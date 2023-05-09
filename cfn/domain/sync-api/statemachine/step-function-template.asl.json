@@ -1,0 +1,71 @@
+{
+    "Comment": "A serverless sync api flow",
+    "StartAt": "Validate Sender Domain",
+    "States": {
+        "Validate Sender Domain": {
+            "Type": "Task",
+            "Resource": "${DomainValidatorArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "Valid Domain?",
+            "ResultPath": "$.syncmsg"
+        },
+        "Valid Domain?": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.syncmsg.valid",
+                    "BooleanEquals": true,
+                    "Next": "Subject Handler?"
+                }
+            ],
+            "Default": "Invalid Domain"
+        },
+        "Subject Handler?": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.syncmsg.Subject",
+                    "StringEquals": "Manifest",
+                    "Next": "Manifest Handler"
+                }
+            ],
+            "Default": "Handler Not Defined"
+        },
+        "Manifest Handler": {
+            "Type": "Task",
+            "InputPath": "$.syncmsg",
+            "ResultPath": "$.subjectResult",
+            "Resource": "${SubjectHandlerArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 20,
+                    "MaxAttempts": 5,
+                    "BackoffRate": 10
+                }
+            ],
+            "End": true
+        },
+        "Invalid Domain": {
+            "Type": "Fail",
+            "Cause": "Domain validation failed"
+        },
+        "Handler Not Defined": {
+            "Type": "Fail",
+            "Cause": "Subject handler not defined"
+        }
+    }
+}
