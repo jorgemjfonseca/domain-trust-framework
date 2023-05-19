@@ -225,6 +225,6 @@ Resources:
 #   Outputs                                                              #
 ##########################################################################
 Outputs:
-  StepFunctions:
-    Description: "Step Functions"
+  ApiUrl:
+    Description: "Sync Api Url"
     Value: !Sub "https://${RestApiforSyncAPI}.execute-api.${AWS::Region}.amazonaws.com/dev"
