@@ -43,16 +43,6 @@ Resources:
     Properties:
       Location: sync-api/sync-api.template
 
-  ManifesterStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: manifester/manifester.template
-
-  MessengerStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: messenger/messenger.template
-
 Outputs:
   SyncApiStack:
     Description: API URL
