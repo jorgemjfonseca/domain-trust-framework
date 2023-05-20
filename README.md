@@ -28,10 +28,8 @@ To deploy the solution,
     * `sam build --template ./cfn/domain/domain.template`
     * `sam deploy --stack-name DTF --region <AWS_REGION>  --resolve-s3 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND`
 
-4. Please note down the api endpoint
-
-
-### Outputs                                                                                                                                          
+4. Please note down the api endpoint, please refer below example
+                                                                                                                            
 
 Key:                 SyncApiStack                                                                                                                 
 Description:         API URL                                                                                                                      
