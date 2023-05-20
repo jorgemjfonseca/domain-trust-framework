@@ -32,11 +32,11 @@ To deploy the solution,
 
 
 ### Outputs                                                                                                                                          
---------------------------------------------------------------------------------------------------------------------------------------------------
+
 Key:                 SyncApiStack                                                                                                                 
 Description:         API URL                                                                                                                      
 Value:               https://<ID>.execute-api.<AWS Region>.amazonaws.com/dev                                                                   
-----------------------------------------------------------------------------------
+
 
 ## Test the example
 
@@ -44,7 +44,6 @@ You can test using api clients e.g. curl
 
 ### Clean up
 
-In this blog post, we used a lambda function to simulate data at 2-minute interval. Hence, to avoid incur-ring future charges, clean up the resources created. To delete the stack, use the following command.
 
 `
 sam delete DTF

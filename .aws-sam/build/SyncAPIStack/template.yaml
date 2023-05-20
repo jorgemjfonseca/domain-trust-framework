@@ -1,0 +1,238 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Sync API module
+
+  '
+Parameters:
+  DomainName:
+    Type: String
+    Default: www.dtfw.org
+    Description: (Required)
+  RecordType:
+    Type: String
+    Default: TXT
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: python3.9
+    MemorySize: 128
+    Tracing: Active
+Resources:
+  SyncApiHostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name:
+        Ref: DomainName
+  SyncApiTXTRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Ref: SyncApiHostedZone
+      Name:
+        Fn::Join:
+        - ''
+        - - sync.
+          - Ref: DomainName
+      Type:
+        Ref: RecordType
+      TTL: '300'
+      ResourceRecords:
+      - Fn::Sub: '"https://${RestApiforSyncAPI}.execute-api.${AWS::Region}.amazonaws.com/dev"'
+  DomainValidator:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: DomainValidator
+      Handler: domain.lambda_handler
+    Metadata:
+      SamResourceId: DomainValidator
+  SubjectHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: SubjectHandler
+      Handler: subject.lambda_handler
+    Metadata:
+      SamResourceId: SubjectHandler
+  SyncApiStateMachineExpressSync:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: ../../../cfn/domain/sync-api/statemachine/step-function-template.asl.json
+      Tracing:
+        Enabled: true
+      DefinitionSubstitutions:
+        DomainValidatorArn:
+          Fn::GetAtt:
+          - DomainValidator
+          - Arn
+        SubjectHandlerArn:
+          Fn::GetAtt:
+          - SubjectHandler
+          - Arn
+        DomainName:
+          Ref: DomainName
+      Policies:
+      - LambdaInvokePolicy:
+          FunctionName:
+            Ref: DomainValidator
+      - LambdaInvokePolicy:
+          FunctionName:
+            Ref: SubjectHandler
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - cloudwatch:*
+          - logs:*
+          Resource: '*'
+      Type: EXPRESS
+      Logging:
+        Destinations:
+        - CloudWatchLogsLogGroup:
+            LogGroupArn:
+              Fn::GetAtt:
+              - StateMachineLogGroup
+              - Arn
+        IncludeExecutionData: false
+        Level: ALL
+  StateMachineLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+        - /
+        - - stepfunctions
+          - SyncApiStateMachineExpressSync
+  RestApiforSyncAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      EndpointConfiguration:
+        Types:
+        - REGIONAL
+      Name:
+        Fn::Sub: ${AWS::StackName}-api
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+    - SyncApiMethod
+    Properties:
+      RestApiId:
+        Ref: RestApiforSyncAPI
+  Resource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+        - RestApiforSyncAPI
+        - RootResourceId
+      PathPart: test
+      RestApiId:
+        Ref: RestApiforSyncAPI
+  Stage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId:
+        Ref: Deployment
+      RestApiId:
+        Ref: RestApiforSyncAPI
+      StageName: dev
+  SyncApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+      Integration:
+        ConnectionType: INTERNET
+        Credentials:
+          Fn::GetAtt:
+          - RestSyncApiRole
+          - Arn
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        IntegrationHttpMethod: POST
+        Type: AWS
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:states:action/StartSyncExecution
+        RequestTemplates:
+          application/json:
+            Fn::Sub:
+            - "#set($data=$util.escapeJavaScript($input.json('$')))\n{\n  \"input\"\
+              : \"$data\",\n  \"stateMachineArn\": \"${SyncApiStateMachineExpressSyncArn}\"\
+              \n}"
+            - SyncApiStateMachineExpressSyncArn:
+                Ref: SyncApiStateMachineExpressSync
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: ''
+      ResourceId:
+        Ref: Resource
+      RestApiId:
+        Ref: RestApiforSyncAPI
+  RestSyncApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - apigateway.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: AllowStepFnExecution
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: states:StartSyncExecution
+            Resource:
+              Fn::GetAtt:
+              - SyncApiStateMachineExpressSync
+              - Arn
+  SyncApWebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      DefaultAction:
+        Allow: {}
+      Name: SyncApWebACL
+      Rules:
+      - Name: SyncApi-AWS-AWSManagedRulesCommonRuleSet
+        Priority: 0
+        Statement:
+          ManagedRuleGroupStatement:
+            VendorName: AWS
+            Name: AWSManagedRulesBotControlRuleSet
+            RuleActionOverrides:
+            - ActionToUse:
+                Count: {}
+              Name: NoUserAgent_HEADER
+            ExcludedRules: []
+        OverrideAction:
+          None: {}
+        VisibilityConfig:
+          CloudWatchMetricsEnabled: true
+          MetricName: AWS-AWSManagedRulesCommonRuleSet
+          SampledRequestsEnabled: true
+      Scope: REGIONAL
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: true
+        MetricName: SyncApiACLMetric
+        SampledRequestsEnabled: true
+  WebACLAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}::/restapis/${RestApiforSyncAPI}/stages/${Stage}
+      WebACLArn:
+        Fn::GetAtt:
+        - SyncApWebACL
+        - Arn
+Outputs:
+  ApiUrl:
+    Description: Sync Api Url
+    Value:
+      Fn::Sub: https://${RestApiforSyncAPI}.execute-api.${AWS::Region}.amazonaws.com/dev
