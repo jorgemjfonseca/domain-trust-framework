@@ -1,11 +1,18 @@
 import * as cdk from "aws-cdk-lib/core";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import { Construct } from 'constructs';
+import { API } from "../ApiGW/Api";
 
-export class WAF extends wafv2.CfnWebACL {
+export class WAF {
+
+    Super: wafv2.CfnWebACL;
     
-    constructor(scope: Construct, id: string) {
-        super(scope, id,{
+    private New() {}
+
+    public static New(scope: Construct, id: string): WAF {
+        const ret = new WAF();
+
+        ret.Super = new wafv2.CfnWebACL(scope, id,{
             defaultAction: { allow: {} },
             visibilityConfig: {
                 cloudWatchMetricsEnabled: true,
@@ -16,13 +23,15 @@ export class WAF extends wafv2.CfnWebACL {
             name: 'foo-prod-waf',
             rules: awsManagedRules.map(wafRule => wafRule.rule),
         });
+
+        return ret;
     }
 
     //https://gist.github.com/statik/f1ac9d6227d98d30c7a7cec0c83f4e64
-    Associate(id: string, arn: string) {
-        new WebACLAssociation(this, id, {
-            resourceArn: arn,
-            webAclArn: this.attrArn,
+    AssociateApi(api: API) {
+        new WebACLAssociation(this.Super, api.Super.restApiName + "Association", {
+            resourceArn: api.Arn(),
+            webAclArn: this.Super.attrArn,
         });
     }
 
