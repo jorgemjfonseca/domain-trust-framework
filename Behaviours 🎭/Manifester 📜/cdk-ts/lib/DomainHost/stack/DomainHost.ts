@@ -1,6 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class DomainHost extends cdk.Stack {
   constructor(scope: Construct, props?: cdk.StackProps) {
