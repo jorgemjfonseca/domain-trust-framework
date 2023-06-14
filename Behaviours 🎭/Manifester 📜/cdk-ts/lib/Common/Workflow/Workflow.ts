@@ -2,13 +2,11 @@ import * as cdk from 'aws-cdk-lib';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import { LAMBDA } from '../Lambda/Lambda';
 import { BUS } from '../EventBus/EventBus';
-import { inherits } from 'util';
 
 export class MACHINE {
 
@@ -84,6 +82,7 @@ export class MACHINE {
 
 export class WORKFLOW {
 
+    Name: string;
     Scope: cdk.Stack;
     FailureCallback: cdk.aws_stepfunctions.State;
     FirstStep: stepfunctions.IChainable;
@@ -91,20 +90,31 @@ export class WORKFLOW {
     LastStepName: string;
     Lambdas: LAMBDA[] = [];
 
-    constructor(scope: cdk.Stack) {
+    constructor(scope: cdk.Stack, id: string) {
       this.Scope = scope;
+      this.Name = id;
 
       // Success and failure pass through step
-      const fail = new sfn.Fail(this.Scope, 'Execution Failed');
+      const fail = new sfn.Fail(
+        this.Scope, 
+        this.Name + ': Execution Failed');
 
       // Create Failure Queue
-      const failureQueue = new sqs.Queue(this.Scope, 'Step funtion Failure Queue');
-      const failureQueueStep = new tasks.SqsSendMessage(this.Scope, 'Failure Queue', {
-        queue: failureQueue,
-        messageBody: sfn.TaskInput.fromJsonPathAt("$"),
-      }).next(fail);
+      const failureQueue = new sqs.Queue(
+        this.Scope, 
+        this.Name + ': Step funtion Failure Queue');
 
-      const failureCallback = new sfn.Pass(this.Scope, 'Failure Callback');
+      const failureQueueStep = new tasks.SqsSendMessage(
+        this.Scope, 
+        this.Name + ': Failure Queue', {
+          queue: failureQueue,
+          messageBody: sfn.TaskInput.fromJsonPathAt("$"),
+        }).next(fail);
+
+      const failureCallback = new sfn.Pass(
+        this.Scope, 
+        this.Name + 'Failure Callback');
+
       failureCallback.next(failureQueueStep);
       this.FailureCallback = failureCallback;
     }
@@ -115,11 +125,13 @@ export class WORKFLOW {
       onFailure?: cdk.aws_stepfunctions.State
     ): tasks.LambdaInvoke {
       
-      const executionFunction = new tasks.LambdaInvoke(this.Scope, fn.Super.functionName, {
-        lambdaFunction: fn.Super,
-        retryOnServiceExceptions: true,
-        outputPath: '$.Payload'
-      });
+      const executionFunction = new tasks.LambdaInvoke(
+        this.Scope, 
+        this.Name + ': ' + fn.Super.functionName, {
+          lambdaFunction: fn.Super,
+          retryOnServiceExceptions: true,
+          outputPath: '$.Payload'
+        });
 
       if (onFailure) {
         executionFunction.addRetry({ errors: ['Failure Exception'], maxAttempts: 1 });
@@ -149,7 +161,7 @@ export class WORKFLOW {
       const step = this.ToWorkflowStep(fn);
       this.LastStep.next(
         new sfn.Choice(fn.Super, 
-          'Was '+this.LastStepName+' successfull?')
+          this.Name + ': Was '+this.LastStepName+' successfull?')
           .when(
             sfn.Condition.stringEquals('$.processedInput.transactionStatus', 'completed'), 
             step)
@@ -161,9 +173,10 @@ export class WORKFLOW {
     }
 
     public ThenSuccess(): WORKFLOW  {
-      const succeeded = new sfn.Succeed(this.Scope, ' Succeed');
+      const succeeded = new sfn.Succeed(this.Scope, 
+        this.Name + ': Succeed');
       this.LastStep.next(
-        new sfn.Choice(this.Scope, 'Was '+this.LastStepName+' successfull?')
+        new sfn.Choice(this.Scope, this.Name + ': Was '+this.LastStepName+' successfull?')
           .when(
             sfn.Condition.stringEquals('$.processedInput.transactionStatus', 'completed'), 
             succeeded)

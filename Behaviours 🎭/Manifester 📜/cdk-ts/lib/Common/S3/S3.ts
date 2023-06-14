@@ -9,6 +9,7 @@ export class S3 {
  
     Scope: cdk.Stack;
     Super: s3.Bucket;
+    Distribution: cloudfront.Distribution;
 
     public static New(
       scope: cdk.Stack , 
@@ -17,7 +18,7 @@ export class S3 {
     ): S3 {
 
         const ret = new S3();
-
+        
         ret.Super = new s3.Bucket(scope, "Bucket", {
           ...props,
           blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -29,6 +30,23 @@ export class S3 {
         return ret;
     }
 
+
+    public Export(alias: string): S3 {
+      
+      new cdk.CfnOutput(this.Super, alias, {
+        value: this.Super.bucketName,
+        exportName: alias,
+      });
+
+      if (this.Distribution) {
+        new cdk.CfnOutput(this.Super, alias + "Distribution", {
+          value: this.Distribution.distributionDomainName,
+          exportName: alias + "Distribution",
+        });
+      }
+
+      return this;
+    }
 
     public CreateCloudFrontDistribution(): S3 {
       
@@ -46,6 +64,8 @@ export class S3 {
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED
         }
       });
+
+      this.Distribution = distribution;
 
       return this;
     }

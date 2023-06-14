@@ -10,7 +10,9 @@ export class DomainManifester extends cdk.Stack {
 
     // S3
     const bucket = S3.New(this, "Bucket")
-      .CreateCloudFrontDistribution();
+      .CreateCloudFrontDistribution()
+      .Export("DomainManifestBucket");
+      
 
     // LAMBDA
     const bus = BUS.Import(this, "DomainBus");
