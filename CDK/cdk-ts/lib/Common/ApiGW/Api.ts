@@ -5,6 +5,9 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apiGW from 'aws-cdk-lib/aws-apigateway';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { WAF } from '../Waf/Waf';
+import { WORKFLOW } from '../Workflow/Workflow';
+import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import { LAMBDA } from '../Lambda/Lambda';
 
 export class API  {
 
@@ -24,12 +27,21 @@ export class API  {
 
 
     public static New(scope: cdk.Stack, id: string = 'Api'): API {
-        
+        const name = scope.stackName + id;
+
         const sup = new cdk.aws_apigateway.RestApi(scope, id,{
-          restApiName: scope.stackName + id,
-            description: scope.stackName + id,
+            restApiName: name,
+            description: name,
             deployOptions: {
               stageName: 'dev',
+              accessLogDestination: 
+                new apiGW.LogGroupLogDestination(
+                  new LogGroup(scope, id + "LogGroup", {
+                    logGroupName: name,
+                    retention: RetentionDays.ONE_DAY,
+                    removalPolicy: cdk.RemovalPolicy.DESTROY
+                  })
+                )
             },
             // Enable CORS
             defaultCorsPreflightOptions: {
@@ -75,14 +87,15 @@ export class API  {
       
     }
     
+
     //https://gist.github.com/statik/f1ac9d6227d98d30c7a7cec0c83f4e64
-    AssociateWaf(waf: WAF): API {
+    public AssociateWaf(waf: WAF): API {
       waf.AssociateApi(this);
       return this;  
     }
 
 
-    public SendMessagesTo(queue: sqs.Queue): API {
+    public SendToQueue(queue: sqs.Queue, resource: cdk.aws_apigateway.Resource): API {
     
       queue.grantSendMessages(this.Role);
 
@@ -112,10 +125,9 @@ export class API  {
           ]
         },
       });
-
         
       // post method
-      this.Super.root.addMethod('POST', sendMessageIntegration, {
+      resource.addMethod('POST', sendMessageIntegration, {
         methodResponses: [
           {
             statusCode: '400',
@@ -131,5 +143,74 @@ export class API  {
 
       return this;
     }
+
+
+    public AddResource(resourceName: string): cdk.aws_apigateway.Resource {
+      return this.Super.root.addResource(resourceName);
+    }
+
+
+    public GetResourceAtPath(path: string): cdk.aws_apigateway.Resource {
+      return this.Super.root.resourceForPath(path);
+    }
+
+
+    public SendToWorkflow(wf: WORKFLOW, resource: cdk.aws_apigateway.Resource) {
+      const credentialsRole = new iam.Role(this.Scope, "getRole", {
+        assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      });
+      
+      credentialsRole.attachInlinePolicy(
+        new iam.Policy(this.Scope, "getPolicy", {
+          statements: [
+            new iam.PolicyStatement({
+              actions: ["states:StartExecution"],
+              effect: iam.Effect.ALLOW,
+              resources: [wf.Super.stateMachineArn],
+            }),
+          ],
+        })
+      );
+      
+      resource.addMethod(
+        "GET",
+        new apiGW.AwsIntegration({
+          service: "states",
+          action: "StartExecution",
+          integrationHttpMethod: "POST",
+          options: {
+            credentialsRole,
+            integrationResponses: [
+              {
+                statusCode: "200",
+                responseTemplates: {
+                  "application/json": `{"done": true}`,
+                },
+              },
+            ],
+            requestTemplates: {
+              "application/json": `{
+                    "input": "{\\"prefix\\":\\"prod\\"}",
+                    "stateMachineArn": "${wf.Super.stateMachineArn}"
+                  }`,
+            },
+          },
+        }),
+        {
+          methodResponses: [{ statusCode: "200" }],
+        }
+      );
+    }
+
+
+    SendToLambda(lambda: LAMBDA, name: string, method: string = "POST") {
+      const resource = 
+        this.GetResourceAtPath("/" + name) ??
+        this.AddResource(name);
+      
+      resource.addMethod(method, 
+        new apiGW.LambdaIntegration(lambda.Super));
+    }
+
 
 }

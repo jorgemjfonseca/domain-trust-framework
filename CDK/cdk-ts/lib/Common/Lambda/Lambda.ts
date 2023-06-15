@@ -9,15 +9,17 @@ import { KEY } from '../KmsKey/KmsKey';
 import { BUS } from '../EventBus/EventBus';
 import { DLQ, QUEUE } from '../Queue/Queue';
 import { S3 } from '../S3/S3';
+import { WORKFLOW } from '../Workflow/Workflow';
+import { API } from '../ApiGW/Api';
 
 export class LAMBDA  {
 
     Name: string;
     Role: iam.Role;
     Scope: cdk.Stack;
-    Super: lambda.IFunction;
+    Super: lambda.Function;
 
-    constructor(scope: cdk.Stack, sup: lambda.IFunction)
+    constructor(scope: cdk.Stack, sup: lambda.Function)
     {
         this.Scope = scope;
         this.Super = sup;
@@ -84,7 +86,7 @@ export class LAMBDA  {
     public static Import(scope: cdk.Stack, alias: string): LAMBDA {
       const name = cdk.Fn.importValue(alias);
       const sup = lambda.Function.fromFunctionName(scope, alias, name);
-      const ret = new LAMBDA(scope, sup);
+      const ret = new LAMBDA(scope, sup as lambda.Function);
       return ret;
     }
 
@@ -162,20 +164,52 @@ export class LAMBDA  {
 
     public SendsMessagesToQueue(queue: QUEUE): LAMBDA {
       queue.Super.grantSendMessages(this.Super);
+      this.Super.addEnvironment("QUEUE_NAME", queue.Super.queueName);
       return this;
     }
 
     public SendsMessagesToBus(bus: BUS): LAMBDA {
       bus.Super.grantPutEventsTo(this.Super);
+      this.Super.addEnvironment("BUS_NAME", bus.Super.eventBusName);
       return this;
     }
 
     public SignsWithKey(key: KEY): LAMBDA {
       key.Super.grantEncrypt(this.Super);
+      this.Super.addEnvironment("KEY_ARN", key.Super.keyArn);
+      return this;
+    }
+
+    public WritesToS3(s3: S3): LAMBDA {
+      s3.Super.grantReadWrite(this.Super);
+      s3.Super.grantDelete(this.Super);
+      s3.Super.grantPut(this.Super);
+      this.Super.addEnvironment("S3_NAME", s3.Super.bucketName);
       return this;
     }
 
 
+    public TriggersWorkflow(wf: WORKFLOW): LAMBDA {
+      wf.Super.grantExecution(this.Super);
+      wf.Super.grantRead(this.Super);
+      wf.Super.grantStartExecution(this.Super);
+      wf.Super.grantStartSyncExecution(this.Super);
+      wf.Super.grantTaskResponse(this.Super);
+      this.Super.addEnvironment("WORKFLOW_ARN", wf.Super.stateMachineArn);
+      return this;
+    }
 
+
+    public AddApiMethod(api: API, name: string, method: string = "POST"): LAMBDA {
+      api.SendToLambda(this, name, method);
+      return this;
+    }
+
+
+    public AddEnvironment(name: string, value: string): LAMBDA {
+      this.Super.addEnvironment(name, value);
+      return this;
+    }
+    
 }
 

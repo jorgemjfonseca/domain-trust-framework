@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { API } from '../../Common/ApiGW/Api';
 import { QUEUE } from '../../Common/Queue/Queue';
 import { LAMBDA } from '../../Common/Lambda/Lambda';
-import { EXPRESS, STANDARD, WORKFLOW } from '../../Common/Workflow/Workflow';
+import { EXPRESS, STANDARD, STATES } from '../../Common/Workflow/Workflow';
 import { BUS } from '../../Common/EventBus/EventBus';
 
 export class DomainMessenger extends cdk.Stack {
@@ -19,21 +19,10 @@ export class DomainMessenger extends cdk.Stack {
     // SENDER FUNCTION 
     const senderFn = LAMBDA.New(this, "SenderFn");
 
-    // SENDER MACHINE
-    EXPRESS
-      .New(this, "SenderWf", 
-        new WORKFLOW(this, 'Prod')
-          .InvokeLambda(wrapperFn)
-          .ThenInvokeLambda(senderFn)
-          .ThenSuccess())
-      .TriggeredByEventBus(bus, { 
-        source: ['OutboundDomainMessages'] 
-      });
-   
-    // SENDER MACHINE
+    // SENDER WORKFLOW
     STANDARD
-      .New(this, "SenderWfTest", 
-        new WORKFLOW(this, 'Test')
+      .New(this, "SenderWf", 
+        new STATES(this, 'SenderWfDef')
           .InvokeLambda(wrapperFn)
           .ThenInvokeLambda(senderFn)
           .ThenSuccess())
@@ -41,8 +30,24 @@ export class DomainMessenger extends cdk.Stack {
         source: ['OutboundDomainMessages'] 
       });
 
-    // RECEIVER QUEUE
-    const receiverQueue = QUEUE.New(this, 'ReceiverQueue');
+    // PUBLISHER FUNCTION
+    const publisherFn = 
+      LAMBDA.New(this, "PublisherFn")
+        .SendsMessagesToBus(bus);
+
+    // RECEIVER WORKFLOW
+    const receiverWf = STANDARD.New(this, "ReceiverWf",
+      new STATES(this, "ReceiverWfDef")
+        .InvokeLambda(unwrapperFn)
+        .ThenInvokeLambda(publisherFn)
+        .ThenSuccess()
+      );
+
+    // RECEIVER FUNCTION
+    const receiverFn = 
+      LAMBDA.New(this, "ReceiverFn")
+        .AddApiMethod(api, "async")
+        .TriggersWorkflow(receiverWf);
 
   }
 }

@@ -8,7 +8,7 @@ import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import { LAMBDA } from '../Lambda/Lambda';
 import { BUS } from '../EventBus/EventBus';
 
-export class MACHINE {
+export class WORKFLOW {
 
     Scope: cdk.Stack;
     Super: stepfunctions.StateMachine;
@@ -17,11 +17,11 @@ export class MACHINE {
     public static New(
       scope: cdk.Stack, 
       id: string, 
-      workflow: WORKFLOW,
+      workflow: STATES,
       props: cdk.aws_stepfunctions.StateMachineProps
-    ): MACHINE {
+    ): WORKFLOW {
 
-        const ret = new MACHINE();
+        const ret = new WORKFLOW();
         ret.Name = scope.stackName + id;
 
         ret.Super = new stepfunctions.StateMachine(scope, id,{
@@ -39,7 +39,7 @@ export class MACHINE {
     }
     
 
-    public InvokesLambda(fn: LAMBDA): MACHINE {
+    public InvokesLambda(fn: LAMBDA): WORKFLOW {
       fn.Super.grantInvoke(this.Super);
       return this;
     }
@@ -56,7 +56,7 @@ export class MACHINE {
     public TriggeredByEventBus(
       bus: BUS, 
       // e.g. { source: ["CustomEvent"], detailType: ["CREATE", "UPDATE", "DELETE"] }
-      eventPattern: events.EventPattern): MACHINE 
+      eventPattern: events.EventPattern): WORKFLOW 
     {
       const ruleName = this.Name + 'ByBus';
       
@@ -80,7 +80,7 @@ export class MACHINE {
 }
 
 
-export class WORKFLOW {
+export class STATES {
 
     Name: string;
     Scope: cdk.Stack;
@@ -119,6 +119,9 @@ export class WORKFLOW {
       this.FailureCallback = failureCallback;
     }
 
+    public static New(scope: cdk.Stack, id: string) {
+      return new STATES(scope, id);
+    }
 
     private ToWorkflowStep(
       fn: LAMBDA, 
@@ -147,7 +150,7 @@ export class WORKFLOW {
 
     public InvokeLambda(
       fn: LAMBDA
-    ): WORKFLOW {
+    ): STATES {
       const step = this.ToWorkflowStep(fn);
       this.FirstStep = this.FirstStep ?? step;
       this.LastStep = step;
@@ -157,7 +160,7 @@ export class WORKFLOW {
 
     public ThenInvokeLambda(
       fn: LAMBDA
-    ): WORKFLOW  {
+    ): STATES  {
       const step = this.ToWorkflowStep(fn);
       this.LastStep.next(
         new sfn.Choice(fn.Super, 
@@ -172,7 +175,7 @@ export class WORKFLOW {
       return this;
     }
 
-    public ThenSuccess(): WORKFLOW  {
+    public ThenSuccess(): STATES  {
       const succeeded = new sfn.Succeed(this.Scope, 
         this.Name + ': Succeed');
       this.LastStep.next(
@@ -188,9 +191,9 @@ export class WORKFLOW {
 }
 
 
-export class EXPRESS extends MACHINE {
+export class EXPRESS extends WORKFLOW {
 
-  public static New(scope: cdk.Stack, id: string, workflow: WORKFLOW): EXPRESS
+  public static New(scope: cdk.Stack, id: string, workflow: STATES): EXPRESS
   {
     const ret = super.New(scope, id, workflow, {
       definition: workflow.FirstStep,
@@ -202,9 +205,9 @@ export class EXPRESS extends MACHINE {
 }
 
 
-export class STANDARD extends MACHINE {
+export class STANDARD extends WORKFLOW {
 
-  public static New(scope: cdk.Stack, id: string, workflow: WORKFLOW)
+  public static New(scope: cdk.Stack, id: string, workflow: STATES)
   {
     const ret = super.New(scope, id, workflow, {
       definition: workflow.FirstStep,
