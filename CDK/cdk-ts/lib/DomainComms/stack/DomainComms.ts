@@ -6,6 +6,7 @@ import { LAMBDA } from '../../Common/Lambda/Lambda';
 import { BUS } from '../../Common/EventBus/EventBus';
 import { KEY } from '../../Common/KmsKey/KmsKey';
 
+
 export class DomainComms extends cdk.Stack {
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, DomainComms.name, props);
@@ -22,12 +23,15 @@ export class DomainComms extends cdk.Stack {
     LAMBDA.New(this, "WrapperFn")
       .Export('DomainWrapperFn');
 
-    const signatureKey = KEY.New(this, 'Key');
+    const signatureKey = KEY.NewForDomain(this, 'Key')
+      .ExportArn('DomainSignatureKey')
+      .ExportKeySpec('DomainSignatureKeySpec');
 
     LAMBDA.New(this, "UnwrapperFn")
       .SignsWithKey(signatureKey)
       .Export('DomainUnwrapperFn');
-
     
+   
+
   }
 }

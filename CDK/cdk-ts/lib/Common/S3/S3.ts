@@ -1,15 +1,13 @@
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { BucketProps } from 'aws-cdk-lib/aws-s3';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
-
+import { CLOUDFRONT } from '../CloudFront/CloudFront';
 
 export class S3 {
  
     Scope: cdk.Stack;
     Super: s3.Bucket;
-    Distribution: cloudfront.Distribution;
+    Distribution: CLOUDFRONT;
 
     public static New(
       scope: cdk.Stack , 
@@ -31,6 +29,12 @@ export class S3 {
     }
 
 
+    public CreateCloudFrontDistribution(): S3 {
+      this.Distribution = CLOUDFRONT.NewForS3(this.Scope, this);
+      return this;
+    }
+
+
     public Export(alias: string): S3 {
       
       new cdk.CfnOutput(this.Super, alias, {
@@ -38,35 +42,8 @@ export class S3 {
         exportName: alias,
       });
 
-      if (this.Distribution) {
-        new cdk.CfnOutput(this.Super, alias + "Distribution", {
-          value: this.Distribution.distributionDomainName,
-          exportName: alias + "Distribution",
-        });
-      }
-
-      return this;
-    }
-
-    public CreateCloudFrontDistribution(): S3 {
+      this.Distribution?.Export(alias + 'Distribution')
       
-      const originAccessIdentity = new cloudfront
-        .OriginAccessIdentity(this.Scope, "Origin", {
-          comment: "Only allow CloudFront to access the S3 bucket directly"
-        });
-
-      const distribution = new cloudfront.Distribution(this.Scope, "Cloudfront", {
-        defaultBehavior: {
-          origin: new S3Origin(this.Super, {
-            originAccessIdentity
-          }),
-          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED
-        }
-      });
-
-      this.Distribution = distribution;
-
       return this;
     }
 

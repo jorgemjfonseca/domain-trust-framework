@@ -10,9 +10,9 @@ export class API  {
 
     Scope: cdk.Stack;
     Role: iam.Role;
-    Super: cdk.aws_apigateway.IRestApi;
+    Super: cdk.aws_apigateway.RestApi;
 
-    constructor (scope: cdk.Stack, api: cdk.aws_apigateway.IRestApi)
+    constructor (scope: cdk.Stack, api: cdk.aws_apigateway.RestApi)
     {
       this.Scope = scope;
       this.Super = api;
@@ -62,7 +62,7 @@ export class API  {
     public static Import(scope: cdk.Stack, alias: string): API {
       const apiId = cdk.Fn.importValue(alias);
       const sup = cdk.aws_apigateway.RestApi.fromRestApiId(scope, alias, apiId);
-      const ret = new API(scope, sup);
+      const ret = new API(scope, sup as cdk.aws_apigateway.RestApi);
       return ret;
     }
     

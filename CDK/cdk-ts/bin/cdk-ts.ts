@@ -6,10 +6,12 @@ import { DomainMessenger } from '../lib/DomainMessenger/stack/DomainMessenger';
 import { DomainHost } from '../lib/DomainHost/stack/DomainHost';
 import { DomainSyncAPI } from '../lib/DomainSyncAPI/stack/DomainSyncAPI';
 import { DomainComms } from '../lib/DomainComms/stack/DomainComms';
+import { DomainDNS } from '../lib/DomainDNS/stack/DomainDNS';
 
 const app = new cdk.App();
 
 new DomainComms(app, {});
+new DomainDNS(app, {});
 new DomainMessenger(app, {});
 new DomainSyncAPI(app, {});
 new DomainManifester(app, {});
