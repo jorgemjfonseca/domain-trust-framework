@@ -1,9 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { API } from '../../Common/ApiGW/Api';
-import { LAMBDA } from '../../Common/Lambda/Lambda';
-import { EXPRESS, STATES } from '../../Common/Workflow/Workflow';
+import { API } from '../../../Common/ApiGW/Api';
+import { LAMBDA } from '../../../Common/Lambda/Lambda';
+import { EXPRESS, STATES } from '../../../Common/Workflow/Workflow';
 
+//https://quip.com/RnO6Ad0BuBSx/-Sync-API
 export class DomainSyncAPI extends cdk.Stack {
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, DomainSyncAPI.name, props);

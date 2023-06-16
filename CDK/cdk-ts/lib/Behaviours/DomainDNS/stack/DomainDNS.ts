@@ -1,9 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { ROUTE53 } from '../../Common/Route53/Route53';
-import { API } from '../../Common/ApiGW/Api';
-import { KEY } from '../../Common/KmsKey/KmsKey';
-import { CERTIFICATE } from '../../Common/Certificate/Certificate';
+import { ROUTE53 } from '../../../Common/Route53/Route53';
+import { API } from '../../../Common/ApiGW/Api';
+import { KEY } from '../../../Common/KmsKey/KmsKey';
+import { CERTIFICATE } from '../../../Common/Certificate/Certificate';
 import { randomUUID } from 'crypto';
 
 export class DomainDNS extends cdk.Stack {

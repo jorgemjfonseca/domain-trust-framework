@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { DomainManifester } from '../lib/DomainManifester/stack/DomainManifester';
-import { DomainMessenger } from '../lib/DomainMessenger/stack/DomainMessenger';
-import { DomainHost } from '../lib/DomainHost/stack/DomainHost';
-import { DomainSyncAPI } from '../lib/DomainSyncAPI/stack/DomainSyncAPI';
-import { DomainComms } from '../lib/DomainComms/stack/DomainComms';
-import { DomainDNS } from '../lib/DomainDNS/stack/DomainDNS';
+import { DomainManifester } from '../lib/Behaviours/DomainManifester/stack/DomainManifester';
+import { DomainMessenger } from '../lib/Behaviours/DomainMessenger/stack/DomainMessenger';
+import { DomainHost } from '../lib/Behaviours/DomainHost/stack/DomainHost';
+import { DomainSyncAPI } from '../lib/Behaviours/DomainSyncAPI/stack/DomainSyncAPI';
+import { DomainComms } from '../lib/Behaviours/DomainComms/stack/DomainComms';
+import { DomainDNS } from '../lib/Behaviours/DomainDNS/stack/DomainDNS';
 
 const app = new cdk.App();
 

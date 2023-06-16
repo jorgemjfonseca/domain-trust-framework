@@ -36,9 +36,10 @@ export class QUEUE {
     }
 
 
-    public TriggeredByEventBus(
-      eventBus: events.IEventBus,      
-      eventPattern: events.EventPattern,     //e.g. { source: ["DTFW"], detailType: ["..."] }
+    public TriggeredByBus(
+      eventBus: events.IEventBus,     
+      // e.g. { source: ["CustomEvent"], detailType: ["CREATE", "UPDATE", "DELETE"] } 
+      eventPattern: events.EventPattern,     
     ): QUEUE 
     {
       const name = this.Super.queueName + eventBus.eventBusName + 'Rule';

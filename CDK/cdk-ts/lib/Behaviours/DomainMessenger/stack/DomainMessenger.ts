@@ -1,11 +1,12 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { API } from '../../Common/ApiGW/Api';
-import { QUEUE } from '../../Common/Queue/Queue';
-import { LAMBDA } from '../../Common/Lambda/Lambda';
-import { EXPRESS, STANDARD, STATES } from '../../Common/Workflow/Workflow';
-import { BUS } from '../../Common/EventBus/EventBus';
+import { API } from '../../../Common/ApiGW/Api';
+import { QUEUE } from '../../../Common/Queue/Queue';
+import { LAMBDA } from '../../../Common/Lambda/Lambda';
+import { EXPRESS, STANDARD, STATES } from '../../../Common/Workflow/Workflow';
+import { BUS } from '../../../Common/EventBus/EventBus';
 
+//https://quip.com/Fxj4AdnE6Eu5/-Messenger
 export class DomainMessenger extends cdk.Stack {
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, DomainMessenger.name, props);
@@ -26,14 +27,14 @@ export class DomainMessenger extends cdk.Stack {
           .InvokeLambda(wrapperFn)
           .ThenInvokeLambda(senderFn)
           .ThenSuccess())
-      .TriggeredByEventBus(bus, { 
+      .TriggeredByBus(bus, { 
         source: ['OutboundDomainMessages'] 
       });
 
     // PUBLISHER FUNCTION
     const publisherFn = 
       LAMBDA.New(this, "PublisherFn")
-        .SendsMessagesToBus(bus);
+        .PublishesToBus(bus);
 
     // RECEIVER WORKFLOW
     const receiverWf = STANDARD.New(this, "ReceiverWf",

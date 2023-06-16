@@ -53,7 +53,7 @@ export class WORKFLOW {
     }
 
 
-    public TriggeredByEventBus(
+    public TriggeredByBus(
       bus: BUS, 
       // e.g. { source: ["CustomEvent"], detailType: ["CREATE", "UPDATE", "DELETE"] }
       eventPattern: events.EventPattern): WORKFLOW 
