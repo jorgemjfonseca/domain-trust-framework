@@ -4,6 +4,7 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications'
+import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import { KEY } from '../KmsKey/KmsKey';
 import { BUS } from '../EventBus/EventBus';
@@ -11,6 +12,8 @@ import { DLQ, QUEUE } from '../Queue/Queue';
 import { S3 } from '../S3/S3';
 import { WORKFLOW } from '../Workflow/Workflow';
 import { API } from '../ApiGW/Api';
+import { DYNAMO } from '../DynamoDB/DynamoDB';
+import { NEPTUNE } from '../Neptune/Neptune';
 
 export class LAMBDA  {
 
@@ -136,10 +139,11 @@ export class LAMBDA  {
     }
 
 
-    public TriggeredByEventBus(
+    public TriggeredByBus(
       eventBus: BUS,
-      eventPattern: events.EventPattern,     //e.g. { source: ["DTFW"] }
-      dlq: DLQ, 
+      // e.g. { source: ["DTFW"], detailType: ["CREATE", "UPDATE", "DELETE"] }
+      source: string[],
+      detailType: string[],
       props?: targets.LambdaFunctionProps): LAMBDA 
     {
       const name = this.Super.functionName + eventBus.Super.eventBusName + 'Rule';
@@ -147,8 +151,13 @@ export class LAMBDA  {
       const eventRule = new events.Rule(this.Scope, name, {
         ruleName: this.Scope.stackName + name,
         eventBus: eventBus.Super,
-        eventPattern: eventPattern
+        eventPattern: {
+          source: source,
+          detailType: detailType
+        }
       });
+
+      const dlq = DLQ.New(this.Scope, this.Name + "ByBus");
 
       eventRule.addTarget(
         new targets.LambdaFunction(this.Super, {
@@ -162,13 +171,27 @@ export class LAMBDA  {
     }
 
 
-    public SendsMessagesToQueue(queue: QUEUE): LAMBDA {
+    //https://docs.dennisokeeffe.com/aws-cdk/dynamodb-stream
+    //https://serverlessland.com/patterns/dynamodb-streams-lambda-dynamodb-cdk-dotnet
+    public TriggeredByDynamoDB(dynamo: DYNAMO): LAMBDA {
+      this.Super.addEventSource(
+        new sources.DynamoEventSource(
+          dynamo.Super, {
+            startingPosition: lambda.StartingPosition.LATEST
+          }
+        ));
+        return this;
+    }
+
+
+    public PublishesToQueue(queue: QUEUE): LAMBDA {
       queue.Super.grantSendMessages(this.Super);
       this.Super.addEnvironment("QUEUE_NAME", queue.Super.queueName);
       return this;
     }
 
-    public SendsMessagesToBus(bus: BUS): LAMBDA {
+
+    public PublishesToBus(bus: BUS): LAMBDA {
       bus.Super.grantPutEventsTo(this.Super);
       this.Super.addEnvironment("BUS_NAME", bus.Super.eventBusName);
       return this;
@@ -185,6 +208,22 @@ export class LAMBDA  {
       s3.Super.grantDelete(this.Super);
       s3.Super.grantPut(this.Super);
       this.Super.addEnvironment("S3_NAME", s3.Super.bucketName);
+      return this;
+    }
+
+
+    public WritesToDynamoDB(dynamo: DYNAMO): LAMBDA {
+      dynamo.Super.grantReadWriteData(this.Super);
+      this.Super.addEnvironment("TABLE_", dynamo.Super.tableName);
+      return this;
+    }
+
+
+    public WritesToNeptune(neptune: NEPTUNE): LAMBDA {
+      neptune.Super.grant(this.Super);
+      neptune.Super.grantConnect(this.Super);
+      this.Super.addEnvironment("NEPTUNE_HOSTNAME", neptune.Super.clusterEndpoint.hostname);
+      this.Super.addEnvironment("NEPTUNE_PORT", neptune.Super.clusterEndpoint.port.toString());
       return this;
     }
 
