@@ -70,7 +70,7 @@ export class API  {
       });
       new cdk.CfnOutput(this.Super, alias + 'Root', {
         value: this.Super.restApiRootResourceId,
-        exportName: alias,
+        exportName: alias + 'Root',
       });
       return this;
     }

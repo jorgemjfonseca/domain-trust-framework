@@ -21,7 +21,8 @@ export class S3 {
         ret.Super = new s3.Bucket(scope, "Bucket", {
           ...props,
           blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-          removalPolicy: cdk.RemovalPolicy.DESTROY
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+          autoDeleteObjects: true
         });
 
         ret.Scope = scope;
