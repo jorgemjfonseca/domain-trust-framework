@@ -1,7 +1,7 @@
 import * as cdk from "aws-cdk-lib/core";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import { Construct } from 'constructs';
-import { API } from "../ApiGW/Api";
+import { API } from "../API/API";
 
 export class WAF {
 

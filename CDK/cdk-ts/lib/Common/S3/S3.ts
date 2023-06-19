@@ -1,16 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { BucketProps } from 'aws-cdk-lib/aws-s3';
-import { CLOUDFRONT } from '../CloudFront/CloudFront';
+import { CLOUDFRONT } from '../CLOUDFRONT/CLOUDFRONT';
+import { STACK } from '../STACK/STACK';
 
 export class S3 {
  
-    Scope: cdk.Stack;
+    Scope: STACK;
     Super: s3.Bucket;
     Distribution: CLOUDFRONT;
 
     public static New(
-      scope: cdk.Stack , 
+      scope: STACK , 
       id: string, 
       props?: BucketProps
     ): S3 {

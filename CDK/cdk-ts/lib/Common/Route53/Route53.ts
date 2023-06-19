@@ -1,17 +1,18 @@
 import * as cdk from 'aws-cdk-lib';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
-import { CLOUDFRONT } from '../CloudFront/CloudFront';
-import { KEY } from '../KmsKey/KmsKey';
+import { CLOUDFRONT } from '../CLOUDFRONT/CLOUDFRONT';
+import { KEY } from '../KEY/KEY';
+import { STACK } from '../STACK/STACK';
 
 
 //https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_route53-readme.html
 export class ROUTE53  {
 
     Super: route53.HostedZone;
-    Scope: cdk.Stack;
+    Scope: STACK;
 
-    public static New(scope: cdk.Stack, id: string, zoneName: string): ROUTE53 {
+    public static New(scope: STACK, id: string, zoneName: string): ROUTE53 {
         const ret = new ROUTE53();
 
         ret.Super = new route53.PublicHostedZone(scope, id, {

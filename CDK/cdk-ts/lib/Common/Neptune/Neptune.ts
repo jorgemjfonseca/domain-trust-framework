@@ -1,15 +1,16 @@
 import * as cdk from 'aws-cdk-lib';
 import * as neptune from '@aws-cdk/aws-neptune-alpha';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import { STACK } from '../STACK/STACK';
 
 //https://github.com/amazon-archives/fully-automated-neo4j-to-neptune/blob/master/bootstrapper/lib/neptune-stack.js
 export class NEPTUNE {
 
-    Scope: cdk.Stack;
+    Scope: STACK;
     Super: neptune.DatabaseCluster;
     
     public static New(
-      scope: cdk.Stack, 
+      scope: STACK, 
       id: string
     ): NEPTUNE {
 
@@ -21,7 +22,7 @@ export class NEPTUNE {
             {
               cidrMask: 24,
               name: "public",
-              subnetType: ec2.SubnetType.PUBLIC
+              subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS
             }
           ]
         });

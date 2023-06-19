@@ -5,17 +5,18 @@ import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
-import { LAMBDA } from '../Lambda/Lambda';
-import { BUS } from '../EventBus/EventBus';
+import { LAMBDA } from '../LAMBDA/LAMBDA';
+import { BUS } from '../BUS/BUS';
+import { STACK } from '../STACK/STACK';
 
 export class WORKFLOW {
 
-    Scope: cdk.Stack;
+    Scope: STACK;
     Super: stepfunctions.StateMachine;
     Name: string;
 
     public static New(
-      scope: cdk.Stack, 
+      scope: STACK, 
       id: string, 
       workflow: STATES,
       props: cdk.aws_stepfunctions.StateMachineProps
@@ -83,14 +84,14 @@ export class WORKFLOW {
 export class STATES {
 
     Name: string;
-    Scope: cdk.Stack;
+    Scope: STACK;
     FailureCallback: cdk.aws_stepfunctions.State;
     FirstStep: stepfunctions.IChainable;
     LastStep: stepfunctions.INextable;
     LastStepName: string;
     Lambdas: LAMBDA[] = [];
 
-    constructor(scope: cdk.Stack, id: string) {
+    constructor(scope: STACK, id: string) {
       this.Scope = scope;
       this.Name = id;
 
@@ -119,7 +120,7 @@ export class STATES {
       this.FailureCallback = failureCallback;
     }
 
-    public static New(scope: cdk.Stack, id: string) {
+    public static New(scope: STACK, id: string) {
       return new STATES(scope, id);
     }
 
@@ -193,7 +194,7 @@ export class STATES {
 
 export class EXPRESS extends WORKFLOW {
 
-  public static New(scope: cdk.Stack, id: string, workflow: STATES): EXPRESS
+  public static New(scope: STACK, id: string, workflow: STATES): EXPRESS
   {
     const ret = super.New(scope, id, workflow, {
       definition: workflow.FirstStep,
@@ -207,7 +208,7 @@ export class EXPRESS extends WORKFLOW {
 
 export class STANDARD extends WORKFLOW {
 
-  public static New(scope: cdk.Stack, id: string, workflow: STATES)
+  public static New(scope: STACK, id: string, workflow: STATES)
   {
     const ret = super.New(scope, id, workflow, {
       definition: workflow.FirstStep,

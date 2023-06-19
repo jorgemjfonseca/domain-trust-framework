@@ -2,19 +2,20 @@ import * as cdk from 'aws-cdk-lib';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { S3 } from '../S3/S3';
+import { STACK } from '../STACK/STACK';
 
 export class CLOUDFRONT {
 
     Super: cloudfront.Distribution;
-    Scope: cdk.Stack;
+    Scope: STACK;
 
-    constructor(scope: cdk.Stack, sup: cloudfront.Distribution)
+    constructor(scope: STACK, sup: cloudfront.Distribution)
     {
       this.Scope = scope;
       this.Super = sup;
     }
 
-    public static NewForS3(scope: cdk.Stack, s3: S3) {
+    public static NewForS3(scope: STACK, s3: S3) {
 
       const originAccessIdentity = new cloudfront
         .OriginAccessIdentity(scope, "Origin", {

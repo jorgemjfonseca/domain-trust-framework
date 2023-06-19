@@ -6,23 +6,25 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications'
 import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as targets from 'aws-cdk-lib/aws-events-targets';
-import { KEY } from '../KmsKey/KmsKey';
-import { BUS } from '../EventBus/EventBus';
-import { DLQ, QUEUE } from '../Queue/Queue';
+import { KEY } from '../KEY/KEY';
+import { BUS } from '../BUS/BUS';
+import { DLQ, SQS } from '../SQS/SQS';
 import { S3 } from '../S3/S3';
-import { WORKFLOW } from '../Workflow/Workflow';
-import { API } from '../ApiGW/Api';
-import { DYNAMO } from '../DynamoDB/DynamoDB';
-import { NEPTUNE } from '../Neptune/Neptune';
+import { WORKFLOW } from '../WORKFLOW/WORKFLOW';
+import { API } from '../API/API';
+import { DYNAMO } from '../DYNAMO/DYNAMO';
+import { NEPTUNE } from '../NEPTUNE/NEPTUNE';
+import * as path from 'path';
+import { STACK } from '../STACK/STACK';
 
-export class LAMBDA  {
+export class LAMBDA {
 
     Name: string;
     Role: iam.Role;
-    Scope: cdk.Stack;
+    Scope: STACK;
     Super: lambda.Function;
 
-    constructor(scope: cdk.Stack, sup: lambda.Function)
+    constructor(scope: STACK, sup: lambda.Function)
     {
         this.Scope = scope;
         this.Super = sup;
@@ -31,19 +33,26 @@ export class LAMBDA  {
     }
 
     public static New(
-      scope: cdk.Stack, 
+      scope: STACK, 
       id: string, 
       props?: cdk.aws_lambda.FunctionProps
     ): LAMBDA {
 
         const dlq = DLQ.New(scope, id + "Dlq");
       
-        const sup = new lambda.Function(scope, id, {
-          role: new iam.Role(scope, id+'FnRole', {
-            assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
-          }),
+        const role = new iam.Role(scope, id+'Role', {
+          assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
+        });
 
-          functionName: scope.stackName + id,
+        role.addManagedPolicy(
+          iam.ManagedPolicy.fromManagedPolicyArn(scope, 
+            scope.Name + id + "BasicExecutionRole", 
+            'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'));
+
+        const sup = new lambda.Function(scope, id, {
+          role: role,
+
+          functionName: scope.Name + id,
           deadLetterQueue: dlq.Super,
           memorySize: 1024, 
           timeout: cdk.Duration.seconds(30),
@@ -53,24 +62,40 @@ export class LAMBDA  {
           runtime: props?.runtime 
             ?? lambda.Runtime.NODEJS_18_X,
           code: props?.code 
-            ?? lambda.Code.fromAsset('lib/' + scope.stackName + '/lambda/' + id),
+            ?? lambda.Code.fromAsset(path.join(this.callerDirname(), '../lambda/' + id)),
           handler: props?.handler 
             ?? 'exports.handler',
         });
 
         const fn = new LAMBDA(scope, sup);
 
-        fn.Role.addManagedPolicy(
-          iam.ManagedPolicy.fromManagedPolicyArn(scope, 
-            fn.Super.functionName + "BasicExecutionRole", 
-            'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'));
-
         dlq.Super.grantSendMessages(fn.Super);
 
         return fn;
     }
 
-    public static FromFunctionName(scope: cdk.Stack, name: string) {
+    private static callerDirname({ depth = 1 } = {}): string {
+      if (typeof depth !== 'number' || depth < 1 || Math.floor(depth) !== depth)
+        throw new Error('Depth must be a positive integer.');
+    
+      /* Start borrowed/modified code */
+      // https://github.com/sindresorhus/callsites/blob/master/index.js
+      const _ = Error.prepareStackTrace;
+      Error.prepareStackTrace = (_, stack) => stack;
+      const stack = new Error().stack!.slice(1);
+      Error.prepareStackTrace = _;
+    
+      // https://github.com/sindresorhus/caller-callsite/blob/master/index.js
+      const caller = (stack as any)
+        .find((c: NodeJS.CallSite) => 
+          //c.getTypeName() !== null &&
+          path.dirname(c.getFileName()+'').includes('stack'));
+      /* End borrowed/modified code */
+    
+      return path.dirname(caller.getFileName());
+    }
+
+    public static FromFunctionName(scope: STACK, name: string) {
       return lambda.Function
         .fromFunctionName(scope, name, name);
     }
@@ -86,7 +111,7 @@ export class LAMBDA  {
     }
 
     // Imports from a CloudFormation parameter.
-    public static Import(scope: cdk.Stack, alias: string): LAMBDA {
+    public static Import(scope: STACK, alias: string): LAMBDA {
       const name = cdk.Fn.importValue(alias);
       const sup = lambda.Function.fromFunctionName(scope, alias, name);
       const ret = new LAMBDA(scope, sup as lambda.Function);
@@ -126,10 +151,10 @@ export class LAMBDA  {
     }
 
 
-    public TriggeredByQueue(queue: QUEUE): LAMBDA {
+    public TriggeredByQueue(queue: SQS): LAMBDA {
       queue.Super.grantConsumeMessages(this.Super);
 
-      new lambda.EventSourceMapping(this.Scope, this.Name + 'Mapping', {
+      new lambda.EventSourceMapping(this.Scope, 'Mapping' + this.Scope.Next(), {
         eventSourceArn: queue.Super.queueArn,
         target: this.Super,
         batchSize: 1
@@ -139,25 +164,38 @@ export class LAMBDA  {
     }
 
 
+    public SpeaksWithBus(
+      eventBus: BUS,
+      // e.g. { source: ["DTFW"], detailType: ["CREATE", "UPDATE", "DELETE"] }
+      source: string,
+      detailType?: string[],
+      props?: targets.LambdaFunctionProps): LAMBDA 
+    {
+      this.TriggeredByBus(eventBus, source, detailType, props);
+      this.PublishesToBus(eventBus);
+      return this;
+    }
+
+
     public TriggeredByBus(
       eventBus: BUS,
       // e.g. { source: ["DTFW"], detailType: ["CREATE", "UPDATE", "DELETE"] }
-      source: string[],
-      detailType: string[],
+      source: string,
+      detailType?: string[],
       props?: targets.LambdaFunctionProps): LAMBDA 
     {
-      const name = this.Super.functionName + eventBus.Super.eventBusName + 'Rule';
+      const name = this.Name + eventBus.Name + 'Rule';
       
-      const eventRule = new events.Rule(this.Scope, name, {
-        ruleName: this.Scope.stackName + name,
+      const eventRule = new events.Rule(this.Scope, source+'Rule', {
+        ruleName: this.Scope.Name + name,
         eventBus: eventBus.Super,
         eventPattern: {
-          source: source,
+          source: [ source ],
           detailType: detailType
         }
       });
 
-      const dlq = DLQ.New(this.Scope, this.Name + "ByBus");
+      const dlq = DLQ.New(this.Scope, source + "ByBus");
 
       eventRule.addTarget(
         new targets.LambdaFunction(this.Super, {
@@ -174,6 +212,7 @@ export class LAMBDA  {
     //https://docs.dennisokeeffe.com/aws-cdk/dynamodb-stream
     //https://serverlessland.com/patterns/dynamodb-streams-lambda-dynamodb-cdk-dotnet
     public TriggeredByDynamoDB(dynamo: DYNAMO): LAMBDA {
+      dynamo.Super.grantStreamRead(this.Super);
       this.Super.addEventSource(
         new sources.DynamoEventSource(
           dynamo.Super, {
@@ -184,7 +223,7 @@ export class LAMBDA  {
     }
 
 
-    public PublishesToQueue(queue: QUEUE): LAMBDA {
+    public PublishesToQueue(queue: SQS): LAMBDA {
       queue.Super.grantSendMessages(this.Super);
       this.Super.addEnvironment("QUEUE_NAME", queue.Super.queueName);
       return this;
@@ -211,10 +250,32 @@ export class LAMBDA  {
       return this;
     }
 
+    public WritesToDynamoDBs(dynamos: DYNAMO[]): LAMBDA {
+      dynamos.forEach(dynamo => {
+        this.WritesToDynamoDB(dynamo);
+      });
+      return this;
+    }
 
     public WritesToDynamoDB(dynamo: DYNAMO): LAMBDA {
       dynamo.Super.grantReadWriteData(this.Super);
-      this.Super.addEnvironment("TABLE_", dynamo.Super.tableName);
+      //dynamo.Super.grantStreamRead(this.Super);
+      this.Super?.addEnvironment("TABLE_", dynamo.Super.tableName);
+      return this;
+    }
+
+    public ReadsFromDynamoDBs(dynamos: DYNAMO[]): LAMBDA {
+      dynamos.forEach(dynamo => {
+        this.ReadsFromDynamoDB(dynamo);
+      });
+      return this;
+    }
+
+    public ReadsFromDynamoDB(dynamo: DYNAMO): LAMBDA {
+      dynamo.Super.grantReadData(this.Super);
+      //dynamo.Super.grantStreamRead(this.Super);
+      if (this.Super.addEnvironment)
+        this.Super.addEnvironment("TABLE_", dynamo.Super.tableName);
       return this;
     }
 
@@ -227,9 +288,16 @@ export class LAMBDA  {
       return this;
     }
 
+    public ReadsFromNeptune(neptune: NEPTUNE): LAMBDA {
+      neptune.Super.grant(this.Super);
+      neptune.Super.grantConnect(this.Super);
+      this.Super.addEnvironment("NEPTUNE_HOSTNAME", neptune.Super.clusterEndpoint.hostname);
+      this.Super.addEnvironment("NEPTUNE_PORT", neptune.Super.clusterEndpoint.port.toString());
+      return this;
+    }
+
 
     public TriggersWorkflow(wf: WORKFLOW): LAMBDA {
-      wf.Super.grantExecution(this.Super);
       wf.Super.grantRead(this.Super);
       wf.Super.grantStartExecution(this.Super);
       wf.Super.grantStartSyncExecution(this.Super);
