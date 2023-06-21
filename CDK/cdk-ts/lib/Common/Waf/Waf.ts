@@ -2,15 +2,21 @@ import * as cdk from "aws-cdk-lib/core";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import { Construct } from 'constructs';
 import { API } from "../API/API";
+import { CONSTRUCT } from "../CONSTRUCT/CONSTRUCT";
+import { STACK } from "../STACK/STACK";
 
-export class WAF {
+export class WAF extends CONSTRUCT {
 
     Super: wafv2.CfnWebACL;
     
+    constructor(scope: STACK) {
+        super(scope);
+    }
+
     private New() {}
 
-    public static New(scope: Construct, id: string): WAF {
-        const ret = new WAF();
+    public static New(scope: STACK, id: string): WAF {
+        const ret = new WAF(scope);
 
         ret.Super = new wafv2.CfnWebACL(scope, id,{
             defaultAction: { allow: {} },

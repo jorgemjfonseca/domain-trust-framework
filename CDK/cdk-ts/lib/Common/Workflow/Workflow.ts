@@ -27,6 +27,7 @@ export class WORKFLOW {
 
         ret.Super = new stepfunctions.StateMachine(scope, id,{
           stateMachineName: ret.Name,
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
           ...props,
         });
 
@@ -57,14 +58,17 @@ export class WORKFLOW {
     public TriggeredByBus(
       bus: BUS, 
       // e.g. { source: ["CustomEvent"], detailType: ["CREATE", "UPDATE", "DELETE"] }
-      eventPattern: events.EventPattern): WORKFLOW 
+      detailType: string
+    ): WORKFLOW 
     {
       const ruleName = this.Name + 'ByBus';
       
       const eventRule = new events
         .Rule(this.Scope, ruleName, {
           ruleName: this.Scope.stackName + ruleName, 
-          eventPattern: eventPattern,
+          eventPattern: {
+            detailType: [ detailType ]
+          },
           eventBus: bus.Super
         });
 

@@ -9,16 +9,16 @@ import { WORKFLOW } from '../WORKFLOW/WORKFLOW';
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { LAMBDA } from '../LAMBDA/LAMBDA';
 import { STACK } from '../STACK/STACK';
+import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 
-export class API  {
+export class API extends CONSTRUCT {
 
-    Scope: STACK;
     Role: iam.Role;
     Super: cdk.aws_apigateway.RestApi;
 
     constructor (scope: STACK, api: cdk.aws_apigateway.RestApi)
     {
-      this.Scope = scope;
+      super(scope);
       this.Super = api;
 
       this.Role = new iam.Role(scope, api.restApiName + 'Role', {
@@ -33,6 +33,7 @@ export class API  {
         const sup = new cdk.aws_apigateway.RestApi(scope, id,{
             restApiName: name,
             description: name,
+            cloudWatchRole: true,
             deployOptions: {
               stageName: 'dev',
               accessLogDestination: 

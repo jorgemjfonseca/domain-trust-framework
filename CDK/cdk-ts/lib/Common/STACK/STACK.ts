@@ -18,4 +18,20 @@ export class STACK extends cdk.Stack {
         return this.Count;
     }
 
+    public RandomName(seed: string): string {
+        return seed+this.Next();
+    }
+
+    public Export(alias: string, value: string): STACK {
+        new cdk.CfnOutput(this, alias, {
+            value: value,
+            exportName: alias,
+        });
+        return this;
+    }
+
+    public Import(alias: string): string {
+        return cdk.Fn.importValue(alias);
+    }
+
 }

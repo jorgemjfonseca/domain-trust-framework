@@ -6,7 +6,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications'
 import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as targets from 'aws-cdk-lib/aws-events-targets';
-import { KEY } from '../KEY/KEY';
+import { KMS_KEY } from '../KEY/KMS_KEY';
 import { BUS } from '../BUS/BUS';
 import { DLQ, SQS } from '../SQS/SQS';
 import { S3 } from '../S3/S3';
@@ -16,17 +16,27 @@ import { DYNAMO } from '../DYNAMO/DYNAMO';
 import { NEPTUNE } from '../NEPTUNE/NEPTUNE';
 import * as path from 'path';
 import { STACK } from '../STACK/STACK';
+import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
+import { EC2_KEY } from '../KEY/EC2_KEY';
 
-export class LAMBDA {
+
+export interface LAMBDAparams {
+  runtime?: lambda.Runtime;
+  handler?: string;
+  super?: cdk.aws_lambda.FunctionProps;
+}
+
+export class LAMBDA extends CONSTRUCT {
 
     Name: string;
     Role: iam.Role;
-    Scope: STACK;
     Super: lambda.Function;
+
+    static PYTHON_3_10 = lambda.Runtime.PYTHON_3_10;
 
     constructor(scope: STACK, sup: lambda.Function)
     {
-        this.Scope = scope;
+        super(scope);
         this.Super = sup;
         this.Name = sup.functionName;
         this.Role = sup.role as iam.Role
@@ -35,7 +45,7 @@ export class LAMBDA {
     public static New(
       scope: STACK, 
       id: string, 
-      props?: cdk.aws_lambda.FunctionProps
+      props?: LAMBDAparams
     ): LAMBDA {
 
         const dlq = DLQ.New(scope, id + "Dlq");
@@ -57,14 +67,19 @@ export class LAMBDA {
           memorySize: 1024, 
           timeout: cdk.Duration.seconds(30),
 
-          ...props,
+          ...props?.super,
 
-          runtime: props?.runtime 
-            ?? lambda.Runtime.NODEJS_18_X,
-          code: props?.code 
+          runtime: 
+            props?.runtime
+            ?? props?.super?.runtime 
+            ?? lambda.Runtime.PYTHON_3_10,
+          code: 
+            props?.super?.code 
             ?? lambda.Code.fromAsset(path.join(this.callerDirname(), '../lambda/' + id)),
-          handler: props?.handler 
-            ?? 'exports.handler',
+          handler: 
+            props?.handler 
+            ?? props?.super?.handler 
+            ?? 'index.handler',
         });
 
         const fn = new LAMBDA(scope, sup);
@@ -167,11 +182,11 @@ export class LAMBDA {
     public SpeaksWithBus(
       eventBus: BUS,
       // e.g. { source: ["DTFW"], detailType: ["CREATE", "UPDATE", "DELETE"] }
-      source: string,
-      detailType?: string[],
+      //source: string,
+      detailType: string,
       props?: targets.LambdaFunctionProps): LAMBDA 
     {
-      this.TriggeredByBus(eventBus, source, detailType, props);
+      this.TriggeredByBus(eventBus, detailType, props);
       this.PublishesToBus(eventBus);
       return this;
     }
@@ -180,22 +195,22 @@ export class LAMBDA {
     public TriggeredByBus(
       eventBus: BUS,
       // e.g. { source: ["DTFW"], detailType: ["CREATE", "UPDATE", "DELETE"] }
-      source: string,
-      detailType?: string[],
+      //source: string,
+      detailType: string,
       props?: targets.LambdaFunctionProps): LAMBDA 
     {
-      const name = this.Name + eventBus.Name + 'Rule';
+      const name = this.Name + '-' + eventBus.Name;
       
-      const eventRule = new events.Rule(this.Scope, source+'Rule', {
-        ruleName: this.Scope.Name + name,
+      const eventRule = new events.Rule(this.Scope, detailType+'-Rule', {
+        ruleName: name+'-Rule',
         eventBus: eventBus.Super,
         eventPattern: {
-          source: [ source ],
-          detailType: detailType
+          //source: [ source ],
+          detailType: [ detailType ]
         }
       });
 
-      const dlq = DLQ.New(this.Scope, source + "ByBus");
+      const dlq = DLQ.New(this.Scope, detailType+'-ByBus');
 
       eventRule.addTarget(
         new targets.LambdaFunction(this.Super, {
@@ -236,9 +251,15 @@ export class LAMBDA {
       return this;
     }
 
-    public SignsWithKey(key: KEY): LAMBDA {
+    public SignsWithKmsKey(key: KMS_KEY): LAMBDA {
       key.Super.grantEncrypt(this.Super);
       this.Super.addEnvironment("KEY_ARN", key.Super.keyArn);
+      return this;
+    }
+
+    public SignsWithEc2Key(key: EC2_KEY): LAMBDA {
+      key.Super.grantReadOnPrivateKey(this.Super);
+      this.Super.addEnvironment("KEY_ARN", key.Super.keyPairName);
       return this;
     }
 
@@ -256,6 +277,30 @@ export class LAMBDA {
       });
       return this;
     }
+
+
+    public GrantKeyManagementServicePowerUser(): LAMBDA {
+      return this.AttachManagedPolicy('AWSKeyManagementServicePowerUser');
+    }
+
+    public GrantCloudFormationReadOnlyAccess(): LAMBDA {
+      return this.AttachManagedPolicy('AWSCloudFormationReadOnlyAccess');
+    }
+    
+    public GrantRoute53FullAccess(): LAMBDA {
+      return this.AttachManagedPolicy('AmazonRoute53FullAccess');
+    }
+
+    // https://bobbyhadz.com/blog/aws-cdk-iam-policy-example
+    public AttachManagedPolicy(name: string): LAMBDA {
+      // 👇 Use an AWS-Managed Policy
+      const managedPolicy = iam.ManagedPolicy.fromAwsManagedPolicyName(name);
+
+      // 👇 attach the Managed Policy to the Role
+      this.Super.role?.addManagedPolicy(managedPolicy);
+      return this;
+    }
+
 
     public WritesToDynamoDB(dynamo: DYNAMO): LAMBDA {
       dynamo.Super.grantReadWriteData(this.Super);

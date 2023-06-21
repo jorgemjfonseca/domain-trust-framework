@@ -11,7 +11,7 @@ import { STACK } from '../../../Common/STACK/STACK';
 // https://quip.com/s9oCAO3UR38A/-Host
 export class HostBehaviour extends STACK {
 
-  public static readonly SESSIONS = 'Host.SessionsTable';
+  public static readonly SESSIONS = 'Host-SessionsTable';
 
 
   constructor(scope: Construct, props?: cdk.StackProps) {

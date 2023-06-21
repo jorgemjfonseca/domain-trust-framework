@@ -1,21 +1,16 @@
 import * as cdk from 'aws-cdk-lib';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as events from 'aws-cdk-lib/aws-events';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as s3n from 'aws-cdk-lib/aws-s3-notifications'
 import { STACK } from '../STACK/STACK';
+import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 
 
-export class BUS {
+export class BUS extends CONSTRUCT {
 
     Super: events.IEventBus;
-    Scope: STACK;
     Name: string;
 
     constructor(scope: STACK, bus: events.IEventBus, name: string) {
-      this.Scope = scope;
+      super(scope);
       this.Super = bus;
       this.Name = name;
     }

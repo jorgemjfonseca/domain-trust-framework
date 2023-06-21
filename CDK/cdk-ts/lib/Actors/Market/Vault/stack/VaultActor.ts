@@ -9,9 +9,9 @@ import { STACK } from '../../../../Common/STACK/STACK';
 // https://quip.com/IZapAfPZPnOD
 export class VaultActor extends STACK {
 
-  public static readonly DISCLOSE_FN = 'Vault.DiscloseHandlerFn';
-  public static readonly BINDS = 'Vault.BindsTable';
-  public static readonly WALLETS = 'Vault.WalletsTable';
+  public static readonly DISCLOSE_FN = 'Vault-DiscloseHandlerFn';
+  public static readonly BINDS = 'Vault-BindsTable';
+  public static readonly WALLETS = 'Vault-WalletsTable';
 
 
   constructor(scope: Construct, props?: cdk.StackProps) {

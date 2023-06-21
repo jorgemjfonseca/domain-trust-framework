@@ -8,9 +8,10 @@ import { BUS } from '../../../Common/BUS/BUS';
 import { SharedComms } from '../../SharedComms/stack/SharedComms';
 import { STACK } from '../../../Common/STACK/STACK';
 
+
 //https://quip.com/Fxj4AdnE6Eu5/-Messenger
 export class MessengerBehaviour extends STACK {
-  constructor(scope: Construct, props?: cdk.StackProps) {
+  constructor(scope: Construct, props: cdk.StackProps) {
     super(scope, MessengerBehaviour.name, props);
    
     // IMPORTS
@@ -29,9 +30,7 @@ export class MessengerBehaviour extends STACK {
           .InvokeLambda(wrapperFn)
           .ThenInvokeLambda(senderFn)
           .ThenSuccess())
-      .TriggeredByBus(bus, { 
-        source: ['OutboundDomainMessages'] 
-      });
+      .TriggeredByBus(bus, 'Messenger-Sender');
 
     // PUBLISHER FUNCTION
     const publisherFn = 

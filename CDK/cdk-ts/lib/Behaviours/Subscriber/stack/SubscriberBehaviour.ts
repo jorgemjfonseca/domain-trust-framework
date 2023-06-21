@@ -15,7 +15,7 @@ export class SubscriberBehaviour extends STACK {
 
     const senderFn = LAMBDA
       .New(this, "SubscriberFn")
-      .TriggeredByBus(bus, 'Subscriber.Publish')
+      .TriggeredByBus(bus, 'Subscriber-Publish')
       .PublishesToBus(bus)
       .WritesToDynamoDB(DYNAMO.New(this, "Deduplication"));
 

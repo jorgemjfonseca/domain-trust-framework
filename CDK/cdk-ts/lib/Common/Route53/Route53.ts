@@ -2,18 +2,22 @@ import * as cdk from 'aws-cdk-lib';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import { CLOUDFRONT } from '../CLOUDFRONT/CLOUDFRONT';
-import { KEY } from '../KEY/KEY';
+import { KMS_KEY } from '../KEY/KMS_KEY';
 import { STACK } from '../STACK/STACK';
+import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 
 
 //https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_route53-readme.html
-export class ROUTE53  {
+export class ROUTE53 extends CONSTRUCT {
 
     Super: route53.HostedZone;
-    Scope: STACK;
+    
+    constructor(scope: STACK) {
+      super(scope);
+    }
 
     public static New(scope: STACK, id: string, zoneName: string): ROUTE53 {
-        const ret = new ROUTE53();
+        const ret = new ROUTE53(scope);
 
         ret.Super = new route53.PublicHostedZone(scope, id, {
           zoneName: zoneName,
@@ -24,13 +28,14 @@ export class ROUTE53  {
         return ret;
     }
 
-    public AddTxtRecord(name: string, value: string) {
-      new route53.TxtRecord(this.Scope, name, {
+    public AddTxtRecord(name: string, value: string): ROUTE53 {
+      new route53.TxtRecord(this.Scope, this.Scope.RandomName('TxtRecord'), {
         zone: this.Super,
         recordName: name, 
         values: [ value ],
         ttl: cdk.Duration.minutes(1),
       });
+      return this;
     }
 
     public AddCNameRecord(name: string, domainName: string) {
@@ -54,7 +59,7 @@ export class ROUTE53  {
     
 
     public Secure() {
-      const dnssecKey = KEY.NewForDnsSec(this.Scope, "SecureKey");
+      const dnssecKey = KMS_KEY.NewForDnsSec(this.Scope, "SecureKey");
       dnssecKey.GrantToService('dnssec-route53.amazonaws.com');
 
       const keySigningKey = new route53.CfnKeySigningKey(this.Scope, 'route-53-key-signing-key', {

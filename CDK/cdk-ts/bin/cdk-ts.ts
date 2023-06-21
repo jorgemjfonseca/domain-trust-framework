@@ -32,14 +32,15 @@ import { WiFiActor } from '../lib/Actors/Devices/WiFi/stack/WiFiActor';
 const app = new cdk.App();
 
 // Behaviours
-new HostBehaviour(app, {});
-new ManifesterBehaviour(app, {});
-new MessengerBehaviour(app, {});
-new PublisherBehaviour(app, {});
 new SharedComms(app, {});
-new SharedDns(app, {});
-new SubscriberBehaviour(app, {});
+new MessengerBehaviour(app, {});
 new SyncApiBehaviour(app, {});
+new ManifesterBehaviour(app, {});
+new PublisherBehaviour(app, {});
+new SubscriberBehaviour(app, {});
+new HostBehaviour(app, {});
+
+new SharedDns(app, {});
 
 // Actors/Backbone
 new GraphActor(app, {});
@@ -65,9 +66,3 @@ new VaultActor(app, {});
 new CellTriggerActor(app, {});
 new PalmistActor(app, {});
 new WiFiActor(app, {});
-
-// tsc -w
-// isengardcli assume dtfw+authority@amazon.com
-// export JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION=1
-// cdk deploy DomainComms --require-approval never
-// cdk deploy DomainMessenger --require-approval never

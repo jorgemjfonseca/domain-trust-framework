@@ -40,7 +40,8 @@ export class SQS {
     public TriggeredByBus(
       eventBus: events.IEventBus,     
       // e.g. { source: ["CustomEvent"], detailType: ["CREATE", "UPDATE", "DELETE"] } 
-      eventPattern: events.EventPattern,     
+      // eventPattern: events.EventPattern,     
+      detailType: string
     ): SQS 
     {
       const name = this.Super.queueName + eventBus.eventBusName + 'Rule';
@@ -48,7 +49,10 @@ export class SQS {
       const eventRule = new events.Rule(this.Super, name, {
         ruleName: this.Scope.stackName + name,        
         eventBus: eventBus,
-        eventPattern: eventPattern
+        eventPattern: { 
+          //source: ["CustomEvent"], 
+          detailType: [ detailType ]
+        } 
       });
 
       eventRule.addTarget(new targets.SqsQueue(this.Super));
