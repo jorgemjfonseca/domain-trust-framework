@@ -140,6 +140,8 @@ def add_dkim_record(hosted_zone_id):
 
     keyId = get_stack_output('SharedComms', 'DomainSignatureKeyArn')
     public_key = get_public_key(keyId)
+
+    # https://repost.aws/knowledge-center/route53-resolve-dkim-text-record-error
     dkim = public_key[:200] + '""' + public_key[200:]
     
     update_record(hosted_zone_id, record_name, f'"v=DKIM1;k=rsa;p={dkim};"')
@@ -160,6 +162,7 @@ def register_domain(hosted_zone_id):
     url = f'https://z6jsx3ldteaiewnhm4dwuhljzi0vrxgn.lambda-url.us-east-1.on.aws/?domain={domain}&servers={serverList}'
     print (f'{url=}')
     
+    # https://stackoverflow.com/questions/37819525/lambda-function-to-make-simple-http-request/71127429#71127429
     urllib.request.urlopen(urllib.request.Request(
         url=url,
         headers={'Accept': 'application/json'},
