@@ -128,7 +128,7 @@ export class LAMBDA extends CONSTRUCT {
 
     // Imports from a CloudFormation parameter.
     public static NewFromFunctionName(scope: STACK, name: string): LAMBDA {
-      const sup = lambda.Function.fromFunctionName(scope, name, name);
+      const sup = lambda.Function.fromFunctionName(scope, scope.RandomName(name), name);
       const ret = new LAMBDA(scope, sup as lambda.Function);
       return ret;
     }
@@ -136,7 +136,7 @@ export class LAMBDA extends CONSTRUCT {
     // Imports from a CloudFormation parameter.
     public static Import(scope: STACK, alias: string): LAMBDA {
       const name = cdk.Fn.importValue(alias);
-      return LAMBDA.NewFromFunctionName(scope, scope.RandomName(name));
+      return LAMBDA.NewFromFunctionName(scope, name);
     }
 
 

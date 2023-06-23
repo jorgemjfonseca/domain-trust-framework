@@ -21,7 +21,8 @@ export class STACK extends cdk.Stack {
     public RandomName(seed: string): string {
         return seed
             + this.Next()
-            + (Math.round(Math.random()*1000));
+            //+ (Math.round(Math.random()*1000))
+            ;
     }
 
     public Export(alias: string, value: string): STACK {
