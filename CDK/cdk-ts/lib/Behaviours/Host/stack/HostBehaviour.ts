@@ -1,11 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
-import { BUS } from '../../../Common/BUS/BUS';
 import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
-import { SharedComms } from '../../SharedComms/stack/SharedComms';
-import { SyncApiBehaviour } from '../../SyncApi/stack/SyncApiBehaviour';
-import { API } from '../../../Common/API/API';
 import { STACK } from '../../../Common/STACK/STACK';
 
 // https://quip.com/s9oCAO3UR38A/-Host
@@ -17,9 +13,6 @@ export class HostBehaviour extends STACK {
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, HostBehaviour.name, props);
 
-    const bus = BUS.Import(this, SharedComms.BUS);
-    const router = API.Import(this, SyncApiBehaviour.ROUTER);
-
     const sessions = DYNAMO
       .New(this, 'Sessions')
       .Export(HostBehaviour.SESSIONS);
@@ -29,39 +22,40 @@ export class HostBehaviour extends STACK {
 
     LAMBDA
       .New(this, "CheckInHandlerFn")
-      .AddApiMethod(router, 'Host-CheckIn')
-      .WritesToDynamoDB(sessions);
+      .WritesToDynamoDB(sessions)
+      .HandlesSyncApi('Host-CheckIn');
 
     LAMBDA
       .New(this, "TalkerHandlerFn")
-      .SpeaksWithBus(bus, 'Host-Talker')
-      .WritesToDynamoDB(sessions);
+      .WritesToDynamoDB(sessions)
+      .HandlesMessenger('Host-Talker');
 
     LAMBDA
       .New(this, "CheckOutHandlerFn")
-      .SpeaksWithBus(bus, 'Host-CheckOut')
-      .WritesToDynamoDB(sessions);
+      .WritesToDynamoDB(sessions)
+      .HandlesMessenger('Host-CheckOut');
 
     LAMBDA
       .New(this, "AbandonedHandlerFn")
-      .SpeaksWithBus(bus, 'Host-Abandoned')
-      .WritesToDynamoDB(sessions);
+      .WritesToDynamoDB(sessions)
+      .HandlesMessenger('Host-Abandoned');
 
     LAMBDA
       .New(this, "DownloadHandlerFn")
-      .AddApiMethod(router, 'Host-Download')
-      .ReadsFromDynamoDBs([ sessions, files ]);
+      .ReadsFromDynamoDB(sessions, "SESSIONS")
+      .ReadsFromDynamoDB(files, "FILES")
+      .HandlesSyncApi('Host-Download');
 
     LAMBDA
       .New(this, "UploadHandlerFn")
-      .AddApiMethod(router, 'Host-Upload')
       .ReadsFromDynamoDB(sessions)
-      .WritesToDynamoDB(files);
+      .WritesToDynamoDB(files)
+      .HandlesSyncApi('Host-Upload');
 
     LAMBDA
       .New(this, "FoundHandlerFn")
-      .SpeaksWithBus(bus, 'Host-Found')
-      .WritesToDynamoDB(sessions);
+      .WritesToDynamoDB(sessions)
+      .HandlesMessenger('Host-Found');
 
   }
 }

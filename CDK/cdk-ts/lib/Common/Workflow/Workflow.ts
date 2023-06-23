@@ -23,9 +23,9 @@ export class WORKFLOW {
     ): WORKFLOW {
 
         const ret = new WORKFLOW();
-        ret.Name = scope.stackName + id;
+        ret.Name = `${scope.Name}-${id}`;
 
-        ret.Super = new stepfunctions.StateMachine(scope, id,{
+        ret.Super = new stepfunctions.StateMachine(scope, `${scope.Name}-${id}`,{
           stateMachineName: ret.Name,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
           ...props,

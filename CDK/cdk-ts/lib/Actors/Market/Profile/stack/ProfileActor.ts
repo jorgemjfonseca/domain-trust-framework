@@ -10,7 +10,6 @@ export class ProfileActor extends STACK {
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, ProfileActor.name, props);
 
-    
     const userData = DYNAMO
       .New(this, 'UserData');
 

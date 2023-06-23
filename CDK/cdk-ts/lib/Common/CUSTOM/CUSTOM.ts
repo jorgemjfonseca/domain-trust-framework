@@ -1,36 +1,48 @@
+import * as cdk from 'aws-cdk-lib';
 import { STACK } from '../STACK/STACK';
 import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 import * as custom from 'aws-cdk-lib/custom-resources';
 import { LAMBDA } from '../LAMBDA/LAMBDA';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 
 
 // 
 export class CUSTOM extends CONSTRUCT {
 
-    Super: custom.Provider;
+    Super: cdk.CustomResource;
     
     constructor(scope: STACK) {
       super(scope);
     }
 
     public static New(
+        id: string,
         onEventHandler: LAMBDA,
-        id?: string
+        properties?: {
+          [key: string]: any;
+        }
     ): CUSTOM {
         const scope = onEventHandler.Scope;
         const ret = new CUSTOM(scope);
 
-        ret.Super = new custom.Provider(
+        const provider = new custom.Provider(
           scope, 
-          id ?? scope.RandomName('Custom'), 
+          id ?? scope.RandomName('Provider'), 
           {
             onEventHandler: onEventHandler.Super,
             logRetention: logs.RetentionDays.ONE_DAY,
-            //role
+            //role,
           });
- 
+
+        // https://github.com/aws/aws-cdk/issues/21058
+        ret.Super = new cdk.CustomResource(
+          scope, 
+          scope.RandomName('CustomResource'), 
+          { 
+            serviceToken: provider.serviceToken,
+            properties: properties
+          });
+
         return ret;
     }
     

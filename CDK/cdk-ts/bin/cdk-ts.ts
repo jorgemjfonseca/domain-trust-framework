@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { ManifesterBehaviour } from '../lib/Behaviours/Manifester/stack/ManifesterBehaviour';
-import { MessengerBehaviour } from '../lib/Behaviours/Messenger/stack/MessengerBehaviour';
+import { Manifester } from '../lib/Behaviours/Manifester/stack/ManifesterBehaviour';
+import { Messenger } from '../lib/Behaviours/Messenger/stack/MessengerBehaviour';
 import { HostBehaviour } from '../lib/Behaviours/Host/stack/HostBehaviour';
-import { SyncApiBehaviour } from '../lib/Behaviours/SyncApi/stack/SyncApiBehaviour';
-import { SharedComms } from '../lib/Behaviours/SharedComms/stack/SharedComms';
-import { SharedDns } from '../lib/Behaviours/SharedDns/stack/SharedDns';
-import { PublisherBehaviour } from '../lib/Behaviours/Publisher/stack/PublisherBehaviour';
+import { SyncApi } from '../lib/Behaviours/SyncApi/stack/SyncApi';
+import { DomainDns } from '../lib/Behaviours/DomainDns/stack/DomainDns';
+import { Publisher } from '../lib/Behaviours/Publisher/stack/Publisher';
 import { SubscriberBehaviour } from '../lib/Behaviours/Subscriber/stack/SubscriberBehaviour';
 import { ListenerActor } from '../lib/Actors/Backbone/Listener/stack/ListenerActor';
 import { GraphActor } from '../lib/Actors/Backbone/Graph/stack/GraphActor';
@@ -29,18 +28,18 @@ import { CellTriggerActor } from '../lib/Actors/Devices/CellTrigger/stack/CellTr
 import { PalmistActor } from '../lib/Actors/Devices/Palmist/stack/PalmistActor';
 import { WiFiActor } from '../lib/Actors/Devices/WiFi/stack/WiFiActor';
 
+
 const app = new cdk.App();
 
 // Behaviours
-new SharedComms(app, {});
-new MessengerBehaviour(app, {});
-new SyncApiBehaviour(app, {});
-new ManifesterBehaviour(app, {});
-new PublisherBehaviour(app, {});
+new DomainDns(app, {});
+
+new Messenger(app, {});
+new SyncApi(app, {});
+new Manifester(app, {});
+new Publisher(app, {});
 new SubscriberBehaviour(app, {});
 new HostBehaviour(app, {});
-
-new SharedDns(app, {});
 
 // Actors/Backbone
 new GraphActor(app, {});

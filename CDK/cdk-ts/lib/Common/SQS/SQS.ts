@@ -22,7 +22,7 @@ export class SQS {
         const dlq = DLQ.New(scope, id + "DLQ");
 
         ret.Super = new sqs.Queue(scope, id,{ 
-          queueName: scope.stackName+id,
+          queueName: `${scope.Name}-${id}`,
           enforceSSL: true,      
           deadLetterQueue: { 
             maxReceiveCount: 1,
@@ -76,7 +76,7 @@ export class DLQ {
   public static New(scope: STACK, id: string): DLQ {
     
     const sup = new sqs.Queue(scope, id,{ 
-      queueName: scope.stackName+id
+      queueName: `${scope.Name}-${id}`
     });
 
     const ret = new DLQ(scope, sup);

@@ -32,13 +32,16 @@ export class KMS_KEY extends CONSTRUCT {
       return ret;
     }
 
+
     public static NewForDomain(scope: STACK, id: string): KMS_KEY {
         return KMS_KEY.New(scope, id, kms.KeySpec.RSA_2048);
     }
+    
 
     public static NewForDnsSec(scope: STACK, id: string): KMS_KEY {
         return KMS_KEY.New(scope, id, kms.KeySpec.ECC_NIST_P256);
     }
+
 
     public Export(alias: string): KMS_KEY {
       new cdk.CfnOutput(this.Super, alias+'Arn', {

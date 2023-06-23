@@ -48,7 +48,7 @@ export class LAMBDA extends CONSTRUCT {
       props?: LAMBDAparams
     ): LAMBDA {
 
-        const dlq = DLQ.New(scope, id + "Dlq");
+        const dlq = DLQ.New(scope, id + "-Dlq");
       
         const role = new iam.Role(scope, id+'Role', {
           assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
@@ -62,7 +62,7 @@ export class LAMBDA extends CONSTRUCT {
         const sup = new lambda.Function(scope, id, {
           role: role,
 
-          functionName: scope.Name + id,
+          functionName: `${scope.Name}-${id}`,
           deadLetterQueue: dlq.Super,
           memorySize: 1024, 
           timeout: cdk.Duration.seconds(30),
@@ -110,6 +110,7 @@ export class LAMBDA extends CONSTRUCT {
       return path.dirname(caller.getFileName());
     }
 
+    
     public static FromFunctionName(scope: STACK, name: string) {
       return lambda.Function
         .fromFunctionName(scope, name, name);
@@ -126,11 +127,16 @@ export class LAMBDA extends CONSTRUCT {
     }
 
     // Imports from a CloudFormation parameter.
-    public static Import(scope: STACK, alias: string): LAMBDA {
-      const name = cdk.Fn.importValue(alias);
-      const sup = lambda.Function.fromFunctionName(scope, alias, name);
+    public static NewFromFunctionName(scope: STACK, name: string): LAMBDA {
+      const sup = lambda.Function.fromFunctionName(scope, name, name);
       const ret = new LAMBDA(scope, sup as lambda.Function);
       return ret;
+    }
+
+    // Imports from a CloudFormation parameter.
+    public static Import(scope: STACK, alias: string): LAMBDA {
+      const name = cdk.Fn.importValue(alias);
+      return LAMBDA.NewFromFunctionName(scope, scope.RandomName(name));
     }
 
 
@@ -271,13 +277,6 @@ export class LAMBDA extends CONSTRUCT {
       return this;
     }
 
-    public WritesToDynamoDBs(dynamos: DYNAMO[]): LAMBDA {
-      dynamos.forEach(dynamo => {
-        this.WritesToDynamoDB(dynamo);
-      });
-      return this;
-    }
-
 
     public GrantKeyManagementServicePowerUser(): LAMBDA {
       return this.AttachManagedPolicy('AWSKeyManagementServicePowerUser');
@@ -291,6 +290,10 @@ export class LAMBDA extends CONSTRUCT {
       return this.AttachManagedPolicy('AmazonRoute53FullAccess');
     }
 
+    public GrantLambdaInvocation(): LAMBDA {
+      return this.AttachManagedPolicy('AWSLambdaInvocation-DynamoDB');
+    }
+
     // https://bobbyhadz.com/blog/aws-cdk-iam-policy-example
     public AttachManagedPolicy(name: string): LAMBDA {
       // 👇 Use an AWS-Managed Policy
@@ -301,26 +304,38 @@ export class LAMBDA extends CONSTRUCT {
       return this;
     }
 
+    
+    public InvokesLambda(lambda: LAMBDA, alias: string): LAMBDA {
+      // Error: "Cannot get policy fragment of PublisherBehaviour/${Token[TOKEN.1378]}, resource imported without a role"
+      // But it's already authorized for any Lambda invocation, so we're good.
+      try { 
+        if (lambda.Super.role)
+          lambda.Super.grantInvoke(this.Super);
+      } catch {}
+      if (this.Super?.addEnvironment)
+        this.Super?.addEnvironment("LAMBDA_", alias);
+      return this;
+    }
 
-    public WritesToDynamoDB(dynamo: DYNAMO): LAMBDA {
+    private getTableParam(alias?: string): string {
+      const name = "TABLE" + (alias ? "_" + alias.toUpperCase() : "");
+      if (name == 'TABLE_UNDEFINED')
+        throw new Error('LAMBDA.ENV[table] cannot be TABLE_UNDEFINED.');
+      return name;
+    }
+
+    public WritesToDynamoDB(dynamo: DYNAMO, alias?: string): LAMBDA {
       dynamo.Super.grantReadWriteData(this.Super);
-      //dynamo.Super.grantStreamRead(this.Super);
-      this.Super?.addEnvironment("TABLE_", dynamo.Super.tableName);
+      const name = this.getTableParam(alias);
+      this.Super?.addEnvironment(name, dynamo.Super.tableName);
       return this;
     }
 
-    public ReadsFromDynamoDBs(dynamos: DYNAMO[]): LAMBDA {
-      dynamos.forEach(dynamo => {
-        this.ReadsFromDynamoDB(dynamo);
-      });
-      return this;
-    }
-
-    public ReadsFromDynamoDB(dynamo: DYNAMO): LAMBDA {
+    public ReadsFromDynamoDB(dynamo: DYNAMO, alias?: string): LAMBDA {
       dynamo.Super.grantReadData(this.Super);
-      //dynamo.Super.grantStreamRead(this.Super);
+      const name = this.getTableParam(alias);
       if (this.Super.addEnvironment)
-        this.Super.addEnvironment("TABLE_", dynamo.Super.tableName);
+        this.Super.addEnvironment(name, dynamo.Super.tableName);
       return this;
     }
 
@@ -353,8 +368,11 @@ export class LAMBDA extends CONSTRUCT {
 
 
     public AddApiMethod(api: API, name: string, method: string = "POST"): LAMBDA {
-      api.SendToLambda(this, name, method);
-      return this;
+      return api.SendToLambda(this, name, method);
+    }
+
+    public SetApiRoot(api: API, method: string = "POST"): LAMBDA {
+      return api.SetRootToLambda(this, method);
     }
 
 

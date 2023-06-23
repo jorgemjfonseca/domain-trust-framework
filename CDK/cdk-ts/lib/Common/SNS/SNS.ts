@@ -17,7 +17,7 @@ export class SNS {
         const ret = new SNS();
 
         ret.Super = new sns.Topic(scope, id,{ 
-          topicName: scope.stackName+id
+          topicName: `${scope.Name}-${id}`
         });
 
         ret.Scope = scope;

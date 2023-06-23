@@ -1,7 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apiGW from 'aws-cdk-lib/aws-apigateway';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { WAF } from '../WAF/WAF';
@@ -10,6 +8,7 @@ import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { LAMBDA } from '../LAMBDA/LAMBDA';
 import { STACK } from '../STACK/STACK';
 import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
+import { CERTIFICATE } from '../CERTIFICATE/CERTIFICATE';
 
 export class API extends CONSTRUCT {
 
@@ -28,12 +27,13 @@ export class API extends CONSTRUCT {
 
 
     public static New(scope: STACK, id: string = 'Api'): API {
-        const name = scope.stackName + id;
+        const name = `${scope.Name}-${id}`;
 
         const sup = new cdk.aws_apigateway.RestApi(scope, id,{
             restApiName: name,
             description: name,
             cloudWatchRole: true,
+            // Deployment
             deployOptions: {
               stageName: 'dev',
               accessLogDestination: 
@@ -214,13 +214,32 @@ export class API extends CONSTRUCT {
     }
 
 
-    SendToLambda(lambda: LAMBDA, name: string, method: string = "POST") {
+    SendToLambda(lambda: LAMBDA, name: string, method: string = "POST"): LAMBDA {
       const resource = 
-        this.GetResourceAtPath("/" + name.toLowerCase()) ??
+        this.GetResourceAtPath("/" + name?.toLowerCase()) ??
         this.AddResource(name);
       
       resource.addMethod(method, 
         new apiGW.LambdaIntegration(lambda.Super));
+
+      return lambda;
+    }
+
+
+    SetRootToLambda(lambda: LAMBDA, method: string = "POST"): LAMBDA {
+      this.Super.root.addMethod(method, 
+        new apiGW.LambdaIntegration(lambda.Super));
+        return lambda;
+    }
+
+
+    AddDomainName(domainName: string, certificate: CERTIFICATE): API {
+      this.Super.addDomainName("domainName", {
+        domainName: domainName,
+        certificate: certificate.Super,
+        endpointType: cdk.aws_apigateway.EndpointType.REGIONAL
+      });
+      return this;
     }
 
 

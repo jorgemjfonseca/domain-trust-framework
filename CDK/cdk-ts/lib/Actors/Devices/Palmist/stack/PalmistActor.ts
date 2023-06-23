@@ -1,11 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LAMBDA } from '../../../../Common/LAMBDA/LAMBDA';
-import { BUS } from '../../../../Common/BUS/BUS';
 import { DYNAMO } from '../../../../Common/DYNAMO/DYNAMO';
-import { API } from '../../../../Common/API/API';
-import { SharedComms } from '../../../../Behaviours/SharedComms/stack/SharedComms';
-import { SyncApiBehaviour } from '../../../../Behaviours/SyncApi/stack/SyncApiBehaviour';
 import { STACK } from '../../../../Common/STACK/STACK';
 
 // https://quip.com/YYLUAcmsT3R7
@@ -13,12 +9,6 @@ export class PalmistActor extends STACK {
   
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, PalmistActor.name, props);
-
-    const bus = BUS
-      .Import(this, SharedComms.BUS);
-
-    const routerApi = API
-      .Import(this, SyncApiBehaviour.ROUTER);
 
     const devices = DYNAMO
       .New(this, 'Devices');
@@ -31,33 +21,36 @@ export class PalmistActor extends STACK {
 
     LAMBDA
       .New(this, 'RegisterHandlerFn')
-      .SpeaksWithBus(bus, 'Palmist-Register')
-      .WritesToDynamoDBs([ devices ]);
+      .WritesToDynamoDB(devices)
+      .HandlesMessenger('Palmist-Register');
 
     LAMBDA
       .New(this, 'DisclosedHandlerFn')
-      .AddApiMethod(routerApi, 'Palmist-Disclosed')
-      .WritesToDynamoDBs([ devices, disclosures ]);
+      .WritesToDynamoDB(devices, 'DEVICES')
+      .WritesToDynamoDB(disclosures, 'DISCLOSURES')
+      .HandlesSyncApi('Palmist-Disclosed');
 
     LAMBDA
       .New(this, 'MatchHandlerFn')
-      .AddApiMethod(routerApi, 'Palmist-Match')
-      .WritesToDynamoDBs([ devices, delegates ]);
+      .WritesToDynamoDB(devices, 'DEVICES')
+      .WritesToDynamoDB(delegates, 'DELEGATES')
+      .HandlesSyncApi('Palmist-Match');
 
     LAMBDA
       .New(this, 'SearchHandlerFn')
-      .SpeaksWithBus(bus, 'Palmist-Search')
-      .WritesToDynamoDBs([ devices ]);
+      .WritesToDynamoDB(devices)
+      .HandlesMessenger('Palmist-Search');
 
     LAMBDA
       .New(this, 'DelegateHandlerFn')
-      .SpeaksWithBus(bus, 'Palmist-Delegate')
-      .WritesToDynamoDBs([ devices, delegates ]);
+      .WritesToDynamoDB(devices, 'DEVICES')
+      .WritesToDynamoDB(delegates, 'DELEGATES')
+      .HandlesMessenger('Palmist-Delegate');
 
     LAMBDA
       .New(this, 'SuppressedHandlerFn')
-      .SpeaksWithBus(bus, 'Palmist-Suppressed')
-      .WritesToDynamoDBs([ devices ]);
+      .WritesToDynamoDB(devices)
+      .HandlesMessenger('Palmist-Suppressed');
 
   }
 }

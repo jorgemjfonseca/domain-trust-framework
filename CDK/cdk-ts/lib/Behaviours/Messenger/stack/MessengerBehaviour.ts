@@ -1,56 +1,90 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { API } from '../../../Common/API/API';
-import { SQS } from '../../../Common/SQS/SQS';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
-import { EXPRESS, STANDARD, STATES } from '../../../Common/WORKFLOW/WORKFLOW';
 import { BUS } from '../../../Common/BUS/BUS';
-import { SharedComms } from '../../SharedComms/stack/SharedComms';
 import { STACK } from '../../../Common/STACK/STACK';
+import { SyncApi } from '../../SyncApi/stack/SyncApi';
+
+
+declare module '../../../Common/LAMBDA/LAMBDA' {
+  interface LAMBDA {
+    HandlesMessenger(action: string): LAMBDA;
+    PublishesToMessenger(): LAMBDA;
+  }
+}
 
 
 //https://quip.com/Fxj4AdnE6Eu5/-Messenger
-export class MessengerBehaviour extends STACK {
+export class Messenger extends STACK {
+
+  private static readonly BUS_NAME = 'DtfwBus';
+  private static readonly PUBLISHER = 'MessengerPublisher';
+
   constructor(scope: Construct, props: cdk.StackProps) {
-    super(scope, MessengerBehaviour.name, props);
-   
+    super(scope, Messenger.name, props);
+
     // IMPORTS
-    const bus = BUS.Import(this, SharedComms.BUS);
-    const api = API.Import(this, SharedComms.API);
-    const wrapperFn = LAMBDA.Import(this, SharedComms.WRAPPER);
-    const unwrapperFn = LAMBDA.Import(this, SharedComms.UNWRAPPER);
+    const senderSync = LAMBDA
+      .Import(this, SyncApi.SENDER);
+    const receierSync = LAMBDA
+      .Import(this, SyncApi.RECEIVER);
+  
+    // BUS
+    const bus = BUS
+      .New(this)
+      .Export(Messenger.BUS_NAME);
 
     // SENDER FUNCTION 
-    const senderFn = LAMBDA.New(this, "SenderFn");
-
-    // SENDER WORKFLOW
-    STANDARD
-      .New(this, "SenderWf", 
-        new STATES(this, 'SenderWfDef')
-          .InvokeLambda(wrapperFn)
-          .ThenInvokeLambda(senderFn)
-          .ThenSuccess())
-      .TriggeredByBus(bus, 'Messenger-Sender');
+    LAMBDA
+      .New(this, "SenderFn")
+      .InvokesLambda(senderSync, 'SENDER');
 
     // PUBLISHER FUNCTION
-    const publisherFn = 
-      LAMBDA.New(this, "PublisherFn")
-        .PublishesToBus(bus);
+    LAMBDA.New(this, "PublisherFn")
+      .PublishesToBus(bus)
+      .Export(Messenger.PUBLISHER);
 
-    // RECEIVER WORKFLOW
-    const receiverWf = STANDARD.New(this, "ReceiverWf",
-      new STATES(this, "ReceiverWfDef")
-        .InvokeLambda(unwrapperFn)
-        .ThenInvokeLambda(publisherFn)
-        .ThenSuccess()
-      );
-
-    // RECEIVER FUNCTION
-    const receiverFn = 
-      LAMBDA.New(this, "WebHookFn")
-        .AddApiMethod(api, "async")
-        .TriggersWorkflow(receiverWf);
-
+    // REGISTER EXTENSIONS
+    LAMBDA.prototype.HandlesMessenger = function(action: string) {
+      return Messenger.HandlesMessenger(this.Scope, action, this);
+    };
+    LAMBDA.prototype.PublishesToMessenger = function() {
+      return Messenger.PublishesToMessenger(this.Scope, this);
+    };
+    
   }
+
+
+  private static BusCache: BUS;
+  public static Bus(scope: STACK) {
+    if (this.BusCache == null)
+      this.BusCache = BUS
+        .Import(scope, Messenger.BUS_NAME);
+    return this.BusCache;
+  }
+
+
+  // EXTENSION
+  public static HandlesMessenger(scope: STACK, action: string, lambda: LAMBDA): LAMBDA {
+    
+    // Receive all messages for this action from the API, and sends to the bus.
+    const publisher = LAMBDA
+      .Import(scope, Messenger.PUBLISHER);
+    publisher.HandlesSyncApi(action);
+
+    // Receives all messages from this action from the Bus.
+    const bus = Messenger.Bus(scope);
+    lambda.SpeaksWithBus(bus, action);
+    return lambda;
+  }
+
+
+  // EXTENSION
+  public static PublishesToMessenger(scope: STACK, lambda: LAMBDA): LAMBDA {
+    const bus = Messenger.Bus(scope);
+    lambda.PublishesToBus(bus);
+    return lambda;
+  }
+
 }
 

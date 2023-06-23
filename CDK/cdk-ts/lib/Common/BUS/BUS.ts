@@ -9,17 +9,20 @@ export class BUS extends CONSTRUCT {
     Super: events.IEventBus;
     Name: string;
 
+
     constructor(scope: STACK, bus: events.IEventBus, name: string) {
       super(scope);
       this.Super = bus;
       this.Name = name;
     }
 
-    public static New(scope: STACK, id: string = 'Bus', 
-      props: cdk.aws_events.EventBusProps = {}
+
+    public static New(scope: STACK, 
+      eventBusName?: string,
+      props?: cdk.aws_events.EventBusProps 
     ): BUS {
-        
-        const name = scope.Name + id;
+        const id = 'Bus';
+        const name = eventBusName ?? `${scope.Name}-${id}`;
         const sup = new events.EventBus(scope, id, {
           ...props,
           eventBusName: name
@@ -39,11 +42,16 @@ export class BUS extends CONSTRUCT {
     }
 
 
-    public static Import(scope: STACK, alias: string): BUS {
-      const name = cdk.Fn.importValue(alias);
-      const sup = events.EventBus.fromEventBusName(scope, alias, name);
+    public static NewFromName(scope: STACK, name: string): BUS {
+      const sup = events.EventBus.fromEventBusName(scope, name, name);
       const ret = new BUS(scope, sup, sup.eventBusName);
       return ret;
+    }
+
+    
+    public static Import(scope: STACK, alias: string): BUS {
+      const name = cdk.Fn.importValue(alias);
+      return this.NewFromName(scope, name);
     }
 
 }

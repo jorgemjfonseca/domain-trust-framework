@@ -134,11 +134,11 @@ def get_public_key(keyId):
     return base64_message
     
     
-def add_dkim_record(hosted_zone_id):
+def add_dkim_record(hosted_zone_id, keyId, record_name):
     
-    record_name = find_record_starting_with(hosted_zone_id, 'dtfw._domainkey')
+    #record_name = find_record_starting_with(hosted_zone_id, 'dtfw._domainkey')
 
-    keyId = get_stack_output('SharedComms', 'DomainSignatureKeyArn')
+    #keyId = get_stack_output('SharedComms', 'DomainSignatureKeyArn')
     public_key = get_public_key(keyId)
 
     # https://repost.aws/knowledge-center/route53-resolve-dkim-text-record-error
@@ -175,8 +175,13 @@ def on_create(event):
         props = event["ResourceProperties"]
         print(f'create new resource with {props=}')
 
-    hosted_zone_id = get_id_of_first_hosted_zone()
-    add_dkim_record(hosted_zone_id)
+    #hosted_zone_id = get_id_of_first_hosted_zone()
+    hosted_zone_id = props['hostedZoneId']
+    keyId = props['signatureKeyArn']
+    record_name = props['dkimRecordName']
+
+    add_dkim_record(hosted_zone_id, keyId, record_name)
+    
     register_domain(hosted_zone_id)
     
     return {'PhysicalResourceId': 'custom'}

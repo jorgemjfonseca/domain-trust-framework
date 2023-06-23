@@ -1,9 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LAMBDA } from '../../../../Common/LAMBDA/LAMBDA';
-import { BUS } from '../../../../Common/BUS/BUS';
 import { DYNAMO } from '../../../../Common/DYNAMO/DYNAMO';
-import { SharedComms } from '../../../../Behaviours/SharedComms/stack/SharedComms';
 import { STACK } from '../../../../Common/STACK/STACK';
 
 // https://quip.com/IZapAfPZPnOD
@@ -16,8 +14,6 @@ export class VaultActor extends STACK {
 
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, VaultActor.name, props);
-
-    const bus = BUS.Import(this, SharedComms.BUS);
 
     const wallets = DYNAMO
       .New(this, 'Wallets')
@@ -35,26 +31,26 @@ export class VaultActor extends STACK {
 
     LAMBDA
       .New(this, 'BindHandlerFn')
-      .SpeaksWithBus(bus, 'Vault-Bind')
-      .WritesToDynamoDB(binds);
+      .WritesToDynamoDB(binds)
+      .HandlesMessenger('Vault-Bind');
 
     LAMBDA
       .New(this, 'DiscloseHandlerFn')
-      .SpeaksWithBus(bus, 'Vault-Disclose')
       .WritesToDynamoDB(disclosures)
+      .HandlesMessenger('Vault-Disclose')
       .Export(VaultActor.DISCLOSE_FN);
 
     LAMBDA
       .New(this, 'ContinueHandlerFn')
-      .SpeaksWithBus(bus, 'Vault-Continue');
+      .HandlesMessenger('Vault-Continue');
 
     LAMBDA
       .New(this, 'UnbindHandlerFn')
-      .SpeaksWithBus(bus, 'Vault-Unbind');
+      .HandlesMessenger('Vault-Unbind');
 
     LAMBDA
       .New(this, 'SuppressHandlerFn')
-      .SpeaksWithBus(bus, 'Vault-Suppress');
+      .HandlesMessenger('Vault-Suppress');
 
   }
 }

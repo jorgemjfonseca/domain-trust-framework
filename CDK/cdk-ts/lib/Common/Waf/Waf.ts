@@ -18,7 +18,7 @@ export class WAF extends CONSTRUCT {
     public static New(scope: STACK, id: string): WAF {
         const ret = new WAF(scope);
 
-        ret.Super = new wafv2.CfnWebACL(scope, id,{
+        ret.Super = new wafv2.CfnWebACL(scope, `${scope.Name}-${id}`, {
             defaultAction: { allow: {} },
             visibilityConfig: {
                 cloudWatchMetricsEnabled: true,
@@ -26,7 +26,7 @@ export class WAF extends CONSTRUCT {
                 sampledRequestsEnabled: false,
               },
             scope: 'REGIONAL',
-            name: 'foo-prod-waf',
+            name: `${scope.Name}-${id}`,
             rules: awsManagedRules.map(wafRule => wafRule.rule),
         });
 

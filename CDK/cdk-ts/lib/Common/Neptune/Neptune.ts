@@ -21,7 +21,7 @@ export class NEPTUNE {
           subnetConfiguration: [
             {
               cidrMask: 24,
-              name: "public",
+              name: `${scope.Name}-${id}`,
               subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS
             }
           ]
@@ -31,6 +31,7 @@ export class NEPTUNE {
           vpc: vpc,
           allowAllOutbound: true
         });
+
         instanceSg.addIngressRule(
           ec2.Peer.anyIpv4(),
           new ec2.Port({
@@ -40,6 +41,7 @@ export class NEPTUNE {
             toPort: 7474
           })
         );
+
         instanceSg.addIngressRule(
           ec2.Peer.anyIpv4(),
           new ec2.Port({
@@ -49,6 +51,7 @@ export class NEPTUNE {
             toPort: 7687
           })
         );
+        
         instanceSg.addIngressRule(
           ec2.Peer.anyIpv4(),
           new ec2.Port({
@@ -60,19 +63,22 @@ export class NEPTUNE {
         );
     
 
-        const sg = new ec2.SecurityGroup(scope, "neptune-sg", {
+        const sg = new ec2.SecurityGroup(scope, `${scope.Name}-${id}-sg`, {
           vpc: vpc,
-          allowAllOutbound: true
+          allowAllOutbound: true,
         });
+
         sg.connections.allowFrom(
           instanceSg,
           ec2.Port.allTcp(),
           "from ec2"
         );
 
-        ret.Super = new neptune.DatabaseCluster(scope, id, { 
+        ret.Super = new neptune.DatabaseCluster(scope, `${scope.Name}-${id}`, { 
           vpc,
           instanceType: neptune.InstanceType.R5_LARGE,
+          deletionProtection: false,
+          removalPolicy: cdk.RemovalPolicy.DESTROY
         });
 
         return ret;

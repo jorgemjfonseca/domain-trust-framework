@@ -18,7 +18,7 @@ export class APPCONFIG extends CONSTRUCT {
     public static New(scope: STACK, name: string, object: any): APPCONFIG {
       
       const app = new appconfig.CfnApplication(scope, name, {
-          name: scope.Name+name+"App",
+          name: `${scope.Name}-${name}`,
       });
       
       const ret = new APPCONFIG(scope, app);

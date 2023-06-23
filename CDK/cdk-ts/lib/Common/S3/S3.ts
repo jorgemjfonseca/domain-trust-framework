@@ -18,7 +18,7 @@ export class S3 {
 
         const ret = new S3();
         
-        ret.Super = new s3.Bucket(scope, "Bucket", {
+        ret.Super = new s3.Bucket(scope, `${scope.Name}-${id}`, {
           ...props,
           blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
