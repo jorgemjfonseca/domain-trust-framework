@@ -6,12 +6,9 @@ import { NEPTUNE } from '../../../../Common/NEPTUNE/NEPTUNE';
 import { STACK } from '../../../../Common/STACK/STACK';
 
 // https://quip.com/hgz4A3clvOes/-Graph
-export class GraphActor extends STACK {
+export class Graph extends STACK {
   constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, GraphActor.name, props);
-
-    const neptune = NEPTUNE
-      .New(this, 'Neptune');
+    super(scope, Graph.name, props);
 
     const domainsTable = DYNAMO
       .New(this, 'Domains', { stream: true });
@@ -19,19 +16,19 @@ export class GraphActor extends STACK {
     LAMBDA
       .New(this, 'ConsumeHandlerFn')
       .WritesToDynamoDB(domainsTable)
-      .WritesToNeptune(neptune)
+      //.WritesToNeptune(neptune)
       .HandlesMessenger('Graph-Consume');
 
     LAMBDA
       .New(this, 'TrustedHandlerFn')
       .ReadsFromDynamoDB(domainsTable)
-      .ReadsFromNeptune(neptune)
+      //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Graph-Trusted');
 
     LAMBDA
       .New(this, 'TrustsHandlerFn')
       .ReadsFromDynamoDB(domainsTable)
-      .ReadsFromNeptune(neptune)
+      //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Graph-Trusts');
 
     LAMBDA
@@ -42,7 +39,7 @@ export class GraphActor extends STACK {
     LAMBDA
       .New(this, 'QueryableHandlerFn')
       .ReadsFromDynamoDB(domainsTable)
-      .ReadsFromNeptune(neptune)
+      //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Graph-Queryable');      
 
     LAMBDA

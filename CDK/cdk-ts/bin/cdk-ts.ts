@@ -9,7 +9,7 @@ import { DomainDns } from '../lib/Behaviours/DomainDns/stack/DomainDns';
 import { Publisher } from '../lib/Behaviours/Publisher/stack/Publisher';
 import { SubscriberBehaviour } from '../lib/Behaviours/Subscriber/stack/SubscriberBehaviour';
 import { ListenerActor } from '../lib/Actors/Backbone/Listener/stack/ListenerActor';
-import { GraphActor } from '../lib/Actors/Backbone/Graph/stack/GraphActor';
+import { Graph } from '../lib/Actors/Backbone/Graph/stack/GraphActor';
 import { AuthorityActor } from '../lib/Actors/Market/Authority/stack/AuthorityActor';
 import { CollectorActor } from '../lib/Actors/Market/Collector/stack/CollectorActor';
 import { ConsumerActor } from '../lib/Actors/Market/Consumer/stack/CollectorActor';
@@ -27,6 +27,8 @@ import { ThingsActor } from '../lib/Actors/Market/Things/stack/ThingsActor';
 import { CellTriggerActor } from '../lib/Actors/Devices/CellTrigger/stack/CellTrigger';
 import { PalmistActor } from '../lib/Actors/Devices/Palmist/stack/PalmistActor';
 import { WiFiActor } from '../lib/Actors/Devices/WiFi/stack/WiFiActor';
+import { SyncApi2 } from '../lib/Behaviours/SyncApi2/stack/SyncApi2';
+import { GraphDB } from '../lib/Actors/Backbone/GraphDB/stack/GraphDB';
 
 
 const app = new cdk.App();
@@ -36,13 +38,15 @@ new DomainDns(app, {});
 
 new Messenger(app, {});
 new SyncApi(app, {});
+new SyncApi2(app, {});
 new Manifester(app, {});
 new Publisher(app, {});
 new SubscriberBehaviour(app, {});
 new HostBehaviour(app, {});
 
 // Actors/Backbone
-new GraphActor(app, {});
+new Graph(app, {});
+new GraphDB(app, {});
 new ListenerActor(app, {});
 
 // Actors/Market

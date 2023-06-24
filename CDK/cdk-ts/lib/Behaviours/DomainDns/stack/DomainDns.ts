@@ -11,6 +11,7 @@ import { randomUUID } from 'crypto';
 
 export class DomainDns extends STACK {
   
+  public static readonly HOSTED_ZONE = 'HostedZone';
   public static readonly DOMAIN_NAME = 'DomainName';
   public static readonly KEY = 'DomainDnsKey';
   public static readonly CERTIFICATE = 'DomainDnsCertificate';
@@ -27,7 +28,8 @@ export class DomainDns extends STACK {
     const dkimRecordName = `dtfw._domainkey.${domainName}`
     const dns = ROUTE53
       .New(this, 'DNS', domainName)
-      .AddTxtRecord(dkimRecordName, `k=rsa;p=?;`);
+      .AddTxtRecord(dkimRecordName, `k=rsa;p=?;`)
+      .Export(DomainDns.HOSTED_ZONE);
 
     const setDkim = LAMBDA
       .New(this, 'SetDkim', {

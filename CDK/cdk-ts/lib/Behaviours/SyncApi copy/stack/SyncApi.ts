@@ -9,7 +9,6 @@ import { KMS_KEY } from '../../../Common/KEY/KMS_KEY';
 import { DomainDns } from '../../DomainDns/stack/DomainDns';
 import { CERTIFICATE } from '../../../Common/CERTIFICATE/CERTIFICATE';
 import { ROUTE53 } from '../../../Common/ROUTE53/ROUTE53';
-import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 
 declare module '../../../Common/LAMBDA/LAMBDA' {
   interface LAMBDA {
@@ -17,9 +16,7 @@ declare module '../../../Common/LAMBDA/LAMBDA' {
   }
 }
 
-
-
-// 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
+//https://quip.com/RnO6Ad0BuBSx/-Sync-API
 export class SyncApi extends STACK {
 
   private static readonly MAP = 'SyncApiMap';
@@ -32,21 +29,7 @@ export class SyncApi extends STACK {
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, SyncApi.name, props);
 
-    // SENDING
-    this.SetUpSender();
-
-    // RECEIVING
-    const api = this.SetUpApi()
-    this.SetUpCustomDomain(api);
-    this.SetUpFirewall(api)
-    this.SetUpReceiver(api);
-
-  }
-
-
-
-  private SetUpSender() {
-
+    
     const domainName = this
       .Import(DomainDns.DOMAIN_NAME);
 
@@ -59,67 +42,22 @@ export class SyncApi extends STACK {
         .AddEnvironment('DOMAIN_NAME', domainName)
         .SignsWithKmsKey(key)
         .Export(SyncApi.SENDER);
-  }
-
-
-  private SetUpApi(): API {
-    const api = API
-      .New(this)
-      .Export(SyncApi.API);
-
-    return api;
-  }
-
-
-  private SetUpFirewall(api: API) {
+  
     const waf = WAF
-      .New(this, 'WAFv2')
-      .AssociateApi(api);
-  }
-
-  private SetUpCustomDomain(api: API) {
-
-    const rootDomain = 
-      //'105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org';
-      this.Import(DomainDns.DOMAIN_NAME);
-    
-    const dns = ROUTE53
-      //.ImportFromDomainName(this, rootDomain);
-      .ImportFromAlias(this, DomainDns.HOSTED_ZONE)  
+      .New(this, 'WAFv2');
 
     const certificate = CERTIFICATE
       .Import(this, DomainDns.CERTIFICATE);
-  
 
-    // CAN'T SET APIGW IN ROUTE53 USING CDK WITH MULTIPLE STACKS, 
-    //   SO SWITCHIN TO A CUSTOM CDK STEP INSTEAD.
-    const domainName = api.AddCertificate('dtfw', rootDomain, certificate)
-    this.Export('ApiAliasHostedZoneId', domainName.domainNameAliasHostedZoneId);
-    this.Export('ApiAliasDomainName', domainName.domainNameAliasDomainName);
-    this.Export('ApiDomainName', domainName.domainName);
-    this.Export('ApiEndpoint', api.DefaultDomain())
+    const dns = ROUTE53
+      .Import(this, DomainDns.HOSTED_ZONE);
 
-    const setAlias = LAMBDA
-      .New(this, 'SetAlias', {
-        runtime: LAMBDA.PYTHON_3_10,
-        handler: 'index.on_event'
-      })
-      .GrantRoute53FullAccess();
-    
-    CUSTOM
-      .New('Custom', setAlias, {
-        apiEndpoint: api.DefaultDomain(),
-        apiDomain: domainName.domainName,
-        apiHostedZoneId: domainName.domainNameAliasHostedZoneId,
-        apiAlias: domainName.domainNameAliasDomainName,
-        customDomain: 'dtfw.'+rootDomain,
-        hostedZoneId: dns.Super.hostedZoneId,
-      });
-      
-  }
-
-
-  private SetUpReceiver(api: API) {
+    // API GATEWAY
+    const api = API.New(this)
+      .AssociateWaf(waf)
+      .AddCertificate("dtfw."+domainName, certificate)
+      .AddToRoute53("dtfw", dns)
+      .Export(SyncApi.API);
 
     // ROUTER MAP
     const map = DYNAMO

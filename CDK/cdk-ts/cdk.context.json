@@ -1,0 +1,12 @@
+{
+  "hosted-zone:account=267691102028:domainName=105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org:privateZone=false:region=us-west-2": {
+    "Id": "/hostedzone/Z09251313MWYO7KRJUSHG",
+    "Name": "105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org."
+  },
+  "availability-zones:account=267691102028:region=us-west-2": [
+    "us-west-2a",
+    "us-west-2b",
+    "us-west-2c",
+    "us-west-2d"
+  ]
+}

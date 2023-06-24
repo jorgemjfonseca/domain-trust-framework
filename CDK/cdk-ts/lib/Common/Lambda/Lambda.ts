@@ -24,6 +24,7 @@ export interface LAMBDAparams {
   runtime?: lambda.Runtime;
   handler?: string;
   super?: cdk.aws_lambda.FunctionProps;
+  description?: string;
 }
 
 export class LAMBDA extends CONSTRUCT {
@@ -63,6 +64,7 @@ export class LAMBDA extends CONSTRUCT {
           role: role,
 
           functionName: `${scope.Name}-${id}`,
+          description: props?.description,
           deadLetterQueue: dlq.Super,
           memorySize: 1024, 
           timeout: cdk.Duration.seconds(30),
@@ -117,7 +119,7 @@ export class LAMBDA extends CONSTRUCT {
     }
     
 
-    // Exports to a CloudFormation parameter.
+    // Exports to a parameter.
     public Export(alias: string): LAMBDA {
       new cdk.CfnOutput(this.Super, alias, {
         value: this.Super.functionName,
@@ -126,14 +128,14 @@ export class LAMBDA extends CONSTRUCT {
       return this;
     }
 
-    // Imports from a CloudFormation parameter.
+    // Imports from a parameter.
     public static NewFromFunctionName(scope: STACK, name: string): LAMBDA {
       const sup = lambda.Function.fromFunctionName(scope, scope.RandomName(name), name);
       const ret = new LAMBDA(scope, sup as lambda.Function);
       return ret;
     }
 
-    // Imports from a CloudFormation parameter.
+    // Imports from a parameter.
     public static Import(scope: STACK, alias: string): LAMBDA {
       const name = cdk.Fn.importValue(alias);
       return LAMBDA.NewFromFunctionName(scope, name);
@@ -258,8 +260,26 @@ export class LAMBDA extends CONSTRUCT {
     }
 
     public SignsWithKmsKey(key: KMS_KEY): LAMBDA {
-      key.Super.grantEncrypt(this.Super);
+      
       this.Super.addEnvironment("KEY_ARN", key.Super.keyArn);
+      key.Super.grantEncrypt(this.Super);
+
+      // https://github.com/aws/aws-cdk/issues/19914
+      // https://docs.aws.amazon.com/kms/latest/developerguide/alias-authorization.html#alias-auth-resource-aliases
+      this.Super.role?.addToPrincipalPolicy(
+        new iam.PolicyStatement({
+          actions: [
+            "kms:Sign",
+          ],
+          resources: ['*'],
+          conditions: {
+            StringEquals: {
+              "kms:RequestAlias": key.Alias,
+            },
+          },
+        }),
+      )
+
       return this;
     }
 

@@ -8,7 +8,14 @@ export class STACK extends cdk.Stack {
     public Name: string;
 
     constructor(scope: Construct, name: string, props?: cdk.StackProps) {
-        super(scope, name, props);
+        super(scope, name, { 
+            // 👉 https://github.com/aws-samples/aws-cdk-examples/issues/238
+            env: {
+                account: process.env.CDK_DEPLOY_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT, 
+                region: process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION             
+            },
+            ...props
+        });
         this.Name = name;
     }
 
@@ -18,8 +25,8 @@ export class STACK extends cdk.Stack {
         return this.Count;
     }
 
-    public RandomName(seed: string): string {
-        return seed
+    public RandomName(seed?: string): string {
+        return (seed??'Random')
             + this.Next()
             //+ (Math.round(Math.random()*1000))
             ;

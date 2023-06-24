@@ -1,7 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as apiGW from 'aws-cdk-lib/aws-apigateway';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import { WAF } from '../WAF/WAF';
 import { WORKFLOW } from '../WORKFLOW/WORKFLOW';
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
@@ -9,11 +11,27 @@ import { LAMBDA } from '../LAMBDA/LAMBDA';
 import { STACK } from '../STACK/STACK';
 import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 import { CERTIFICATE } from '../CERTIFICATE/CERTIFICATE';
+import { ROUTE53 } from '../ROUTE53/ROUTE53';
+import { ARecord, RecordTarget } from 'aws-cdk-lib/aws-route53';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
+
+export interface API_CustomDomain {
+  certificate: CERTIFICATE;
+  zone: ROUTE53;
+  rootDomain: string,
+  domainPrefix?: string
+}
+
+export interface API_Options {
+  id?: string;
+  customDomain?: API_CustomDomain
+}
 
 export class API extends CONSTRUCT {
 
     Role: iam.Role;
     Super: cdk.aws_apigateway.RestApi;
+    
 
     constructor (scope: STACK, api: cdk.aws_apigateway.RestApi)
     {
@@ -26,41 +44,124 @@ export class API extends CONSTRUCT {
     }
 
 
-    public static New(scope: STACK, id: string = 'Api'): API {
+    public static New(scope: STACK, props?: API_Options): API {
+        const id =  props?.id ?? 'Api';
         const name = `${scope.Name}-${id}`;
 
-        const sup = new cdk.aws_apigateway.RestApi(scope, id,{
+        const cd = props?.customDomain;
+      
+        // e.g., 'apiUrl2.105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org'
+        const fullDomainName = 
+          cd?.domainPrefix + 
+          (cd?.domainPrefix?'.':'') +
+          cd?.rootDomain
+
+        // ENABLE CUSTOM DOMAINS
+        // 👉 https://us-west-2.console.aws.amazon.com/apigateway/main/publish/domain-names?region=us-west-2
+        const domainOptions = cd?.certificate && cd.rootDomain ?
+          {
+            domainName: fullDomainName,
+            certificate: cd.certificate.Super,
+            // EDGE requires the certificate to be in eu-west-1
+            endpointType: cdk.aws_apigateway.EndpointType.REGIONAL,
+          }
+          : undefined;
+
+        // ENABLE CORS
+        // 👉 https://us-west-2.console.aws.amazon.com/apigateway/home?region=us-west-2#/apis/76vhnh0x3j/resources/bff2uyep4j/enable-cors
+        const corsOption = {
+          allowHeaders: [
+            'Content-Type',
+            'X-Amz-Date',
+            'Authorization',
+            'X-Api-Key',
+          ],
+          allowMethods: ['OPTIONS', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+          allowOrigins: ['*'],
+        }
+
+        // SETUP DEPLOYMENT
+        // 👉 https://us-west-2.console.aws.amazon.com/apigateway/home?region=us-west-2#/apis/76vhnh0x3j/stages/dev
+        const deployOptions = {
+          stageName: 'dev',
+          accessLogDestination: 
+            new apiGW.LogGroupLogDestination(
+              new LogGroup(scope, id + "LogGroup", {
+                logGroupName: name,
+                retention: RetentionDays.ONE_DAY,
+                removalPolicy: cdk.RemovalPolicy.DESTROY
+              })
+            )
+        };
+
+        // CREATE THE API
+        // 👉 https://us-west-2.console.aws.amazon.com/apigateway/main/apis?region=us-west-2
+        const api = new cdk.aws_apigateway.RestApi(scope, id,{
+            deploy: true,
+            retainDeployments: false,
             restApiName: name,
             description: name,
             cloudWatchRole: true,
-            // Deployment
-            deployOptions: {
-              stageName: 'dev',
-              accessLogDestination: 
-                new apiGW.LogGroupLogDestination(
-                  new LogGroup(scope, id + "LogGroup", {
-                    logGroupName: name,
-                    retention: RetentionDays.ONE_DAY,
-                    removalPolicy: cdk.RemovalPolicy.DESTROY
-                  })
-                )
-            },
-            // Enable CORS
-            defaultCorsPreflightOptions: {
-              allowHeaders: [
-                'Content-Type',
-                'X-Amz-Date',
-                'Authorization',
-                'X-Api-Key',
-              ],
-              allowMethods: ['OPTIONS', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-              allowOrigins: ['*'],
-            },
+            // EDGE requires the certificate to be in eu-west-1
+            endpointTypes: [ cdk.aws_apigateway.EndpointType.REGIONAL ],
+            defaultCorsPreflightOptions: corsOption,
+            deployOptions: deployOptions,
+            domainName: domainOptions,
         });
 
-        const ret = new API(scope, sup);
+        // ADD DNS RECORD FOR CUSTOM DOMAIN
+        // 👉 https://us-east-1.console.aws.amazon.com/route53/v2/hostedzones?region=us-east-1#ListRecordSets/Z09251313MWYO7KRJUSHG
+        // 👉 https://stackoverflow.com/questions/63220019/cdk-api-gateway-route53-lambda-custom-domain-name-not-working
+        if (cd?.zone) {
+            const target = RecordTarget
+              .fromAlias(new targets.ApiGateway(api));
+
+            new ARecord(scope, scope.RandomName('ApiRecordA'), {
+              zone: cd.zone.Super,
+              // e.g., 'apiUrl2.105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org'
+              recordName: fullDomainName,
+              target: target,
+              ttl: cdk.Duration.minutes(1),
+            });
+        }
+        
+        const ret = new API(scope, api);
 
         return ret;
+    }
+
+
+    public DefaultDomain(): string {
+      const url = this.Super.url;
+      const stageName = this.Super.deploymentStage.stageName;
+      const domainName = url
+        .replace(stageName, '')
+        .replace(/^https?:\/\//, '')
+        .replace('//', '')
+        .replace('/', '')
+        .replace('/', '');
+      return domainName;
+    }
+
+
+    public AddCertificate(
+      domainPrefix: string, 
+      rootDomain: string, 
+      certificate: CERTIFICATE
+    ): apiGW.DomainName {
+      
+      // e.g., 'apiUrl2.105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org'
+      const fullDomainName = 
+        domainPrefix + 
+        (domainPrefix?'.':'') +
+        rootDomain;
+
+      const domainName = this.Super.addDomainName('DomainName', {
+        domainName: fullDomainName,
+        certificate: certificate.Super
+      });
+
+      return domainName;
     }
 
 
@@ -78,6 +179,7 @@ export class API extends CONSTRUCT {
 
 
     public static Import(scope: STACK, alias: string): API {
+      throw Error('Not tested properly');
       const apiId = cdk.Fn.importValue(alias);
       const rootResourceId = cdk.Fn.importValue(alias + 'Root');
       //const sup = cdk.aws_apigateway.RestApi.fromRestApiId(scope, alias, apiId);
@@ -92,22 +194,26 @@ export class API extends CONSTRUCT {
 
     public Arn(): string {
         //store the gateway ARN for use with our WAF stack
-        //https://serverlessland.com/patterns/apigw-waf-cdk
-        //https://github.com/cdk-patterns/serverless/blob/main/the-waf-apigateway/typescript/lib/api-gateway-stack.ts
+        // 👉 https://serverlessland.com/patterns/apigw-waf-cdk
+        // 👉 https://github.com/cdk-patterns/serverless/blob/main/the-waf-apigateway/typescript/lib/api-gateway-stack.ts
         return `arn:aws:apigateway:${cdk.Stack.of(this.Super).region}::/restapis/${this.Super.restApiId}/stages/${this.Super.deploymentStage.stageName}`
       
     }
     
 
-    //https://gist.github.com/statik/f1ac9d6227d98d30c7a7cec0c83f4e64
+    // 👉 https://gist.github.com/statik/f1ac9d6227d98d30c7a7cec0c83f4e64
     public AssociateWaf(waf: WAF): API {
       waf.AssociateApi(this);
       return this;  
     }
 
 
+    /**
+     * @deprecated 'Not tested properly, use a SendToLambda() instead.'
+     */
     public SendToQueue(queue: sqs.Queue, resource: cdk.aws_apigateway.Resource): API {
-    
+      throw Error('Not tested properly, use a SendToLambda() instead.');
+
       queue.grantSendMessages(this.Role);
 
       // Api Gateway Direct Integration
@@ -165,8 +271,13 @@ export class API extends CONSTRUCT {
       return this.Super.root.resourceForPath(path);
     }
 
-
+    
+    /**
+     * @deprecated 'Not tested properly, use a SendToLambda() instead.'
+     */
     public SendToWorkflow(wf: WORKFLOW, resource: cdk.aws_apigateway.Resource) {
+      throw Error('Not tested properly, use a SendToLambda() instead.');
+
       const credentialsRole = new iam.Role(this.Scope, "getRole", {
         assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),
       });
@@ -230,16 +341,6 @@ export class API extends CONSTRUCT {
       this.Super.root.addMethod(method, 
         new apiGW.LambdaIntegration(lambda.Super));
         return lambda;
-    }
-
-
-    AddDomainName(domainName: string, certificate: CERTIFICATE): API {
-      this.Super.addDomainName("domainName", {
-        domainName: domainName,
-        certificate: certificate.Super,
-        endpointType: cdk.aws_apigateway.EndpointType.REGIONAL
-      });
-      return this;
     }
 
 
