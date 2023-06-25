@@ -1,49 +1,20 @@
 #!/usr/bin/env python3
 
-# https://github.com/kmille/dkim-verify/blob/master/verify-dkim.py
-from typing import Dict, Optional
-import re
-import sys
-from base64 import b64encode, b64decode
-# import email
-# import email.message
-# from Crypto.Signature import PKCS1_v1_5
-# from Crypto.Hash import SHA256
-# from Crypto.PublicKey import RSA
-# from Crypto.Util.asn1 import DerSequence, DerNull, DerOctetString, DerObjectId
-# import Crypto.Util
-# from Crypto.Util.number import bytes_to_long, long_to_bytes
-import dns.resolver
+from OpenSSL import crypto
+#import os
+#import json
+#import base64
 
-
-# 👉 https://github.com/kmille/dkim-verify
-# 👉 dig dtfw._domainkey.105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org txt
-def get_public_key(domain: str, selector: str):
-    
-    # get the domain's info
-    answer = dns.resolver.query(
-        "{}._domainkey.{}.".format(selector, domain), "TXT"
-        ).response.answer
-    
-    # merge multiple TXT blocks
-    txt = ''
-    for a in answer:
-        txt = txt + a.to_text()
-    txt = txt.replace('\" \"', '')
-    
-    # get the p= variable
-    key = re.search(r'p=([\w\d/+]*)', txt).group(1)
-    
-    return key 
-    pub_key = RSA.importKey(b64decode(p))
-    return pub_key
-    
     
 def lambda_handler(event, context):   
-    key = get_public_key('105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org', 'dtfw')
-    return {
-        'statusCode': 200,
-        "body": "Success: " + key
-    }
+    print(f"{event=}")
     
     
+
+'''
+{
+    "Message": "{\"Header\":{\"Correlation\":\"bb37d258-015c-497e-8a67-50bf244a9299\",\"Timestamp\":\"2023-06-24T23:08:24.550719Z\",\"To\":\"105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org\",\"Subject\":\"AnyMethod\",\"Code\":\"dtfw.org/msg\",\"Version\":\"1\",\"From\":\"105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org\"},\"Body\":{}}",
+    "PublicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvIFyT1ahUEOpNftMqgVwF2jf0Zyq7q22kpi7QMo37w5y7j2byGip5YykA+LCXZZbkanLxh4GiMimTDAHQxvC/yLjQwWLJXtRndIwCtVlr09+uLp7aepL8PmNNQJhMoG8P1rp8E+jcB8lPb8G1RKAZgNyY3H/axgtOLuRNCms9IepnEa2VJZsT6peHKC9hEOBuIKw/SKKRVXgixtF05S4BdUCJ1lvXLVcRHuKbPkFzNap7JnIdc5hnSUnHv/VJSLDJj+SErP8nqomM+jR3JmsLr9aitd99nGeusNfbEIXbUaPgJxjXEkBwk6YZiWTWA61LPW/XCXtkiFKRVhgJz9HWwIDAQAB",
+    "Signature": "Lw7sQp6zkOGyJ+OzGn+B1R4rCN/qcYJCtijflQu1Ayqpgxph10yS3KwA4yRhjXgUovskK7LSH+ZqhXm1bcLeMS81l1GKDVaZk3qXpNtrwRmnWrjfD1MekZrO1sRWPNBRH157INAkPWFH/Wb2LLPCAJZYwIv02BF3zKz/Zgm8z7BqOJ3ZrAOC80kTef1zhXNXUMQ/HBrspUTx0NFiMi+dXZMJ69ylxGaAjALMLmcMwFqH2D5cWqX5+eMx0zv2tMh73e8xQqxOr+YLUkO7JjK56KbCUk0HYGUbL5co9eyQMYCGyDtn0G2FqSK9h8BJ1YW3LQmWWTGa/kWDxPjHR3iNyg=="
+}
+'''

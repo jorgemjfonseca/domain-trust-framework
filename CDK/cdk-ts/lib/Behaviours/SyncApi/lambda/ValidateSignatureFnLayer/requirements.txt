@@ -1,0 +1,7 @@
+# 👉️ https://medium.com/geekculture/how-to-deploy-a-python-lambda-using-aws-cdk-99479fd28a06
+# 👉️ https://docs.aws.amazon.com/cdk/api/v2/docs/@aws-cdk_aws-lambda-python-alpha.PythonLayerVersion.html
+# 👉️ https://docs.aws.amazon.com/cdk/api/v2/docs/aws-lambda-python-alpha-readme.html
+# 👉️ https://github.com/kmille/dkim-verify/blob/master/verify-dkim.py
+
+cffi
+pyOpenSSL
