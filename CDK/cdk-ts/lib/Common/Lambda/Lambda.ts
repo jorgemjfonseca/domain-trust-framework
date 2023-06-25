@@ -77,7 +77,7 @@ export class LAMBDA extends CONSTRUCT {
             ?? lambda.Runtime.PYTHON_3_10,
           code: 
             props?.super?.code 
-            ?? lambda.Code.fromAsset(path.join(this.callerDirname(), '../lambda/' + id)),
+            ?? lambda.Code.fromAsset(path.join(this.CallerDirname(), '../lambda/' + id)),
           handler: 
             props?.handler 
             ?? props?.super?.handler 
@@ -91,7 +91,7 @@ export class LAMBDA extends CONSTRUCT {
         return fn;
     }
 
-    private static callerDirname({ depth = 1 } = {}): string {
+    public static CallerDirname({ depth = 1 } = {}): string {
       if (typeof depth !== 'number' || depth < 1 || Math.floor(depth) !== depth)
         throw new Error('Depth must be a positive integer.');
     
@@ -264,19 +264,22 @@ export class LAMBDA extends CONSTRUCT {
       this.Super.addEnvironment("KEY_ARN", key.Super.keyArn);
       key.Super.grantEncrypt(this.Super);
 
-      // https://github.com/aws/aws-cdk/issues/19914
-      // https://docs.aws.amazon.com/kms/latest/developerguide/alias-authorization.html#alias-auth-resource-aliases
+      // 👉 https://github.com/aws/aws-cdk/issues/19914
+      // 👉 https://docs.aws.amazon.com/kms/latest/developerguide/alias-authorization.html#alias-auth-resource-aliases
       this.Super.role?.addToPrincipalPolicy(
         new iam.PolicyStatement({
           actions: [
             "kms:Sign",
           ],
           resources: ['*'],
-          conditions: {
+
+          // FILTER BY ALIAS IS NOT WORKING - IT BLOCKS.
+          /* conditions: {
             StringEquals: {
               "kms:RequestAlias": key.Alias,
             },
-          },
+          }, */
+
         }),
       )
 

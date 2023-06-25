@@ -15,8 +15,13 @@ export class GraphDB extends STACK {
     const neptune = NEPTUNE
       .New(this, 'Neptune');
 
-    this.Export(GraphDB.NEPTUNE_HOSTNAME, neptune.Super.clusterEndpoint.hostname);
-    this.Export(GraphDB.NEPTUNE_PORT, neptune.Super.clusterEndpoint.port.toString());
+    this.Export(
+      GraphDB.NEPTUNE_HOSTNAME, 
+      neptune.Super.clusterEndpoint.hostname);
+      
+    this.Export(
+      GraphDB.NEPTUNE_PORT, 
+      neptune.Super.clusterEndpoint.port.toString());
       
   }
 }

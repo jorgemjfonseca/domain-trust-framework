@@ -48,7 +48,7 @@ def update_record(props: any):
                 "Type": 'A',
                 'AliasTarget': {
                     'HostedZoneId': props['apiHostedZoneId'],
-                    'DNSName': props['apiEndpoint'],
+                    'DNSName': props['apiAlias'],
                     'EvaluateTargetHealth': True
                 }
             }

@@ -10,6 +10,7 @@ import { DomainDns } from '../../DomainDns/stack/DomainDns';
 import { CERTIFICATE } from '../../../Common/CERTIFICATE/CERTIFICATE';
 import { ROUTE53 } from '../../../Common/ROUTE53/ROUTE53';
 import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
+import { PYTHON } from '../../../Common/PYTHON/PYTHON';
 
 declare module '../../../Common/LAMBDA/LAMBDA' {
   interface LAMBDA {
@@ -77,6 +78,8 @@ export class SyncApi extends STACK {
       .AssociateApi(api);
   }
 
+
+
   private SetUpCustomDomain(api: API) {
 
     const rootDomain = 
@@ -99,16 +102,16 @@ export class SyncApi extends STACK {
     this.Export('ApiDomainName', domainName.domainName);
     this.Export('ApiEndpoint', api.DefaultDomain())
 
-    const setAlias = LAMBDA
-      .New(this, 'SetAlias', {
+    const setAliasFn = LAMBDA
+      .New(this, 'SetAliasFn', {
         runtime: LAMBDA.PYTHON_3_10,
         handler: 'index.on_event'
       })
       .GrantRoute53FullAccess();
     
     CUSTOM
-      .New('Custom', setAlias, {
-        apiEndpoint: api.DefaultDomain(),
+      .New('Custom', setAliasFn, {
+        //apiEndpoint: api.DefaultDomain(), 
         apiDomain: domainName.domainName,
         apiHostedZoneId: domainName.domainNameAliasHostedZoneId,
         apiAlias: domainName.domainNameAliasDomainName,
@@ -116,10 +119,20 @@ export class SyncApi extends STACK {
         hostedZoneId: dns.Super.hostedZoneId,
       });
       
+    // Test 👉 https://www.sslshopper.com/ssl-checker.html
+    // Test 👉 https://www.digicert.com/help/
   }
 
 
   private SetUpReceiver(api: API) {
+
+    const getPublicKeyFn = PYTHON
+      .New(this, 'GetPublicKeyFn')
+      .FunctionName();
+
+    const validateSignatureFn = PYTHON
+      .New(this, 'ValidateSignatureFn')
+      .FunctionName();
 
     // ROUTER MAP
     const map = DYNAMO
@@ -131,7 +144,10 @@ export class SyncApi extends STACK {
       .New(this, "ReceiverFn")
       .ReadsFromDynamoDB(map)
       .GrantLambdaInvocation()
-      .SetApiRoot(api)
+      .AddApiMethod(api, 'inbox', 'POST')
+      //.SetApiRoot(api)
+      .AddEnvironment('GET_PUBLIC_KEY_FN', getPublicKeyFn)
+      .AddEnvironment('VALIDATE_SIGNATURE_FN', validateSignatureFn)
       .Export(SyncApi.RECEIVER);
 
     // REGISTER EXTENSION

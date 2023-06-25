@@ -5,100 +5,152 @@ import boto3
 from urllib import request, parse
 import base64
 from base64 import b64encode, b64decode
+from hashlib import sha256
 import os
 import json
-
+import copy
 import re
 import sys
 
-tableName = os.environ('TABLE_Map')
-dynamodbClient = boto3.client('dynamodb')
+tableName = os.environ['TABLE']
+dynamodbClient = boto3.resource('dynamodb')
+table = dynamodbClient.Table(tableName)
 
 
 # 👉 https://www.fernandomc.com/posts/ten-examples-of-getting-data-from-dynamodb-with-python-and-boto3/
-def getItem(tableName, id):
+def getItem(table, id):
     print (f'{id=}')
     print (f'{tableName=}')
 
-    response = dynamodbClient.get_item(
-        TableName = tableName,
-        Key = { 'ID': {'S': id} }
+    response = table.get_item(
+        Key = { 'ID': id }
     )
+    print (f'{response=}')
+    
+    if 'Item' not in response:
+        return Null
 
     item = response['Item']
     print (f'{item=}')
-
-    obj = json.loads(item['Json'])
-    return obj
+    return item
 
 
 # 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
 lambdaClient = boto3.client('lambda')
 def invoke(functionName, params):
-    return lambdaClient.invoke(
+    print(f'invoking [{functionName}]({params})...')
+    
+    response = lambdaClient.invoke(
         FunctionName = functionName,
         Payload=json.dumps(params),
         LogType='Tail')
+    ret = json.loads(response['Payload'].read())
+    return ret
+    
+    
+# 👉️ https://datagy.io/python-sha256/
+# 👉️ https://debugging.works/blog/verify-dkim-signature/
+def digest(canonicalized: str) -> str: 
+    utf8 = canonicalized.encode('utf-8')
+    digested = sha256(utf8)
+    hexdigested = digested.hexdigest()
+    print(f'{hexdigested=}')
+    return hexdigested
+    
+    
+# 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
+def canonicalize(object: any) -> str:
+    canonicalized = json.dumps(object, separators=(',', ':'))
+    print(f'{canonicalized=}')
+    return canonicalized    
 
 
-# 👉 https://blog.knoldus.com/how-to-create-an-eventbridge-application-in-python/
-# 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html
-# 👉 https://boto3.amazonaws.com/v1/documentation/api/1.10.46/reference/services/events.html
-eventsClient = boto3.client('events')
-def publish(eventBusName, source, detailType, detail):
-    return eventsClient.put_events(
-        Entries=[
-            {
-                'Source':source,
-                'DetailType':detailType,
-                'Detail':detail,
-                'EventBusName':eventBusName
-            }
-        ]
-)
-
-
-# 👉 https://github.com/kmille/dkim-verify
-def get_public_key(domain: str, selector: str):
-    dns_response = dns.resolver.query("{}._domainkey.{}.".format(selector, domain), "TXT").response.answer[0].to_text()
-    p = re.search(r'p=([\w\d/+]*)', dns_response).group(1)
-    pub_key = RSA.importKey(b64decode(p))
-    return pub_key
+def getHash(event): 
+    envelope = copy.deepcopy(event)
+    del envelope['Signature']
+    del envelope['Hash']
+    canonicalized = canonicalize(envelope)
+    digested = digest(canonicalized)
+    return digested
     
 
+def getPublicKey(event):
+    print('getPublicKey...')
+        
+    if 'Header' not in event:
+        return Null
+        
+    if 'From' not in event['Header']:
+        return Null
 
+    resp = invoke(
+        os.environ['GET_PUBLIC_KEY_FN'],
+        { 'domain': event['Header']['From'] }
+    )
+    return resp
+    
+    
+def getSubject(event):
+    if 'Header' not in event:
+        return Null
+        
+    if 'Subject' not in event['Header']:
+        return Null
 
+    subject = event['Header']['Subject']
+    return subject
+    
 
 def handler(event, context):
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Content-Type": "application/json"
-        },
-        "body": "hello :)"
-    }
-    
-    action = envelope['action']
-    
-    target = getItem(tableName=tableName, id=action)
+    print(f'{event=}')
 
-    return invoke(
-        functionName=target['name'], 
-        params=envelope)
+    received = event
+    
+    # VALIDATE THE REQUEST
+    pub_key = getPublicKey(received)
+    rehashed = getHash(received)
+    
+    # EXECUTE THE ACTION
+    subject = getSubject(received)
+    target = getItem(table=table, id=subject)
+    if (target):
+        answer = invoke(
+            functionName=target['Target'], 
+            params=received)
+    
+    output = {
+        'Executed': {
+            'Answer': answer,
+            'Subject': subject,
+            'Target': target
+        },
+        'Validated': {
+            'PublicKey': pub_key,
+            'Rehashed': rehashed
+        },
+        'Received': received
+    }
+
+    return output
+    
+
+    
+
 
 '''
 {
-  "Header": {
-    "Correlation": "53675692-1064-4ce2-a304-1a8b58541b2f",
-    "Timestamp": "2023-06-23T19:23:32.489913Z",
-    "To": "7b61af20-7518-4d5a-b7c0-eee17e54bf7a.dev.dtfw.org",
-    "Subject": "AnyMethod",
-    "Code": "dtfw.org/msg",
-    "Version": "1",
-    "From": "7b61af20-7518-4d5a-b7c0-eee17e54bf7a.dev.dtfw.org"
-  },
-  "Body": {},
-  "Signature": "W7HvsldzbP65Evd0HY87HITB4BLwU4F89XYsy4V5f5GP1cM0dXoqu5Liepfx4/AgAoLbi5J2go7mkbLHYbqzeq4jkjgG2MrMNmfc/DHRs2DOAtn4vTgv1U8caalfx+W394U6DdzkHnMyBSpvWzX5EsDu+LNWnpFLZ905YTQRLlkHvaI3rqgtvrjr9nPugn/Y+NuujIcvehVZPecLNX75LhaKMaBUVak3L74AL/YF+N9r0aay+Jp78w8ZlVOgn3QYV6x6/8fXWc16foX4x8uYMfRqDyZoAjaPn30I3vTOdnuVSOVQ7LB4w/b9gBanvqhjix5WpKrp+exuJfHu3s5B3g==", 
-  "Hash": "416ffa44a7adc6dfce6bd7811da5862e6602cb135819aa06a86cd73ef4c63576"
+    "Header":{
+        "Correlation":"bb37d258-015c-497e-8a67-50bf244a9299",
+        "Timestamp":"2023-06-24T23:08:24.550719Z",
+        "To":"105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org",
+        "Subject":"AnyMethod",
+        "Code":"dtfw.org/msg",
+        "Version":"1",
+        "From":"105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org"
+    },
+    "Body":{
+    },
+    "Signature": "Lw7sQp6zkOGyJ+OzGn+B1R4rCN/qcYJCtijflQu1Ayqpgxph10yS3KwA4yRhjXgUovskK7LSH+ZqhXm1bcLeMS81l1GKDVaZk3qXpNtrwRmnWrjfD1MekZrO1sRWPNBRH157INAkPWFH/Wb2LLPCAJZYwIv02BF3zKz/Zgm8z7BqOJ3ZrAOC80kTef1zhXNXUMQ/HBrspUTx0NFiMi+dXZMJ69ylxGaAjALMLmcMwFqH2D5cWqX5+eMx0zv2tMh73e8xQqxOr+YLUkO7JjK56KbCUk0HYGUbL5co9eyQMYCGyDtn0G2FqSK9h8BJ1YW3LQmWWTGa/kWDxPjHR3iNyg==", 
+    "Hash": "ee6ca2a43ec05d0bd855803407b9350e6c84dd1b981274e51ce0a0a8be16e4a1"
 }
 '''

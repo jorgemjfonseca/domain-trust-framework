@@ -131,6 +131,12 @@ export class API extends CONSTRUCT {
     }
 
 
+    /**
+     * @deprecated 
+     *    Don't use for a CNAME on ROUTE53, it will return the wrong certificate.
+     *    Instead, use [IDomainName.domainNameAliasHostedZoneId].
+     *    Details: https://repost.aws/knowledge-center/api-gateway-domain-certificate
+     */
     public DefaultDomain(): string {
       const url = this.Super.url;
       const stageName = this.Super.deploymentStage.stageName;
@@ -331,7 +337,9 @@ export class API extends CONSTRUCT {
         this.AddResource(name);
       
       resource.addMethod(method, 
-        new apiGW.LambdaIntegration(lambda.Super));
+        new apiGW.LambdaIntegration(lambda.Super, {
+          proxy: false
+        }));
 
       return lambda;
     }

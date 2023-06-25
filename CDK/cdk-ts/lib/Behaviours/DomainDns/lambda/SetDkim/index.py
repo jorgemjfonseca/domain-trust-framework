@@ -35,37 +35,6 @@ def on_event(event, context):
     raise Exception(f'Invalid request type: {request_type}')
 
 
-def get_hosted_zones():
-    # https://docs.aws.amazon.com/fr_fr/ses/latest/dg/example_ses_Scenario_ReplicateIdentities_section.html
-    zones = []
-    zone_paginator = r53.get_paginator('list_hosted_zones')
-    zone_iterator = zone_paginator.paginate(PaginationConfig={'PageSize': 20})
-    zones = [
-        zone for zone_page in zone_iterator for zone in zone_page['HostedZones']]
-    logger.info("Found %s hosted zones.", len(zones))
-    return zones
-    
-    
-def get_id_of_first_hosted_zone():
-    zones = get_hosted_zones()
-    print(f'zones: {zones}')
-
-    # https://docs.aws.amazon.com/fr_fr/ses/latest/dg/example_ses_Scenario_ReplicateIdentities_section.html
-    hosted_zone_id = zones[0]['Id']
-    return hosted_zone_id
-    
-    
-def find_record_starting_with(hosted_zone_id, prefix):
-    result=r53.list_resource_record_sets(HostedZoneId=hosted_zone_id)
-    
-    for r in result["ResourceRecordSets"]:
-        record_name = r["Name"]
-        if (record_name.startswith(prefix)):
-            return record_name
-            
-    raise Exception('Record not found')
-
-
 def find_ns_record(hosted_zone_id):
     result=r53.list_resource_record_sets(HostedZoneId=hosted_zone_id)
     
@@ -74,19 +43,6 @@ def find_ns_record(hosted_zone_id):
             return r
             
     raise Exception('No record NS found')
-    
-    
-def get_stack_output(stack_name, output_name):
-    response = cfn.describe_stacks(StackName=stack_name)
-    outputs = response["Stacks"][0]["Outputs"]
-    for output in outputs:
-        print (f'output: {output}')
-        if 'ExportName' in output:
-            keyName = output["ExportName"]
-            if keyName == output_name:
-                return output["OutputValue"]
-            
-    raise Exception(f'KeyName not found: {output_name}')
     
 
 def update_record(hosted_zone_id, record_name, value):
@@ -136,9 +92,6 @@ def get_public_key(keyId):
     
 def add_dkim_record(hosted_zone_id, keyId, record_name):
     
-    #record_name = find_record_starting_with(hosted_zone_id, 'dtfw._domainkey')
-
-    #keyId = get_stack_output('SharedComms', 'DomainSignatureKeyArn')
     public_key = get_public_key(keyId)
 
     # https://repost.aws/knowledge-center/route53-resolve-dkim-text-record-error
@@ -147,7 +100,7 @@ def add_dkim_record(hosted_zone_id, keyId, record_name):
     update_record(hosted_zone_id, record_name, f'"v=DKIM1;k=rsa;p={dkim};"')
     
     
-    
+# 👉 host -t NS 105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org
 def register_domain(hosted_zone_id):
     ns = find_ns_record(hosted_zone_id)
     print (f'{ns=}')
@@ -175,7 +128,6 @@ def on_create(event):
         props = event["ResourceProperties"]
         print(f'create new resource with {props=}')
 
-    #hosted_zone_id = get_id_of_first_hosted_zone()
     hosted_zone_id = props['hostedZoneId']
     keyId = props['signatureKeyArn']
     record_name = props['dkimRecordName']

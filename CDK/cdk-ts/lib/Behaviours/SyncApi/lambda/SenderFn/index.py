@@ -59,7 +59,7 @@ def post(envelope: any) -> any:
     print(f'{envelope=}')
 
     to = envelope['Header']['To']
-    url = 'https://_dtfw.' + to
+    url = f'https://dtfw.{to}/inbox' 
     print(f'{url=}')
 
     data = parse.urlencode(envelope).encode()
