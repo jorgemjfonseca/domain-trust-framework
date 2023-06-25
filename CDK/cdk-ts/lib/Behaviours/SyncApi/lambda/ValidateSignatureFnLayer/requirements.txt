@@ -3,5 +3,4 @@
 # 👉️ https://docs.aws.amazon.com/cdk/api/v2/docs/aws-lambda-python-alpha-readme.html
 # 👉️ https://github.com/kmille/dkim-verify/blob/master/verify-dkim.py
 
-cffi
-pyOpenSSL
+cryptography

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# 📚 SyncApi.ValidateSignatureFn
 
 from OpenSSL import crypto
 #import os

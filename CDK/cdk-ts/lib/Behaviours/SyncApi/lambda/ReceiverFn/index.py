@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# 📚 SyncApi.ReceiverFn
 
 from typing import Dict, Optional
 import boto3
@@ -28,7 +28,7 @@ def getItem(table, id):
     print (f'{response=}')
     
     if 'Item' not in response:
-        return Null
+        return None
 
     item = response['Item']
     print (f'{item=}')
@@ -71,7 +71,10 @@ def getHash(event):
     del envelope['Hash']
     canonicalized = canonicalize(envelope)
     digested = digest(canonicalized)
-    return digested
+    return { 
+        'digested': digested,
+        'canonicalized': canonicalized
+    }
     
 
 def getPublicKey(event):
@@ -113,6 +116,8 @@ def handler(event, context):
     # EXECUTE THE ACTION
     subject = getSubject(received)
     target = getItem(table=table, id=subject)
+    
+    answer = None 
     if (target):
         answer = invoke(
             functionName=target['Target'], 
@@ -120,22 +125,20 @@ def handler(event, context):
     
     output = {
         'Executed': {
-            'Answer': answer,
             'Subject': subject,
-            'Target': target
+            'Target': target,
+            'Answer': answer
         },
         'Validated': {
             'PublicKey': pub_key,
-            'Rehashed': rehashed
+            'Rehashed': rehashed['digested'],
+            'Canonicalized': rehashed['canonicalized']
         },
         'Received': received
     }
 
     return output
     
-
-    
-
 
 '''
 {

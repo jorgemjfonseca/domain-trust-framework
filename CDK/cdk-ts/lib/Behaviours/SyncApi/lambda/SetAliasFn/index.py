@@ -1,3 +1,5 @@
+# 📚 SyncApi.SetAliasFn
+
 # https://medium.com/cyberark-engineering/advanced-custom-resources-with-aws-cdk-1e024d4fb2fa
 
 from typing import Any

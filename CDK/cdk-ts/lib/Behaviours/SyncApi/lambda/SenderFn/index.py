@@ -1,4 +1,4 @@
-# SyncApi.SenderFn
+# 📚 SyncApi.SenderFn
 
 import boto3
 from urllib import request, parse
@@ -59,13 +59,19 @@ def post(envelope: any) -> any:
     print(f'{envelope=}')
 
     to = envelope['Header']['To']
-    url = f'https://dtfw.{to}/inbox' 
+    url = f'https://dtfw.{to}/inbox'
     print(f'{url=}')
 
     data = parse.urlencode(envelope).encode()
     req = request.Request(url=url, data=data)
     resp = request.urlopen(req)
-    return resp
+    
+    charset=resp.info().get_content_charset()
+    if charset == None:
+        charset = 'utf-8'
+    content=resp.read().decode(charset)
+    
+    return content
 
 
 # 👉️ https://stackoverflow.com/questions/53676600/string-formatting-of-utcnow
