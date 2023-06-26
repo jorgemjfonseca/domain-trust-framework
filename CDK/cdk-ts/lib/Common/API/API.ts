@@ -184,8 +184,10 @@ export class API extends CONSTRUCT {
     }
 
 
+    /** 
+    * @deprecated: Not tested properly!
+    */
     public static Import(scope: STACK, alias: string): API {
-      throw Error('Not tested properly');
       const apiId = cdk.Fn.importValue(alias);
       const rootResourceId = cdk.Fn.importValue(alias + 'Root');
       //const sup = cdk.aws_apigateway.RestApi.fromRestApiId(scope, alias, apiId);

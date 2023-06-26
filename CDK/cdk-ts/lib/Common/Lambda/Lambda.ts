@@ -27,6 +27,8 @@ export interface LAMBDAparams {
   description?: string;
 }
 
+
+
 export class LAMBDA extends CONSTRUCT {
 
     Name: string;
@@ -49,7 +51,7 @@ export class LAMBDA extends CONSTRUCT {
       props?: LAMBDAparams
     ): LAMBDA {
 
-        const dlq = DLQ.New(scope, id + "-Dlq");
+        //const dlq = DLQ.New(scope, id + "-Dlq");
       
         const role = new iam.Role(scope, id+'Role', {
           assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
@@ -65,7 +67,7 @@ export class LAMBDA extends CONSTRUCT {
 
           functionName: `${scope.Name}-${id}`,
           description: props?.description,
-          deadLetterQueue: dlq.Super,
+          //deadLetterQueue: dlq.Super,
           memorySize: 1024, 
           timeout: cdk.Duration.seconds(30),
 
@@ -86,7 +88,7 @@ export class LAMBDA extends CONSTRUCT {
 
         const fn = new LAMBDA(scope, sup);
 
-        dlq.Super.grantSendMessages(fn.Super);
+        //dlq.Super.grantSendMessages(fn.Super);
 
         return fn;
     }
@@ -308,9 +310,13 @@ export class LAMBDA extends CONSTRUCT {
     public GrantCloudFormationReadOnlyAccess(): LAMBDA {
       return this.AttachManagedPolicy('AWSCloudFormationReadOnlyAccess');
     }
-    
+
     public GrantRoute53FullAccess(): LAMBDA {
       return this.AttachManagedPolicy('AmazonRoute53FullAccess');
+    }
+    
+    public GrantSsmFullAccess(): LAMBDA {
+      return this.AttachManagedPolicy('AmazonSSMFullAccess');
     }
 
     public GrantLambdaInvocation(): LAMBDA {

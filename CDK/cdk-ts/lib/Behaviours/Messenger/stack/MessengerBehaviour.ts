@@ -2,8 +2,8 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { BUS } from '../../../Common/BUS/BUS';
+import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
 import { STACK } from '../../../Common/STACK/STACK';
-import { SyncApi } from '../../SyncApi/stack/SyncApi';
 
 
 declare module '../../../Common/LAMBDA/LAMBDA' {
@@ -20,14 +20,15 @@ export class Messenger extends STACK {
   private static readonly BUS_NAME = 'DtfwBus';
   private static readonly PUBLISHER = 'MessengerPublisher';
 
-  constructor(scope: Construct, props: cdk.StackProps) {
+ 
+  public constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, Messenger.name, props);
 
     // IMPORTS
     const senderSync = LAMBDA
-      .Import(this, SyncApi.SENDER);
+      .Import(this, SyncApiHandlers.SENDER);
     const receierSync = LAMBDA
-      .Import(this, SyncApi.RECEIVER);
+      .Import(this, SyncApiHandlers.RECEIVER);
   
     // BUS
     const bus = BUS

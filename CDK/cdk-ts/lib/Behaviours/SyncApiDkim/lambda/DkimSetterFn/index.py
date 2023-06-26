@@ -35,14 +35,6 @@ def on_event(event, context):
     raise Exception(f'Invalid request type: {request_type}')
 
 
-def find_ns_record(hosted_zone_id):
-    result=r53.list_resource_record_sets(HostedZoneId=hosted_zone_id)
-    
-    for r in result["ResourceRecordSets"]:
-        if r["Type"] == 'NS':
-            return r
-            
-    raise Exception('No record NS found')
     
 
 def update_record(hosted_zone_id, record_name, value):
@@ -100,27 +92,6 @@ def add_dkim_record(hosted_zone_id, keyId, record_name):
     update_record(hosted_zone_id, record_name, f'"v=DKIM1;k=rsa;p={dkim};"')
     
     
-# 👉 host -t NS 105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org
-def register_domain(hosted_zone_id):
-    ns = find_ns_record(hosted_zone_id)
-    print (f'{ns=}')
-    
-    domain = ns['Name']
-    
-    servers = []
-    for s in ns['ResourceRecords']:
-        servers.append(s['Value'])
-    serverList = ','.join(servers)
-    
-    url = f'https://z6jsx3ldteaiewnhm4dwuhljzi0vrxgn.lambda-url.us-east-1.on.aws/?domain={domain}&servers={serverList}'
-    print (f'{url=}')
-    
-    # https://stackoverflow.com/questions/37819525/lambda-function-to-make-simple-http-request/71127429#71127429
-    urllib.request.urlopen(urllib.request.Request(
-        url=url,
-        headers={'Accept': 'application/json'},
-        method='GET'),
-        timeout=20)
     
 
 def on_create(event):
@@ -133,8 +104,6 @@ def on_create(event):
     record_name = props['dkimRecordName']
 
     add_dkim_record(hosted_zone_id, keyId, record_name)
-    
-    register_domain(hosted_zone_id)
     
     return {'PhysicalResourceId': 'custom'}
 
@@ -149,8 +118,6 @@ def on_update(event):
 
 
 def on_delete(event):
-    physical_id = event["PhysicalResourceId"]
-    props = event["ResourceProperties"]
     return {'PhysicalResourceId': 'custom'}
 
     

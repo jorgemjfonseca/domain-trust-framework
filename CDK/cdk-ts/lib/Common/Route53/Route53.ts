@@ -41,9 +41,6 @@ export class ROUTE53 extends CONSTRUCT {
     }
 
 
-    /**
-     * @deprecated Throws 'Cannot determine scope for context provider hosted-zone'. Use ImportFromDomainName() instead.
-     */
     public static ImportFromAlias(scope: STACK, alias: string): ROUTE53 {
       const hostedZoneId = cdk.Fn.importValue(alias+'ID');
       const hostedZoneName = cdk.Fn.importValue(alias+'Name');
