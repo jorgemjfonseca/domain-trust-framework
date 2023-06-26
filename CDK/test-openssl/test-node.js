@@ -9,7 +9,7 @@ const create = () => {
         crypto.generateKeyPairSync('rsa', { 
             modulusLength: 2048,
             publicKeyEncoding: {
-                type: "pkcs1",
+                type: "spki",
                 format: "pem",
             },
             privateKeyEncoding: {
@@ -35,39 +35,47 @@ const load = () => {
 
 export const handler = (event) => {
         
-    //const keys = create();    
-    const keys = load();
-    const privateKey2 = keys['privateKey'];
-    const publicKey2 = keys['publicKey'];
+    const keys = create();    
+    //const keys = load();
+    const privateKey2 = keys['privateKey'] + '';
+    const publicKey2 = keys['publicKey'] + '';
     
     
     // Using Hashing Algorithm
     const algorithm = "SHA256";
      
     // Converting string to buffer
-    //let text = '{"Header":{"Correlation":"bb37d258-015c-497e-8a67-50bf244a9299","Timestamp":"2023-06-24T23:08:24.550719Z","To":"105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org","Subject":"AnyMethod","Code":"dtfw.org/msg","Version":"1","From":"105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org"},"Body":{}}'
-    let text = 'bacon';
-    let data = Buffer.from(text);
+    let text = '{"Header":{"Correlation":"bb37d258-015c-497e-8a67-50bf244a9299","Timestamp":"2023-06-24T23:08:24.550719Z","To":"105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org","Subject":"AnyMethod","Code":"dtfw.org/msg","Version":"1","From":"105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org"},"Body":{}}'
+    //let text = 'bacon';
          
     // Sign the data and returned signature in buffer
-    let signature = crypto.sign(algorithm, data, privateKey2);
+    let originalSign = crypto.sign(algorithm, Buffer.from(text), privateKey2 + '');
+    let signature = originalSign.toString("base64") + '';
+    let loadedSign = Buffer.from(signature, 'base64');
 
     // Verifying signature using crypto.verify() function
-    let isVerified = crypto.verify(algorithm, data, publicKey2, signature);
+    let isVerified = crypto.verify(algorithm, Buffer.from(text), publicKey2 + '', loadedSign);
 
     // Printing the result
     return {
-        // openssl dgst -sha512  -verify public.pem  -signature sha256.sign myfile.txt
-        isVerified,
+        text,
         algorithm,
-        hash1: crypto.createHash('sha256').update(text).digest('base64'),
-        hash2: Buffer.from(crypto.createHash('sha256').update(text).digest('hex')).toString('base64'),
-        // openssl dgst -sha256 myfile.txt
-        hash3: crypto.createHash('sha256').update(text).digest('hex'),
-        // openssl dgst -sha256 -sign private.pem -out sha256.bin  myfile.txt && openssl base64 -in sha256.bin -out sha256.sign
-        signature: signature.toString("base64"),
         privateKey: privateKey2,
         publicKey: publicKey2,
+        /*
+        less myfile.txt | openssl dgst -sha256 >> hash.txt
+        */
+        hash: crypto.createHash('sha256').update(text).digest('hex'),
+        /* 
+        openssl dgst -sha256 -sign private.pem -out signature.sha1 myfile.txt && \
+        openssl base64 -in signature.sha1 -out signature.txt
+        */
+        signature: signature,
+        /*
+        openssl enc -d -A -base64 -in signature.txt -out signature.sha1 && \
+        openssl dgst -sha256 -verify public.pem -signature signature.sha1 myfile.txt
+        */
+        isVerified
     };
 
 
@@ -75,6 +83,34 @@ export const handler = (event) => {
 
 let ret = handler({});
 console.log(ret);
-console.log(ret['privateKey']);
+//console.log(ret['privateKey']);
 
-fs.writeFileSync('private.pem', ret['privateKey']);
+let f1 = 'via-node/';
+fs.writeFileSync(f1+'node-logs.json', JSON.stringify(ret, null, 4));
+fs.writeFileSync(f1+'private.pem', ret['privateKey']);
+fs.writeFileSync(f1+'public.pem', ret['publicKey']);
+fs.writeFileSync(f1+'signature.txt', ret['signature']);
+fs.writeFileSync(f1+'hash.txt', ret['hash']);
+fs.writeFileSync(f1+'myfile.txt', ret['text']);
+
+let f2 = 'via-openssl/';
+fs.writeFileSync(f1+'test.sh', `
+echo == NEXT STEPS ========== 
+mkdir via-openssl 
+echo == VALIDATE THE SIGNATURE, EXPECT "Verified OK" ========== 
+openssl enc -d -A -base64 -in ${f1}signature.txt -out ${f2}signature.sha1 
+openssl dgst -sha256 -verify ${f1}public.pem -signature ${f2}signature.sha1 ${f1}myfile.txt
+rm ${f2}signature.sha1
+echo == CREATE THE SIGNATURE, EXPECT EMPTY DIFF ==========
+openssl dgst -sha256 -sign ${f1}private.pem -out ${f2}signature.sha1 ${f1}myfile.txt
+openssl base64 -A -in ${f2}signature.sha1 -out ${f2}signature.txt
+rm ${f2}signature.sha1
+diff ${f1}signature.txt ${f2}signature.txt
+echo == CREATE THE HASH, EXPECT EMPTY DIFF ==========
+cat ${f1}myfile.txt | openssl dgst -sha256 > ${f2}hash.txt 
+truncate -s -1 ${f2}hash.txt 
+diff ${f1}hash.txt ${f2}hash.txt
+`);
+
+console.log(`run 
+chmod +x ${f1}test.sh && ./${f1}test.sh`);
