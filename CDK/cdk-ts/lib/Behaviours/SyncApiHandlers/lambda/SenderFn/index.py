@@ -116,7 +116,7 @@ def sign_envelope(envelope: any):
     canonicalized = canonicalize(envelope)
     signed = sign(keys['privateKey'], keys['publicKey'], canonicalized)
 
-    if not signed.isVerified:
+    if not signed['isVerified']:
         raise Exception('The sending signature is not valid!')
     
     envelope.update({

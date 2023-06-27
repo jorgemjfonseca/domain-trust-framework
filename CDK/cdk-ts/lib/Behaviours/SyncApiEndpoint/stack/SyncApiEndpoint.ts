@@ -9,6 +9,7 @@ import { CERTIFICATE } from '../../../Common/CERTIFICATE/CERTIFICATE';
 import { ROUTE53 } from '../../../Common/ROUTE53/ROUTE53';
 import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 import { DomainName } from '../../DomainName/stack/DomainName';
+import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
 
 
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
@@ -25,9 +26,11 @@ export class SyncApiEndpoint extends STACK {
 
     // BLOCKS
     const api = this.SetUpApi()
+    this.SetUpInbox(api);
     this.SetUpCustomDomain(api);
-    this.SetUpFirewall(api)
+    this.SetUpFirewall(api);
   }
+
 
 
 
@@ -40,6 +43,15 @@ export class SyncApiEndpoint extends STACK {
   }
 
 
+  private SetUpInbox(api: API) {
+    // All changes to the API must be done on the same stack
+    // because CDK doesn't redeploy the API after an import.
+    LAMBDA
+      .Import(this, SyncApiHandlers.RECEIVER)
+      .AddApiMethod(api, 'inbox', 'POST');
+  }
+
+  
   private SetUpFirewall(api: API) {
     const waf = WAF
       .New(this, 'WAFv2')

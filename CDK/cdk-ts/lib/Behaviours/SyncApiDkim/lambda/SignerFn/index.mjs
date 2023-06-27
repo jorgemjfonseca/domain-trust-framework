@@ -2,7 +2,7 @@
 
 import * as crypto from 'crypto';
 
-export const handler = (event) => {
+export const handler = async(event) => {
 
     const privateKey2 = event['privateKey'] + '';
     const publicKey2 = event['publicKey'] + '';

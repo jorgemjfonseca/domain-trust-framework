@@ -311,6 +311,10 @@ export class LAMBDA extends CONSTRUCT {
       return this.AttachManagedPolicy('AWSCloudFormationReadOnlyAccess');
     }
 
+    public GrantAmazonAPIGatewayAdministrator(): LAMBDA {
+      return this.AttachManagedPolicy('AmazonAPIGatewayAdministrator');
+    }
+
     public GrantRoute53FullAccess(): LAMBDA {
       return this.AttachManagedPolicy('AmazonRoute53FullAccess');
     }

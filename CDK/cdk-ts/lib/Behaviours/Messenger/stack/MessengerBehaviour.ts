@@ -22,7 +22,10 @@ export class Messenger extends STACK {
 
  
   public constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, Messenger.name, props);
+    super(scope, Messenger.name, {
+      description: 'Creates async message bus.',
+      ...props
+    });
 
     // IMPORTS
     const senderSync = LAMBDA

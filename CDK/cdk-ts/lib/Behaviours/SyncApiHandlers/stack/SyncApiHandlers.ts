@@ -3,10 +3,10 @@ import { Construct } from 'constructs';
 import { STACK } from '../../../Common/STACK/STACK';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
-import { API } from '../../../Common/API/API';
 import { SyncApiEndpoint } from '../../SyncApiEndpoint/stack/SyncApiEndpoint';
 import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
 import { DomainName } from '../../DomainName/stack/DomainName';
+import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 
 
 
@@ -20,17 +20,19 @@ export class SyncApiHandlers extends STACK {
   public static readonly RECEIVER = 'SyncApiReceiverFn';
 
   constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, SyncApiHandlers.name, props);
+    super(scope, SyncApiHandlers.name, {
+      description: 'Creates handlers for Sender and Receiver Map.',
+      ...props
+    });
 
     // DEPENDENCIES
-    const api = API.Import(this, SyncApiEndpoint.API);
     const domainName = DomainName.GetDomainName(this);
 
     // BLOCKS
     this.SetUpSender(domainName);
-    this.SetUpReceiver(domainName, api);
-    
+    this.SetUpReceiver(domainName);
   }
+
 
 
   private SetUpSender(domainName: string) {
@@ -48,7 +50,7 @@ export class SyncApiHandlers extends STACK {
   }
 
 
-  private SetUpReceiver(domainName: string, api: API) {
+  private SetUpReceiver(domainName: string) {
 
     // ROUTER MAP
     const map = DYNAMO
@@ -69,7 +71,6 @@ export class SyncApiHandlers extends STACK {
       .AddEnvironment('DKIM_READER_FN', dkimReaderFn.FunctionName())
       .AddEnvironment('VALIDATOR_FN', validatorFn.FunctionName())
       .AddEnvironment('DOMAIN_NAME', domainName)
-      .AddApiMethod(api, 'inbox', 'POST')
       .Export(SyncApiHandlers.RECEIVER);
 
     // REGISTER EXTENSION

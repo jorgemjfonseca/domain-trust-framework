@@ -45,15 +45,15 @@ const domainName = new DomainName(app);
 const domainDns = new DomainDns(app);
 domainDns.addDependency(domainName);
 
-const syncApiEndpoint = new SyncApiEndpoint(app);
-syncApiEndpoint.addDependency(domainDns);
-
 const syncApiDkim = new SyncApiDkim(app);
 syncApiDkim.addDependency(domainDns);
 
 const syncApiHandlers = new SyncApiHandlers(app);
 syncApiHandlers.addDependency(syncApiDkim);
-syncApiHandlers.addDependency(syncApiEndpoint);
+
+const syncApiEndpoint = new SyncApiEndpoint(app);
+syncApiEndpoint.addDependency(domainDns);
+syncApiEndpoint.addDependency(syncApiHandlers);
 
 const syncApi = new SyncApi(app);
 syncApi.addDependency(domainDns);
