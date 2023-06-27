@@ -46,17 +46,8 @@ def invoke(functionName, params):
         LogType='Tail')
     ret = json.loads(response['Payload'].read())
     return ret
-    
-    
-# 👉️ https://datagy.io/python-sha256/
-# 👉️ https://debugging.works/blog/verify-dkim-signature/
-def digest(canonicalized: str) -> str: 
-    utf8 = canonicalized.encode('utf-8')
-    digested = sha256(utf8)
-    hexdigested = digested.hexdigest()
-    print(f'{hexdigested=}')
-    return hexdigested
-    
+        
+
     
 # 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
 def canonicalize(object: any) -> str:
@@ -65,53 +56,73 @@ def canonicalize(object: any) -> str:
     return canonicalized    
 
 
-def getHash(event): 
-    envelope = copy.deepcopy(event)
-    del envelope['Signature']
-    del envelope['Hash']
-    canonicalized = canonicalize(envelope)
-    digested = digest(canonicalized)
-    return { 
-        'digested': digested,
-        'canonicalized': canonicalized
-    }
+# REQUEST { hostname }
+# RESPONSE: str
+def invokeDkimReader(event):
+    return invoke(
+        os.environ['DKIM_READER_FN'],
+        { 
+            'hostname': event['Header']['From'] 
+        })
     
 
-def getPublicKey(event):
-    print('getPublicKey...')
-        
-    if 'Header' not in event:
-        return Null
-        
-    if 'From' not in event['Header']:
-        return Null
 
-    resp = invoke(
-        os.environ['GET_PUBLIC_KEY_FN'],
-        { 'domain': event['Header']['From'] }
-    )
-    return resp
+def getFrom(event):
+    return event['Header']['From']
+
+
+def getTo(event):
+    return event['Header']['Subject']
     
-    
+
 def getSubject(event):
-    if 'Header' not in event:
-        return Null
-        
-    if 'Subject' not in event['Header']:
-        return Null
-
-    subject = event['Header']['Subject']
-    return subject
+    return event['Header']['Subject']
     
+
+def validateTo(received: any):
+    if getTo(received).lower() != os.environ['DOMAIN_NAME']:
+        a = getTo(received).lower()
+        b = os.environ['DOMAIN_NAME']
+        raise Exception(f'Wrong domain. Expected [{a}], but received [{b}].')
+
+
+# REQUEST { text, publicKey, signature }
+# RESPONSE { hash, isVerified }
+def invokeValidator(text, publicKey, signature):
+    invoke(os.environp['VALIDATOR_FN'], {
+        'text': text,
+        'publicKey': publicKey,
+        'signature': signature
+    })
+
+
+def validateSignature(received: any, pub_key):
+    
+    copy = received.deepcopy()
+    del copy['Signature']
+    del copy['Hash']
+    text = canonicalize(copy)
+
+    publicKey = invokeDkimReader(received)
+    signature = received['Signature']
+    verification = invokeValidator(text, publicKey, signature)
+
+    if verification['hash'] != received['Hash']:
+        a = verification['hash']
+        b = received['Hash']
+        raise Exception(f'Wrong hash: expected [{a}] but received [{b}].')
+
+    if not verification['isVerified']:
+        raise Exception(f'Signature not valid.')
+
+
 
 def handler(event, context):
     print(f'{event=}')
 
     received = event
-    
-    # VALIDATE THE REQUEST
-    pub_key = getPublicKey(received)
-    rehashed = getHash(received)
+    validateTo(received)
+    validateSignature(received) 
     
     # EXECUTE THE ACTION
     subject = getSubject(received)

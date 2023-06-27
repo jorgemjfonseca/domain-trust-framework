@@ -319,6 +319,10 @@ export class LAMBDA extends CONSTRUCT {
       return this.AttachManagedPolicy('AmazonSSMFullAccess');
     }
 
+    public GrantSecretsManagerReadWrite(): LAMBDA {
+      return this.AttachManagedPolicy('SecretsManagerReadWrite');
+    }
+
     public GrantLambdaInvocation(): LAMBDA {
       return this.AttachManagedPolicy('AWSLambdaInvocation-DynamoDB');
     }
@@ -408,6 +412,10 @@ export class LAMBDA extends CONSTRUCT {
     public AddEnvironment(name: string, value: string): LAMBDA {
       this.Super.addEnvironment(name, value);
       return this;
+    }
+
+    public FunctionName(): string {
+      return this.Super.functionName;
     }
     
 }

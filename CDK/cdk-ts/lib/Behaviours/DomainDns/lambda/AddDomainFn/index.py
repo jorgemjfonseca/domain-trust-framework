@@ -95,8 +95,10 @@ def process_request(event):
         return
     
     hosted_zone_id = get_hosted_zone_id(parent)
-    if False and record_exists(hosted_zone_id, child):
-        print(f'Record exists')
+    
+    # Ensure that domains, once created, cannot be pointed to other Name Servers.
+    if record_exists(hosted_zone_id, child):
+        print(f'Record exists, ignoring for security.')
         return
     
     value = [{'Value': ns} for ns in servers]

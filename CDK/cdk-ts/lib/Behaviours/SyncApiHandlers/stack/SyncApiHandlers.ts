@@ -6,6 +6,8 @@ import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
 import { API } from '../../../Common/API/API';
 import { SyncApiEndpoint } from '../../SyncApiEndpoint/stack/SyncApiEndpoint';
 import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
+import { DomainName } from '../../DomainName/stack/DomainName';
+
 
 
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
@@ -22,24 +24,28 @@ export class SyncApiHandlers extends STACK {
 
     // DEPENDENCIES
     const api = API.Import(this, SyncApiEndpoint.API);
+    const domainName = DomainName.GetDomainName(this);
 
     // BLOCKS
-    this.SetUpSender();
-    this.SetUpReceiver(api);
+    this.SetUpSender(domainName);
+    this.SetUpReceiver(domainName, api);
     
   }
 
 
-  private SetUpSender() {
+  private SetUpSender(domainName: string) {
       
     // SENDER FUNCTION 
     const senderFn = LAMBDA
         .New(this, "SenderFn")
-        .Export(SyncApiHandlers.SENDER);
+        .GrantLambdaInvocation()
+        .Export(SyncApiHandlers.SENDER)
+        .AddEnvironment('SIGNER_FN', SyncApiDkim.SIGNER_FN)
+        .AddEnvironment('DOMAIN_NAME', domainName);
   }
 
 
-  private SetUpReceiver(api: API) {
+  private SetUpReceiver(domainName: string, api: API) {
 
     // ROUTER MAP
     const map = DYNAMO
@@ -51,6 +57,9 @@ export class SyncApiHandlers extends STACK {
       .New(this, "ReceiverFn")
       .ReadsFromDynamoDB(map)
       .GrantLambdaInvocation()
+      .AddEnvironment('DKIM_READER_FN', SyncApiDkim.DKIM_READER_FN)
+      .AddEnvironment('VALIDATOR_FN', SyncApiDkim.VALIDATOR_FN)
+      .AddEnvironment('DOMAIN_NAME', domainName)
       .AddApiMethod(api, 'inbox', 'POST')
       .Export(SyncApiHandlers.RECEIVER);
 

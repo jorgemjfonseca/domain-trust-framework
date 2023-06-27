@@ -11,40 +11,31 @@ import uuid
 import datetime
 
 
-kms = boto3.client('kms')
-domainName = os.environ['DOMAIN_NAME']
+
+# 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
+lambdaClient = boto3.client('lambda')
+def invoke(functionName, params):
+    print(f'invoking [{functionName}]({params})...')
+    
+    response = lambdaClient.invoke(
+        FunctionName = functionName,
+        Payload=json.dumps(params),
+        LogType='Tail')
+    
+    returned = json.loads(response['Payload'].read())
+    print(f'{returned=}')
+    return returned
 
 
 # 👉️ https://hands-on.cloud/boto3-kms-tutorial/
-def sign(message: str) -> str:
-    print(f'{message=}')
-
-    keyId = os.environ['KEY_ARN']
-    print(f'{keyId=}')
-
-    response = kms.sign(
-        KeyId=keyId,
-        Message=message,
-        MessageType='RAW',
-        GrantTokens=['string'],
-        SigningAlgorithm='RSASSA_PSS_SHA_256'
-    )
-
-    bytes = response['Signature']
-    signature = base64.b64encode(bytes).decode()   
-
-    print(f'{signature=}')
-    return signature
-    
-   
-# 👉️ https://datagy.io/python-sha256/
-# 👉️ https://debugging.works/blog/verify-dkim-signature/
-def digest(canonicalized: str) -> str: 
-    utf8 = canonicalized.encode('utf-8')
-    digested = sha256(utf8)
-    hexdigested = digested.hexdigest()
-    print(f'{hexdigested=}')
-    return hexdigested
+# REQUEST { privateKey, publicKey, text }
+# RESPONSE { hash, signature, isVerified }
+def sign(privateKey: str, publicKey, text) -> str:
+    return invoke(os.environ['SIGNER_FN'], {
+        'privateKey': privateKey,
+        'publicKey': publicKey,
+        'text': text
+    })
     
     
 # 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
@@ -55,14 +46,10 @@ def canonicalize(object: any) -> str:
     
     
 # 👉️ https://stackoverflow.com/questions/36484184/python-make-a-post-request-using-python-3-urllib    
-def post(envelope: any) -> any:
-    print(f'{envelope=}')
-
-    to = envelope['Header']['To']
-    url = f'https://dtfw.{to}/inbox'
+def post(url: str, body: any) -> any:
     print(f'{url=}')
 
-    data = parse.urlencode(envelope).encode()
+    data = parse.urlencode(body).encode()
     req = request.Request(url=url, data=data)
     resp = request.urlopen(req)
     
@@ -87,11 +74,15 @@ def correlation():
     print(f'{correlation=}')
     return correlation
 
+secretsmanager = boto3.client('secretsmanager')
+def get_keys(): 
+    return {
+        'publicKey': secretsmanager.get_secret_value('/dtfw/publicKey')['SecretString'],
+        'privateKey': secretsmanager.get_secret_value('/dtfw/privateKey')['SecretString']
+    }
 
-# 👉️ https://quip.com/NiUhAQKbj7zi
-def process(message: any): 
-    print(f'{message=}')
-    
+
+def wrap_envelope(message: any):
     defaults = {
         'Header': {
             'Correlation': correlation(),
@@ -105,7 +96,7 @@ def process(message: any):
         'Header': {
             'Code': 'dtfw.org/msg', 
             'Version': '1',
-            'From': domainName
+            'From': os.environ['DOMAIN_NAME']
         }
     }
     print(f'{overrides=}')
@@ -116,25 +107,43 @@ def process(message: any):
     envelope['Header'].update(overrides['Header'])
     if 'Body' in message:
         envelope['Body'].update(message['Body']) 
-    
+
+    return envelope
+
+
+def sign_envelope(envelope: any):
+    keys = get_keys()
     canonicalized = canonicalize(envelope)
-    digested = digest(canonicalized)
-    signature = sign(canonicalized)
+    signed = sign(keys['privateKey'], keys['publicKey'], canonicalized)
+
+    if not signed.isVerified:
+        raise Exception('The sending signature is not valid!')
     
     envelope.update({
-        'Signature': signature,
-        'Hash': digested
+        'Signature': signed['signature'],
+        'Hash': signed['hash']
     })
+    return envelope
+
+
+def send_envelope(envelope: any):
+    to = envelope['Header']['To']
+    url = f'https://dtfw.{to}/inbox'
     
-    response = post(envelope)
+    response = post(url, envelope)
     return response
 
+   
 
+# 👉️ https://quip.com/NiUhAQKbj7zi
 def handler(event, context):
     print(f'{event=}')
 
     message = event
-    return process(message)
+    envelope = wrap_envelope(message)
+    envelope = sign_envelope(envelope)
+    sent = send_envelope(envelope)
+    return sent
     
 
 '''
