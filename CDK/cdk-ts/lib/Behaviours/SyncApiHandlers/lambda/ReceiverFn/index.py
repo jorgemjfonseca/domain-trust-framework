@@ -11,6 +11,8 @@ import json
 import copy
 import re
 import sys
+from copy import deepcopy
+
 
 tableName = os.environ['TABLE']
 dynamodbClient = boto3.resource('dynamodb')
@@ -59,10 +61,12 @@ def canonicalize(object: any) -> str:
 # REQUEST { hostname }
 # RESPONSE: str
 def invokeDkimReader(event):
+    domain = event['Header']['From']
+    hostname = 'dtfw._domainkey.' + domain
     return invoke(
         os.environ['DKIM_READER_FN'],
         { 
-            'hostname': event['Header']['From'] 
+            'hostname': hostname 
         })
     
 
@@ -72,7 +76,7 @@ def getFrom(event):
 
 
 def getTo(event):
-    return event['Header']['Subject']
+    return event['Header']['To']
     
 
 def getSubject(event):
@@ -83,22 +87,22 @@ def validateTo(received: any):
     if getTo(received).lower() != os.environ['DOMAIN_NAME']:
         a = getTo(received).lower()
         b = os.environ['DOMAIN_NAME']
-        raise Exception(f'Wrong domain. Expected [{a}], but received [{b}].')
+        raise Exception(f'Wrong domain. Expected [{b}], but received [{a}].')
 
 
 # REQUEST { text, publicKey, signature }
 # RESPONSE { hash, isVerified }
 def invokeValidator(text, publicKey, signature):
-    invoke(os.environp['VALIDATOR_FN'], {
+    invoke(os.environ['VALIDATOR_FN'], {
         'text': text,
         'publicKey': publicKey,
         'signature': signature
     })
 
 
-def validateSignature(received: any, pub_key):
+def validateSignature(received: any):
     
-    copy = received.deepcopy()
+    copy = deepcopy(received)
     del copy['Signature']
     del copy['Hash']
     text = canonicalize(copy)
