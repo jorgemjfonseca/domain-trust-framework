@@ -77,8 +77,8 @@ def correlation():
 secretsmanager = boto3.client('secretsmanager')
 def get_keys(): 
     return {
-        'publicKey': secretsmanager.get_secret_value('/dtfw/publicKey')['SecretString'],
-        'privateKey': secretsmanager.get_secret_value('/dtfw/privateKey')['SecretString']
+        'publicKey': secretsmanager.get_secret_value(SecretId='/dtfw/publicKey')['SecretString'],
+        'privateKey': secretsmanager.get_secret_value(SecretId='/dtfw/privateKey')['SecretString']
     }
 
 

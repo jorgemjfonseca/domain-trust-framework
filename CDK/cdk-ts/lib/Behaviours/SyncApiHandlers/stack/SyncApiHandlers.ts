@@ -35,12 +35,15 @@ export class SyncApiHandlers extends STACK {
 
   private SetUpSender(domainName: string) {
       
-    // SENDER FUNCTION 
+    const signer = LAMBDA
+      .Import(this, SyncApiDkim.SIGNER_FN);
+
     const senderFn = LAMBDA
         .New(this, "SenderFn")
         .GrantLambdaInvocation()
+        .GrantSecretsManagerReadWrite()
         .Export(SyncApiHandlers.SENDER)
-        .AddEnvironment('SIGNER_FN', SyncApiDkim.SIGNER_FN)
+        .AddEnvironment('SIGNER_FN', signer.FunctionName())
         .AddEnvironment('DOMAIN_NAME', domainName);
   }
 
@@ -52,13 +55,19 @@ export class SyncApiHandlers extends STACK {
       .New(this, 'Map')
       .Export(SyncApiHandlers.MAP);
 
+    const dkimReaderFn = LAMBDA
+      .Import(this, SyncApiDkim.DKIM_READER_FN);
+
+    const validatorFn = LAMBDA
+      .Import(this, SyncApiDkim.VALIDATOR_FN);
+
     // RECEIVER FUNCTION
     LAMBDA
       .New(this, "ReceiverFn")
       .ReadsFromDynamoDB(map)
       .GrantLambdaInvocation()
-      .AddEnvironment('DKIM_READER_FN', SyncApiDkim.DKIM_READER_FN)
-      .AddEnvironment('VALIDATOR_FN', SyncApiDkim.VALIDATOR_FN)
+      .AddEnvironment('DKIM_READER_FN', dkimReaderFn.FunctionName())
+      .AddEnvironment('VALIDATOR_FN', validatorFn.FunctionName())
       .AddEnvironment('DOMAIN_NAME', domainName)
       .AddApiMethod(api, 'inbox', 'POST')
       .Export(SyncApiHandlers.RECEIVER);
