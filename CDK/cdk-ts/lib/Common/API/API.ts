@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apiGW from 'aws-cdk-lib/aws-apigateway';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
@@ -238,15 +239,9 @@ export class API extends CONSTRUCT {
             'application/json': 'Action=SendMessage&MessageBody=$input.body',
           },
           integrationResponses: [
-            {
-              statusCode: '200',
-            },
-            {
-              statusCode: '400',
-            },
-            {
-              statusCode: '500',
-            }
+            { statusCode: '200' },
+            { statusCode: '400' },
+            { statusCode: '500' }
           ]
         },
       });
@@ -254,15 +249,9 @@ export class API extends CONSTRUCT {
       // post method
       resource.addMethod('POST', sendMessageIntegration, {
         methodResponses: [
-          {
-            statusCode: '400',
-          },
-          { 
-            statusCode: '200',
-          },
-          {
-            statusCode: '500',
-          }
+          { statusCode: '200' },
+            { statusCode: '400' },
+            { statusCode: '500' }
         ]
       });
 
@@ -333,17 +322,62 @@ export class API extends CONSTRUCT {
     }
 
 
-    SendToLambda(lambda: LAMBDA, name: string, method: string = "POST"): LAMBDA {
+    private SetAutoScaling(fn: LAMBDA, name: string): lambda.Alias {
+
+      const liveAlias = new lambda.Alias(this, fn.Name+'Alias', {
+        aliasName: 'live',
+        version: fn.Super.currentVersion,
+      })
+
+      const target = liveAlias.addAutoScaling({
+        minCapacity: 1,
+        maxCapacity: 100
+      })
+
+      target.scaleOnUtilization({
+        utilizationTarget: 0.75,
+      })
+
+      return liveAlias;
+    }
+
+
+    SendToLambda(fn: LAMBDA, name: string, method: string = "POST"): LAMBDA {
+
       const resource = 
         this.GetResourceAtPath("/" + name?.toLowerCase()) ??
         this.AddResource(name);
-      
-      resource.addMethod(method, 
-        new apiGW.LambdaIntegration(lambda.Super, {
-          proxy: false
-        }));
 
-      return lambda;
+      const liveAlias = this.SetAutoScaling(fn, name);
+
+      resource.addMethod(method, 
+        new apiGW.LambdaIntegration(liveAlias, {
+          proxy: true,
+          integrationResponses: [
+            { statusCode: '200' },
+            { statusCode: '400' },
+            { statusCode: '500' }
+          ]
+        }), {
+          methodResponses: [
+            { statusCode: '200' },
+            { statusCode: '400' },
+            { statusCode: '500' }
+          ]
+        });
+
+      // Grant permission to execute
+      // 👉 https://stackoverflow.com/questions/62201988/aws-cdk-how-to-grant-invoke-permissions-on-a-lambda-to-api-gateway-before-depl
+      fn.Super.addPermission('PermitAPIGInvocation', {
+        principal: new iam.ServicePrincipal('apigateway.amazonaws.com'),
+        //sourceArn: this.Super.arnForExecuteApi('*')
+      });
+
+      // 👉 https://stackoverflow.com/questions/55900479/cross-stack-lambda-and-api-gateway-permissions-with-aws-cdk
+      fn.Super.grantInvoke(
+        new iam.ServicePrincipal('apigateway.amazonaws.com'));
+
+      return fn;
     }
 
 

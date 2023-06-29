@@ -26,7 +26,10 @@ export class SyncApi extends STACK {
   }
 
   private constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, SyncApi.name, props);
+    super(scope, SyncApi.name, {
+      ...props,
+      description: 'Sync API umbrella.'
+    });
 
   }
 

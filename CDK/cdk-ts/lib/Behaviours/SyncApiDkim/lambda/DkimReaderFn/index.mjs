@@ -30,7 +30,7 @@ export const handler = async(event) => {
             let ret = 'NOT FOUND!'
             itemsArray.forEach((x) => { 
                 if (x['key'] == 'p') {
-                    ret = x['value'];
+                    ret = x['value'].replace(',', '');
                 }
             });
             return ret;
@@ -40,6 +40,6 @@ export const handler = async(event) => {
 
 /*
 {
-    "hostname": "dtfw._domainkey.cf41fa0a-5bbf-4123-8473-6c44e5721323.dev.dtfw.org"
+    "hostname": "dtfw._domainkey.38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
 }
 */

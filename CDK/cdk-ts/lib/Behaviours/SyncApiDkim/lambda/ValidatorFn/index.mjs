@@ -2,18 +2,19 @@
 
 import * as crypto from 'crypto';
 
-export const handler = (event) => {
-    console.info("EVENT\n" + JSON.stringify(event, null, 2))
+export const handler = async(event) => {
+    console.log("EVENT\n" + JSON.stringify(event, null, 2))
 
     const text = event['text']
     
-    const publicKey2 = event['publicKey'] + '';
-    if (!publicKey2.startswith('--')) {
-        signature = 
+    let publicKey2 = event['publicKey'] + '';
+    if (!publicKey2.startsWith('--')) {
+        publicKey2 = 
             '-----BEGIN PUBLIC KEY-----\n' +
             publicKey2.toString( 'base64' ) +
-            '\n-----END PUBLIC KEY-----'
+            '\n-----END PUBLIC KEY-----';
     }
+    console.log('publicKey2:' + publicKey2);
     
     const signature = event['signature'];
     
@@ -22,14 +23,21 @@ export const handler = (event) => {
     // Using Hashing Algorithm
     const algorithm = "SHA256";
     
-    // Verifying signature using crypto.verify() function
+    console.log('Verifying signature using crypto.verify() function...');
+    console.log('signature:' + signature);
+    console.log('algorithm:' + algorithm);
+    console.log('text:' + text);
+    console.log('publicKey2:' + publicKey2);
+    
     let isVerified = crypto.verify(algorithm, Buffer.from(text), publicKey2 + '', loadedSign);
 
-    // Printing the result
-    return {
+    const ret = {
         hash: crypto.createHash('sha256').update(text).digest('hex'),
         isVerified
     };
+    
+    console.log('Returning the result: ' + ret);
+    return ret;
 
 };
 

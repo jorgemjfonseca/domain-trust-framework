@@ -27,7 +27,7 @@ def getItem(table, id):
     response = table.get_item(
         Key = { 'ID': id }
     )
-    print (f'{response=}')
+    print (f'getItem: {response=}')
     
     if 'Item' not in response:
         return None
@@ -40,13 +40,15 @@ def getItem(table, id):
 # 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
 lambdaClient = boto3.client('lambda')
 def invoke(functionName, params):
-    print(f'invoking [{functionName}]({params})...')
+    print(f'invoke.invoking [{functionName}]({params})...')
     
     response = lambdaClient.invoke(
         FunctionName = functionName,
         Payload=json.dumps(params),
         LogType='Tail')
     ret = json.loads(response['Payload'].read())
+    
+    print(f'invoke.returning {ret}')
     return ret
         
 
@@ -61,6 +63,8 @@ def canonicalize(object: any) -> str:
 # REQUEST { hostname }
 # RESPONSE: str
 def invokeDkimReader(event):
+    print(f'invokeDkimReader: {event=}')
+    
     domain = event['Header']['From']
     hostname = 'dtfw._domainkey.' + domain
     return invoke(
@@ -72,18 +76,23 @@ def invokeDkimReader(event):
 
 
 def getFrom(event):
+    print(f'getFrom: {event=}')
     return event['Header']['From']
 
 
 def getTo(event):
+    print(f'getTo: {event=}')
     return event['Header']['To']
     
 
 def getSubject(event):
+    print(f'getSubject: {event=}')
     return event['Header']['Subject']
     
 
 def validateTo(received: any):
+    print(f'validateTo: {received=}')
+    
     if getTo(received).lower() != os.environ['DOMAIN_NAME']:
         a = getTo(received).lower()
         b = os.environ['DOMAIN_NAME']
@@ -93,7 +102,7 @@ def validateTo(received: any):
 # REQUEST { text, publicKey, signature }
 # RESPONSE { hash, isVerified }
 def invokeValidator(text, publicKey, signature):
-    invoke(os.environ['VALIDATOR_FN'], {
+    return invoke(os.environ['VALIDATOR_FN'], {
         'text': text,
         'publicKey': publicKey,
         'signature': signature
@@ -110,6 +119,7 @@ def validateSignature(received: any):
     publicKey = invokeDkimReader(received)
     signature = received['Signature']
     verification = invokeValidator(text, publicKey, signature)
+    print(f'{verification=}')
 
     if verification['hash'] != received['Hash']:
         a = verification['hash']
@@ -119,14 +129,18 @@ def validateSignature(received: any):
     if not verification['isVerified']:
         raise Exception(f'Signature not valid.')
 
+    return verification
 
 
 def handler(event, context):
     print(f'{event=}')
+    
+    if 'httpMethod' in event and 'body' in event:
+        event = json.loads(event['body'])
 
     received = event
     validateTo(received)
-    validateSignature(received) 
+    validation = validateSignature(received) 
     
     # EXECUTE THE ACTION
     subject = getSubject(received)
@@ -138,21 +152,31 @@ def handler(event, context):
             functionName=target['Target'], 
             params=received)
     
+    print(f'Building the output...')
     output = {
         'Executed': {
             'Subject': subject,
             'Target': target,
             'Answer': answer
         },
-        'Validated': {
-            'PublicKey': pub_key,
-            'Rehashed': rehashed['digested'],
-            'Canonicalized': rehashed['canonicalized']
-        },
+        'Validation': validation,
         'Received': received
     }
 
-    return output
+    print ('Returning...')
+    if validation['isVerified'] != True:
+        return {
+            'statusCode': 400,
+            'body': json.dumps(output)
+        }
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps(output)
+    }
+    
+
+    
     
 
 '''
