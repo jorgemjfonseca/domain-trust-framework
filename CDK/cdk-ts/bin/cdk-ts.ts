@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { Manifester } from '../lib/Behaviours/Manifester/stack/ManifesterBehaviour';
-import { Messenger } from '../lib/Behaviours/Messenger/stack/MessengerBehaviour';
+import { Manifester } from '../lib/Behaviours/Manifester/stack/Manifester';
+import { Messenger } from '../lib/Behaviours/Messenger/stack/Messenger';
 import { HostBehaviour as Host } from '../lib/Behaviours/Host/stack/HostBehaviour';
 import { SyncApi } from '../lib/Behaviours/SyncApi/stack/SyncApi';
 import { DomainDns } from '../lib/Behaviours/DomainDns/stack/DomainDns';
@@ -70,17 +70,20 @@ const syncApi = SyncApi.New(app, {
     syncApiHandlers
 });
 
-const messenger = new Messenger(app);
-messenger.addDependency(syncApi);
+const messenger = Messenger.New(app, {
+    syncApi
+});
 
-const manifester = new Manifester(app, {});
-manifester.addDependency(domainName);
-manifester.addDependency(messenger);
+const manifester = Manifester.New(app, {
+    domainName,
+    messenger
+});
 
-const domain = new Domain(app);
-domain.addDependency(manifester);
-domain.addDependency(syncApi);
-domain.addDependency(messenger);
+const domain = Domain.New(app, {
+    manifester,
+    syncApi,
+    messenger
+});
 
 const publisher = new Publisher(app);
 publisher.addDependency(domain);

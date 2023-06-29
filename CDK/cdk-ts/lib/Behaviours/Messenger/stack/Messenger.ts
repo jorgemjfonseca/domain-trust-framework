@@ -4,6 +4,7 @@ import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { BUS } from '../../../Common/BUS/BUS';
 import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
 import { STACK } from '../../../Common/STACK/STACK';
+import { SyncApi } from '../../SyncApi/stack/SyncApi';
 
 
 declare module '../../../Common/LAMBDA/LAMBDA' {
@@ -13,6 +14,10 @@ declare module '../../../Common/LAMBDA/LAMBDA' {
   }
 }
 
+export interface MessengerDependencies {
+  syncApi: SyncApi
+}
+
 
 //https://quip.com/Fxj4AdnE6Eu5/-Messenger
 export class Messenger extends STACK {
@@ -20,8 +25,13 @@ export class Messenger extends STACK {
   private static readonly BUS_NAME = 'DtfwBus';
   private static readonly PUBLISHER = 'MessengerPublisher';
 
+  public static New(scope: Construct, deps: MessengerDependencies): Messenger {
+    const ret = new Messenger(scope);
+    ret.addDependency(deps.syncApi);
+    return ret;
+  }
  
-  public constructor(scope: Construct, props?: cdk.StackProps) {
+  private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, Messenger.name, {
       description: 'Creates async message bus.',
       ...props
