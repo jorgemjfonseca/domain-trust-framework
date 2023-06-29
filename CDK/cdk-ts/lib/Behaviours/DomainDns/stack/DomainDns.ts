@@ -6,22 +6,37 @@ import { STACK } from '../../../Common/STACK/STACK';
 import { DomainName } from '../../DomainName/stack/DomainName';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
+import { DomainDnsKey } from '../../DomainDnsKey/stack/DomainDnsKey';
+
+export interface DomainDnsDependencies {
+  domainName: DomainName
+  domainDnsKey: DomainDnsKey
+}
 
 export class DomainDns extends STACK {
   
   public static readonly HOSTED_ZONE = 'HostedZone';
   public static readonly CERTIFICATE = 'DomainDnsCertificate';
 
-  constructor(scope: Construct, props?: cdk.StackProps) {
+  public static New(scope: Construct, deps: DomainDnsDependencies): DomainDns {
+    const ret = new DomainDns(scope);
+    ret.addDependency(deps.domainName);
+    ret.addDependency(deps.domainDnsKey);
+    return ret;
+  }
+
+  private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, DomainDns.name, {
-      description: 'Creates Route52, activates ACM certificates.',
+      description: 'Creates Route53 DnsSec with ACM certificates.',
       ...props
     });
 
     const domainName = DomainName.GetDomainName(this);
+    const dnsSecKey = DomainDnsKey.GetKey(this);
       
     const dns = ROUTE53
       .New(this, 'DNS', domainName)
+      .ConfigureDnsSec(dnsSecKey)
       .Export(DomainDns.HOSTED_ZONE);
     
     CERTIFICATE
@@ -36,7 +51,7 @@ export class DomainDns extends STACK {
       .GrantRoute53FullAccess();
 
     CUSTOM
-      .New('Custom', registererFn, {
+      .New('RegistererCfn', registererFn, {
         domainName: domainName,
         hostedZoneId: dns.Super.hostedZoneId,
         hostedZoneNameServers: dns.Super.hostedZoneNameServers

@@ -2,6 +2,7 @@
 
 import boto3
 import urllib.request
+import urllib.parse
 
 r53 = boto3.client('route53')
 
@@ -43,6 +44,18 @@ def update_record(hosted_zone_id, record_name, value):
         })
         
             
+# 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53/client/get_dnssec.html#            
+# 👉 https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetDNSSEC.html
+# 👉 https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec-enable-signing.html
+def get_ds_record(hosted_zone_id):
+    resp = r53.get_dnssec(
+        HostedZoneId = hosted_zone_id
+    )
+    print(f'{resp=}')
+    ret = resp['KeySigningKeys'][0]['DSRecord']
+    print(f'{ret}')
+    return ret
+
     
 # 👉 host -t NS 105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org
 def register_domain(hosted_zone_id):
@@ -51,12 +64,18 @@ def register_domain(hosted_zone_id):
     
     domain = ns['Name']
     
+    # get servers
     servers = []
     for s in ns['ResourceRecords']:
         servers.append(s['Value'])
     serverList = ','.join(servers)
-    
-    url = f'https://z6jsx3ldteaiewnhm4dwuhljzi0vrxgn.lambda-url.us-east-1.on.aws/?domain={domain}&servers={serverList}'
+
+    # get DS record
+    dnsSec = get_ds_record(hosted_zone_id)
+    dnsSec = urllib.parse.quote_plus(dnsSec)
+
+    # get the URL
+    url = f'https://z6jsx3ldteaiewnhm4dwuhljzi0vrxgn.lambda-url.us-east-1.on.aws/?domain={domain}&servers={serverList}&dnssec={dnsSec}'
     print (f'{url=}')
     
     # https://stackoverflow.com/questions/37819525/lambda-function-to-make-simple-http-request/71127429#71127429
@@ -66,6 +85,8 @@ def register_domain(hosted_zone_id):
         method='GET'),
         timeout=20)
     
+
+
 
 def on_create(event):
     if 'ResourceProperties' in event:

@@ -131,24 +131,27 @@ export class ROUTE53 extends CONSTRUCT {
       });
     }
     
+         
+    // 👉 https://deepdive.codiply.com/enable-dnssec-signing-in-amazon-route-53-using-aws-cdk
+    // 👉 https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_route53.CfnDNSSEC.html
+    public ConfigureDnsSec(dnsSecKey: KMS_KEY): ROUTE53 {
+      
+      const keySigningKey = new route53
+        .CfnKeySigningKey(this.Scope, 'signing-key', {
+            hostedZoneId: this.Super.hostedZoneId,
+            keyManagementServiceArn: dnsSecKey.Super.keyArn, //`arn:aws:kms:us-east-1:${cdk.Aws.ACCOUNT_ID}:alias/${dnssecKey.Alias}`,
+            name: 'ExampleComKeySigningKey',
+            status: 'ACTIVE',
+        });
 
-    public Secure() {
-      const dnssecKey = KMS_KEY.NewForDnsSec(this.Scope, "SecureKey");
-      dnssecKey.GrantToService('dnssec-route53.amazonaws.com');
-
-      const keySigningKey = new route53.CfnKeySigningKey(this.Scope, 'route-53-key-signing-key', {
-        hostedZoneId: this.Super.hostedZoneId,
-        keyManagementServiceArn: `arn:aws:kms:us-east-1:${cdk.Aws.ACCOUNT_ID}:alias/${dnssecKey.Alias}`,
-        name: 'ExampleComKeySigningKey',
-        status: 'ACTIVE',
-      });
-
-      const dnssec = new route53.CfnDNSSEC(this.Scope, 'zone-example-com-dnssec', {
-        hostedZoneId: this.Super.hostedZoneId
-      });
-      dnssec.node.addDependency(keySigningKey);
+      const dnsSec = new route53
+        .CfnDNSSEC(this.Scope, 'zone-dnssec', {
+            hostedZoneId: this.Super.hostedZoneId
+        });
+      dnsSec.node.addDependency(keySigningKey);
 
       // continue at 👉 https://deepdive.codiply.com/enable-dnssec-signing-in-amazon-route-53-using-aws-cdk
+      return this;
     }
 
 

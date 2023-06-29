@@ -9,6 +9,10 @@ import { ROUTE53 } from '../../../Common/ROUTE53/ROUTE53';
 import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 
 
+export interface SyncApiDkimDependencies {
+  domainDns: DomainDns
+}
+
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
 export class SyncApiDkim extends STACK {
 
@@ -16,7 +20,13 @@ export class SyncApiDkim extends STACK {
   public static readonly VALIDATOR_FN = 'SyncApiDkim-Validator';
   public static readonly DKIM_READER_FN = 'SyncApiDkim-DkimReader';
 
-  constructor(scope: Construct, props?: cdk.StackProps) {
+  public static New(scope: Construct, deps: SyncApiDkimDependencies): SyncApiDkim {
+    const ret = new SyncApiDkim(scope);
+    ret.addDependency(deps.domainDns);
+    return ret;
+  }
+
+  private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, SyncApiDkim.name, {
       description: 'Creates Key-Pair, sets DKIM.',
       ...props

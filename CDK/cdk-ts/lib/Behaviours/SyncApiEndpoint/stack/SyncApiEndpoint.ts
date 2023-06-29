@@ -11,6 +11,10 @@ import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 import { DomainName } from '../../DomainName/stack/DomainName';
 import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
 
+export interface SyncApiEndpointDependencies {
+  domainDns: DomainDns,
+  syncApiHandlers: SyncApiHandlers
+}
 
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
 export class SyncApiEndpoint extends STACK {
@@ -18,7 +22,14 @@ export class SyncApiEndpoint extends STACK {
   
   public static readonly API = 'SyncApi';
 
-  constructor(scope: Construct, props?: cdk.StackProps) {
+  public static New(scope: Construct, deps: SyncApiEndpointDependencies): SyncApiEndpoint {
+    const ret = new SyncApiEndpoint(scope);
+    ret.addDependency(deps.domainDns);
+    ret.addDependency(deps.syncApiHandlers);
+    return ret;
+  }
+
+  private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, SyncApiEndpoint.name, {
       description: 'Creates ApiGW+WAF with custom domain.',
       ...props

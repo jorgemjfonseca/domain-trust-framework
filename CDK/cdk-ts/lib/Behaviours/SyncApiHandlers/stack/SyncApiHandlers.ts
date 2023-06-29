@@ -8,7 +8,9 @@ import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
 import { DomainName } from '../../DomainName/stack/DomainName';
 import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 
-
+export interface SyncApiHandlersDependencies {
+  syncApiDkim: SyncApiDkim
+}
 
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
 export class SyncApiHandlers extends STACK {
@@ -19,7 +21,13 @@ export class SyncApiHandlers extends STACK {
   public static readonly SENDER = 'SyncApiSenderFn';
   public static readonly RECEIVER = 'SyncApiReceiverFn';
 
-  constructor(scope: Construct, props?: cdk.StackProps) {
+  public static New(scope: Construct, deps: SyncApiHandlersDependencies): SyncApiHandlers {
+    const ret = new SyncApiHandlers(scope);
+    ret.addDependency(deps.syncApiDkim);
+    return ret;
+  }
+
+  private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, SyncApiHandlers.name, {
       description: 'Creates handlers for Sender and Receiver Map.',
       ...props

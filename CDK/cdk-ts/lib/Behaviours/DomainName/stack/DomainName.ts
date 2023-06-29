@@ -31,7 +31,11 @@ export class DomainName extends STACK {
       });
   }
 
-  constructor(scope: Construct, props?: cdk.StackProps) {
+  public static New(scope: Construct): DomainName {
+    return new DomainName(scope);
+  }
+  
+  private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, DomainName.name, {
       description: 'Defines a random name for the domain.',
       ...props
@@ -40,4 +44,7 @@ export class DomainName extends STACK {
     this.SetDomainName();
 
   }
+
+  
+
 }

@@ -8,38 +8,44 @@ import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 export class KMS_KEY extends CONSTRUCT {
 
     Super: kms.Key;
-    KeySpec: string;
     Alias: string;
     
-    constructor(scope: STACK, sup: kms.Key, spec: string, alias: string) {
+    constructor(scope: STACK, sup: kms.Key, alias: string) {
       super(scope);
       this.Super = sup;
-      this.KeySpec = spec;
       this.Alias = alias;
     }
 
-    private static New(scope: STACK, id: string, spec:kms.KeySpec): KMS_KEY {
+    private static New(scope: STACK, id: string, props: kms.KeyProps): KMS_KEY {
       const alias = scope.stackName + id;
       const sup = new kms.Key(scope, id, {
         alias: alias,
-        keySpec: spec,
-        keyUsage: kms.KeyUsage.SIGN_VERIFY,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
         enableKeyRotation: false,
+        pendingWindow: cdk.Duration.days(7),
+        ...props
       });
 
-      const ret = new KMS_KEY(scope, sup, spec, alias);
+      const ret = new KMS_KEY(scope, sup, alias);
       return ret;
     }
 
 
     public static NewForDomain(scope: STACK, id: string): KMS_KEY {
-        return KMS_KEY.New(scope, id, kms.KeySpec.RSA_2048);
+        return KMS_KEY.New(scope, id, {
+          keySpec: kms.KeySpec.RSA_2048,
+          keyUsage: kms.KeyUsage.SIGN_VERIFY,
+        });
     }
     
 
     public static NewForDnsSec(scope: STACK, id: string): KMS_KEY {
-        return KMS_KEY.New(scope, id, kms.KeySpec.ECC_NIST_P256);
+        const ret = KMS_KEY.New(scope, id, {
+          keySpec: kms.KeySpec.ECC_NIST_P256,
+          keyUsage: kms.KeyUsage.SIGN_VERIFY,
+        });
+        ret.GrantToDnsSec();
+        return ret;
     }
 
 
@@ -52,21 +58,31 @@ export class KMS_KEY extends CONSTRUCT {
         value: this.Alias,
         exportName: alias + 'Alias',
       });
-      new cdk.CfnOutput(this.Super, alias+'Spec', {
-        value: this.KeySpec,
-        exportName: alias + 'Spec',
-      });
+      
       return this;
     }
 
+    public static ImportFromRegion(
+      scope: STACK, 
+      stackRegion: string, 
+      stackName: string, 
+      alias: string
+    ): KMS_KEY {
+      return new KMS_KEY(scope,
+        kms.Key.fromKeyArn(scope, alias, 
+          `arn:aws:kms:${stackRegion}:${cdk.Aws.ACCOUNT_ID}:alias/${stackName}${alias}`) as kms.Key,
+        alias);
+    }
 
     public static Import(scope: STACK, alias: string): KMS_KEY {
       return new KMS_KEY(scope,
         kms.Key.fromKeyArn(scope, alias, cdk.Fn.importValue(alias+'Arn')) as kms.Key,
-        cdk.Fn.importValue(alias+'Spec'), 
-        cdk.Fn.importValue(alias+'Alias'));
+        cdk.Fn.importValue(alias));
     }
 
+    public GrantToDnsSec() {
+      this.GrantToService('dnssec-route53.amazonaws.com');
+    }
 
     public GrantToService(service: string) {
 

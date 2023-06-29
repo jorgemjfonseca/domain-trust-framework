@@ -33,6 +33,7 @@ import { SyncApiDkim } from '../lib/Behaviours/SyncApiDkim/stack/SyncApiDkim';
 import { SyncApiHandlers } from '../lib/Behaviours/SyncApiHandlers/stack/SyncApiHandlers';
 import { DomainName } from '../lib/Behaviours/DomainName/stack/DomainName';
 import { Domain } from '../lib/Behaviours/Domain/stack/Domain';
+import { DomainDnsKey } from '../lib/Behaviours/DomainDnsKey/stack/DomainDnsKey';
 
 
 const app = new cdk.App();
@@ -40,26 +41,34 @@ const app = new cdk.App();
 // =====================================
 // BEHAVIOURS
 
-const domainName = new DomainName(app);
+const domainName = DomainName.New(app);
 
-const domainDns = new DomainDns(app);
-domainDns.addDependency(domainName);
+const domainDnsKey = DomainDnsKey.New(app);
 
-const syncApiDkim = new SyncApiDkim(app);
-syncApiDkim.addDependency(domainDns);
+const domainDns = DomainDns.New(app, {
+    domainName,
+    domainDnsKey
+});
 
-const syncApiHandlers = new SyncApiHandlers(app);
-syncApiHandlers.addDependency(syncApiDkim);
+const syncApiDkim = SyncApiDkim.New(app, {
+    domainDns
+});
 
-const syncApiEndpoint = new SyncApiEndpoint(app);
-syncApiEndpoint.addDependency(domainDns);
-syncApiEndpoint.addDependency(syncApiHandlers);
+const syncApiHandlers = SyncApiHandlers.New(app, {
+    syncApiDkim
+});
 
-const syncApi = new SyncApi(app);
-syncApi.addDependency(domainDns);
-syncApi.addDependency(syncApiDkim);
-syncApi.addDependency(syncApiEndpoint);
-syncApi.addDependency(syncApiHandlers);
+const syncApiEndpoint = SyncApiEndpoint.New(app, {
+    domainDns, 
+    syncApiHandlers
+});
+
+const syncApi = SyncApi.New(app, {
+    domainDns, 
+    syncApiDkim,
+    syncApiEndpoint,
+    syncApiHandlers
+});
 
 const messenger = new Messenger(app);
 messenger.addDependency(syncApi);
