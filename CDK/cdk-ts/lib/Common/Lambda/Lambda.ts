@@ -116,7 +116,10 @@ export class LAMBDA extends CONSTRUCT {
     }
 
     
-    public static FromFunctionName(scope: STACK, name: string) {
+    /**
+     * @deprecated
+     */
+    private static FromFunctionName(scope: STACK, name: string) {
       return lambda.Function
         .fromFunctionName(scope, name, name);
     }
@@ -128,37 +131,46 @@ export class LAMBDA extends CONSTRUCT {
         value: this.Super.functionName,
         exportName: alias,
       });
-      /*
       new cdk.CfnOutput(this.Super, alias+'Arn', {
-        value: this.Super.functionName + 'Arn',
-        exportName: alias,
+        value: this.Super.functionArn,
+        exportName: alias + 'Arn',
       });
-      */
+      new cdk.CfnOutput(this.Super, alias+'RoleArn', {
+        value: this.Super.role?.roleArn + '',
+        exportName: alias + 'RoleArn',
+      });
       return this;
     }
 
 
-    public static NewFromFunctionName(scope: STACK, name: string): LAMBDA {
+    private static NewFromFunctionName(scope: STACK, name: string): LAMBDA {
       const sup = lambda.Function.fromFunctionName(scope, scope.RandomName(name), name);
       const ret = new LAMBDA(scope, sup as lambda.Function);
       return ret;
     }
 
-    public static NewFromAttributes(scope: STACK, arn: string): LAMBDA {
-      const sup = lambda.Function.fromFunctionAttributes(scope, scope.RandomName(arn), {
-        functionArn: arn,
-        sameEnvironment: true,
-      });
+    private static NewFromAttributes(scope: STACK, functionArn: string, roleArn: string): LAMBDA {
+      const sup = lambda.Function.fromFunctionAttributes(
+        scope, 
+        scope.RandomName('fn'), {
+          functionArn: functionArn,
+          role: iam.Role.fromRoleArn(
+            scope, 
+            scope.RandomName('role'), 
+            roleArn),
+          sameEnvironment: true,
+        });
       const ret = new LAMBDA(scope, sup as lambda.Function);
       return ret;
     }
 
     // Imports from a parameter.
     public static Import(scope: STACK, alias: string): LAMBDA {
-      const name = cdk.Fn.importValue(alias);
-      //const arn =  cdk.Fn.importValue(alias + 'Arn');
-      return LAMBDA.NewFromFunctionName(scope, name);
-      //return LAMBDA.NewFromAttributes(scope, arn);
+      //const name = cdk.Fn.importValue(alias);
+      //return LAMBDA.NewFromFunctionName(scope, name);
+      const functionArn =  cdk.Fn.importValue(alias + 'Arn');
+      const roleArn =  cdk.Fn.importValue(alias + 'RoleArn');
+      return LAMBDA.NewFromAttributes(scope, functionArn, roleArn);
     }
 
 
@@ -347,7 +359,10 @@ export class LAMBDA extends CONSTRUCT {
       return this.AttachManagedPolicy('SecretsManagerReadWrite');
     }
 
-    public GrantLambdaInvocation(): LAMBDA {
+    /**
+     * @deprecated Don't be lazy!
+     */
+    private GrantLambdaInvocation(): LAMBDA {
       return this.AttachManagedPolicy('AWSLambdaInvocation-DynamoDB');
     }
 
@@ -388,18 +403,16 @@ export class LAMBDA extends CONSTRUCT {
     }
 
     
-    public InvokesLambda(lambda: LAMBDA, alias: string): LAMBDA {
+    public InvokesLambda(fn: LAMBDA, envName?: string): LAMBDA {
       // Error: "Cannot get policy fragment of PublisherBehaviour/${Token[TOKEN.1378]}, resource imported without a role"
       // But it's already authorized for any Lambda invocation, so we're good.
-      try { 
-        if (lambda.Super.role)
-          lambda.Super.grantInvoke(this.Super);
-      } catch {}
-      if (this.Super?.addEnvironment)
-        this.Super?.addEnvironment("LAMBDA_", alias);
+      fn.Super.grantInvoke(this.Super);
+      if (envName)
+        this.Super?.addEnvironment(envName, fn.FunctionName());
       return this;
     }
 
+    
     private getTableParam(alias?: string): string {
       const name = "TABLE" + (alias ? "_" + alias.toUpperCase() : "");
       if (name == 'TABLE_UNDEFINED')

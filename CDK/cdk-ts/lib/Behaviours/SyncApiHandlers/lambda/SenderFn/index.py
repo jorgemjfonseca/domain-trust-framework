@@ -1,10 +1,7 @@
-# 📚 SyncApi.SenderFn
+# 📚 SyncApiHandlers-SenderFn
 
 import boto3
 from urllib import request, parse
-import base64
-from base64 import b64encode
-from hashlib import sha256
 import os
 import json
 import uuid
@@ -48,9 +45,14 @@ def canonicalize(object: any) -> str:
 # 👉️ https://stackoverflow.com/questions/36484184/python-make-a-post-request-using-python-3-urllib    
 def post(url: str, body: any) -> any:
     print(f'{url=}')
+    print(f'body={json.dumps(body)}')
 
-    data = parse.urlencode(body).encode()
-    req = request.Request(url=url, data=data)
+    # data = parse.urlencode(body).encode()
+    # print(f'{data=}')
+    data = bytes(json.dumps(body), encoding='utf-8')
+    
+    req = request.Request(url=url, method='POST', data=data)
+    req.add_header('Content-Type', 'application/json')
     resp = request.urlopen(req)
     
     charset=resp.info().get_content_charset()
@@ -58,6 +60,7 @@ def post(url: str, body: any) -> any:
         charset = 'utf-8'
     content=resp.read().decode(charset)
     
+    print(f'{content=}')
     return content
 
 

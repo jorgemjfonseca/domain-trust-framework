@@ -16,7 +16,7 @@ export interface SyncApiDkimDependencies {
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
 export class SyncApiDkim extends STACK {
 
-  public static readonly SIGNER_FN = 'SyncApiDkim-Signer';
+  private static readonly SIGNER_FN = 'SyncApiDkim-Signer';
   public static readonly VALIDATOR_FN = 'SyncApiDkim-Validator';
   public static readonly DKIM_READER_FN = 'SyncApiDkim-DkimReader';
 
@@ -61,23 +61,24 @@ export class SyncApiDkim extends STACK {
 
     const keyPairRotatorFn = LAMBDA
       .New(this, 'KeyPairRotatorFn')
-      .GrantLambdaInvocation()
-      .AddEnvironment('KeyPairGeneratorFn', keyPairGenerator.FunctionName())
-      .AddEnvironment('SecretSetterFn', secretSetterFn.FunctionName())
-      .AddEnvironment('DkimSetterFn', dkimSetterFn.FunctionName());
+      .InvokesLambda(keyPairGenerator, 'KeyPairGeneratorFn')
+      .InvokesLambda(secretSetterFn, 'SecretSetterFn')
+      .InvokesLambda(dkimSetterFn, 'DkimSetterFn');
 
     const cfnFn = LAMBDA
       .New(this, 'CfnFn', {
         runtime: LAMBDA.PYTHON_3_10,
         handler: 'index.on_event'
       })
-      .GrantLambdaInvocation()
-      .AddEnvironment('KeyPairRotatorFn', keyPairRotatorFn.FunctionName());
+      .InvokesLambda(keyPairRotatorFn, 'KeyPairRotatorFn');
 
     CUSTOM
       .New('Custom', cfnFn);
   }
 
+  public static GetSigner(stack: STACK): LAMBDA {
+    return LAMBDA.Import(stack, SyncApiDkim.SIGNER_FN);
+  }
 
   private SetUpSigner(domainName: string) {
 

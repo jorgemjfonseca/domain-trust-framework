@@ -411,10 +411,10 @@ export class API extends CONSTRUCT {
     }
 
 
-    ApiServicePrinciple():iam.ServicePrincipal {
+    ApiServicePrinciple(): iam.ServicePrincipal {
       return new iam.ServicePrincipal('apigateway.amazonaws.com', {
         conditions: {
-          ArnEquals: {
+          ArnLike: {
             'aws:SourceArn': `arn:aws:execute-api:${this.Scope.region}:${this.Scope.account}:${this.Super.restApiId}/*/*`,
           }
         }

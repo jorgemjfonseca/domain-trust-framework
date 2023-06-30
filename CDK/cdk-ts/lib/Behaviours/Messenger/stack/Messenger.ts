@@ -59,6 +59,7 @@ export class Messenger extends STACK {
     LAMBDA.prototype.HandlesMessenger = function(action: string) {
       return Messenger.HandlesMessenger(this.Scope, action, this);
     };
+    
     LAMBDA.prototype.PublishesToMessenger = function() {
       return Messenger.PublishesToMessenger(this.Scope, this);
     };

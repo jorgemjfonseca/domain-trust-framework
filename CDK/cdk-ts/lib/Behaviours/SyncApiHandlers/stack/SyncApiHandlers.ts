@@ -3,10 +3,8 @@ import { Construct } from 'constructs';
 import { STACK } from '../../../Common/STACK/STACK';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
-import { SyncApiEndpoint } from '../../SyncApiEndpoint/stack/SyncApiEndpoint';
 import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
 import { DomainName } from '../../DomainName/stack/DomainName';
-import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 
 export interface SyncApiHandlersDependencies {
   syncApiDkim: SyncApiDkim
@@ -21,19 +19,23 @@ export class SyncApiHandlers extends STACK {
   private static readonly SENDER = 'SyncApiSenderFn';
   private static readonly RECEIVER = 'SyncApiReceiverFn';
 
+
   public static GetSenderFn(scope: STACK) {
     return LAMBDA.Import(scope, this.SENDER);
   }
 
+
   public static GetReceiverFn(scope: STACK) {
     return LAMBDA.Import(scope, this.RECEIVER);
   }
+
 
   public static New(scope: Construct, deps: SyncApiHandlersDependencies): SyncApiHandlers {
     const ret = new SyncApiHandlers(scope);
     ret.addDependency(deps.syncApiDkim);
     return ret;
   }
+
 
   private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, SyncApiHandlers.name, {
@@ -50,18 +52,15 @@ export class SyncApiHandlers extends STACK {
   }
 
 
-
   private SetUpSender(domainName: string) {
       
-    const signer = LAMBDA
-      .Import(this, SyncApiDkim.SIGNER_FN);
+    const signer = SyncApiDkim.GetSigner(this);
 
     const senderFn = LAMBDA
         .New(this, "SenderFn")
-        .GrantLambdaInvocation()
+        .InvokesLambda(signer, 'SIGNER_FN')
         .GrantSecretsManagerReadWrite()
         .Export(SyncApiHandlers.SENDER)
-        .AddEnvironment('SIGNER_FN', signer.FunctionName())
         .AddEnvironment('DOMAIN_NAME', domainName);
   }
 
@@ -83,9 +82,8 @@ export class SyncApiHandlers extends STACK {
     LAMBDA
       .New(this, "ReceiverFn")
       .ReadsFromDynamoDB(map)
-      .GrantLambdaInvocation()
-      .AddEnvironment('DKIM_READER_FN', dkimReaderFn.FunctionName())
-      .AddEnvironment('VALIDATOR_FN', validatorFn.FunctionName())
+      .InvokesLambda(dkimReaderFn, 'DKIM_READER_FN')
+      .InvokesLambda(validatorFn, 'VALIDATOR_FN')
       .AddEnvironment('DOMAIN_NAME', domainName)
       .Export(SyncApiHandlers.RECEIVER);
 
@@ -98,15 +96,21 @@ export class SyncApiHandlers extends STACK {
   }
   
 
-  public static HandlesSyncApi(scope: STACK, action: string, lambda: LAMBDA) 
+  public static HandlesSyncApi(scope: STACK, action: string, fn: LAMBDA) 
   {
     const map = DYNAMO
       .Import(scope, SyncApiHandlers.MAP);
       
+    // Register the function name.
     map.PutItem({
       'ID': {'S':action},
-      'Target': {'S':lambda.Super.functionName}
+      'Target': {'S':fn.FunctionName()}
     });
+
+    // Add invoke permission.
+    SyncApiHandlers
+      .GetReceiverFn(scope)
+      .InvokesLambda(fn);
   }
 
 }

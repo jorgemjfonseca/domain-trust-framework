@@ -1,5 +1,4 @@
 # 📚 SyncApiHandlers-ReceiverFn
-# TODO: on [handler], catch internal validation exceptions, and return a 400
 
 import boto3
 from urllib.request import urlopen
