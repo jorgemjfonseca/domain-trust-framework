@@ -18,6 +18,7 @@ import * as path from 'path';
 import { STACK } from '../STACK/STACK';
 import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 import { EC2_KEY } from '../KEY/EC2_KEY';
+import { APPCONFIG } from '../APPCONFIG/APPCONFIG';
 
 
 export interface LAMBDAparams {
@@ -127,12 +128,27 @@ export class LAMBDA extends CONSTRUCT {
         value: this.Super.functionName,
         exportName: alias,
       });
+      /*
+      new cdk.CfnOutput(this.Super, alias+'Arn', {
+        value: this.Super.functionName + 'Arn',
+        exportName: alias,
+      });
+      */
       return this;
     }
 
-    // Imports from a parameter.
+
     public static NewFromFunctionName(scope: STACK, name: string): LAMBDA {
       const sup = lambda.Function.fromFunctionName(scope, scope.RandomName(name), name);
+      const ret = new LAMBDA(scope, sup as lambda.Function);
+      return ret;
+    }
+
+    public static NewFromAttributes(scope: STACK, arn: string): LAMBDA {
+      const sup = lambda.Function.fromFunctionAttributes(scope, scope.RandomName(arn), {
+        functionArn: arn,
+        sameEnvironment: true,
+      });
       const ret = new LAMBDA(scope, sup as lambda.Function);
       return ret;
     }
@@ -140,7 +156,9 @@ export class LAMBDA extends CONSTRUCT {
     // Imports from a parameter.
     public static Import(scope: STACK, alias: string): LAMBDA {
       const name = cdk.Fn.importValue(alias);
+      //const arn =  cdk.Fn.importValue(alias + 'Arn');
       return LAMBDA.NewFromFunctionName(scope, name);
+      //return LAMBDA.NewFromAttributes(scope, arn);
     }
 
 
@@ -159,12 +177,8 @@ export class LAMBDA extends CONSTRUCT {
           'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'));
       
       this.Super.grantInvoke(new iam.ServicePrincipal('s3.amazonaws.com').withConditions({
-        ArnLike: {
-          'aws:SourceArn': bucket.Super.bucketArn,
-        },
-        StringEquals: {
-          'aws:SourceAccount': cdk.Aws.ACCOUNT_ID,
-        }
+        ArnLike: { 'aws:SourceArn': bucket.Super.bucketArn, },
+        StringEquals: { 'aws:SourceAccount': cdk.Aws.ACCOUNT_ID, }
       }));
 
       var destination = new s3n.LambdaDestination(this.Super);
@@ -176,7 +190,7 @@ export class LAMBDA extends CONSTRUCT {
     }
 
 
-    public TriggeredByQueue(queue: SQS): LAMBDA {
+    public TriggeredBySQS(queue: SQS): LAMBDA {
       queue.Super.grantConsumeMessages(this.Super);
 
       new lambda.EventSourceMapping(this.Scope, 'Mapping' + this.Scope.Next(), {
@@ -294,6 +308,12 @@ export class LAMBDA extends CONSTRUCT {
       return this;
     }
 
+    public ReadsFromS3(s3: S3): LAMBDA {
+      s3.Super.grantRead(this.Super);
+      this.Super.addEnvironment("S3_NAME", s3.Super.bucketName);
+      return this;
+    }
+
     public WritesToS3(s3: S3): LAMBDA {
       s3.Super.grantReadWrite(this.Super);
       s3.Super.grantDelete(this.Super);
@@ -330,6 +350,32 @@ export class LAMBDA extends CONSTRUCT {
     public GrantLambdaInvocation(): LAMBDA {
       return this.AttachManagedPolicy('AWSLambdaInvocation-DynamoDB');
     }
+
+    public GrantConfigUserAccess(): LAMBDA {
+      return this.AttachManagedPolicy('AWSConfigUserAccess');
+    }
+
+    public ReadsAppConfig(appConfig: APPCONFIG): LAMBDA {
+      appConfig.AddEnvironment(this);
+      this.GrantConfigUserAccess();
+      
+      this.Super.role?.attachInlinePolicy(
+        new iam.Policy(this.Scope, "PolicyConfig", {
+          statements: [
+            new iam.PolicyStatement({
+              actions: [
+                "appconfig:StartConfigurationSession",
+                "appconfig:GetLatestConfiguration"
+              ],
+              effect: iam.Effect.ALLOW,
+              resources: ['*'],
+            }),
+          ],
+        }));
+
+      return this;
+    }
+    
 
     // https://bobbyhadz.com/blog/aws-cdk-iam-policy-example
     public AttachManagedPolicy(name: string): LAMBDA {
@@ -404,8 +450,8 @@ export class LAMBDA extends CONSTRUCT {
     }
 
 
-    public AddApiMethod(api: API, name: string, method: string = "POST"): LAMBDA {
-      return api.SendToLambda(this, name, method);
+    public AddApiMethod(api: API, name: string, methods: string[] = ["POST"]): LAMBDA {
+      return api.SendToLambda(this, name, methods);
     }
 
     public SetApiRoot(api: API, method: string = "POST"): LAMBDA {

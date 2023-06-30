@@ -18,8 +18,16 @@ export class SyncApiHandlers extends STACK {
   private static readonly MAP = 'SyncApiMap';
   private static readonly MAPPER = 'SyncApiMapper';
 
-  public static readonly SENDER = 'SyncApiSenderFn';
-  public static readonly RECEIVER = 'SyncApiReceiverFn';
+  private static readonly SENDER = 'SyncApiSenderFn';
+  private static readonly RECEIVER = 'SyncApiReceiverFn';
+
+  public static GetSenderFn(scope: STACK) {
+    return LAMBDA.Import(scope, this.SENDER);
+  }
+
+  public static GetReceiverFn(scope: STACK) {
+    return LAMBDA.Import(scope, this.RECEIVER);
+  }
 
   public static New(scope: Construct, deps: SyncApiHandlersDependencies): SyncApiHandlers {
     const ret = new SyncApiHandlers(scope);

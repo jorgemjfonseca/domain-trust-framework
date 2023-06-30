@@ -21,7 +21,6 @@ def publish(eventBusName, source, detailType, detail):
         ]
 )
     
-
 def handler(event, context):
     print(f'{event=}')
 

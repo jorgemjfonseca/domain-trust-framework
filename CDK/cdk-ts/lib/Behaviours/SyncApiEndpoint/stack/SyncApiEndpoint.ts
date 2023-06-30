@@ -10,22 +10,25 @@ import { ROUTE53 } from '../../../Common/ROUTE53/ROUTE53';
 import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 import { DomainName } from '../../DomainName/stack/DomainName';
 import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
+import { ManifesterBucket } from '../../ManifesterBucket/stack/ManifesterBucket';
 
 export interface SyncApiEndpointDependencies {
   domainDns: DomainDns,
-  syncApiHandlers: SyncApiHandlers
+  syncApiHandlers: SyncApiHandlers,
+  manifesterBucket: ManifesterBucket
 }
 
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
 export class SyncApiEndpoint extends STACK {
 
   
-  public static readonly API = 'SyncApi';
+  private static readonly API = 'SyncApi';
 
   public static New(scope: Construct, deps: SyncApiEndpointDependencies): SyncApiEndpoint {
     const ret = new SyncApiEndpoint(scope);
     ret.addDependency(deps.domainDns);
     ret.addDependency(deps.syncApiHandlers);
+    ret.addDependency(deps.manifesterBucket);
     return ret;
   }
 
@@ -37,6 +40,7 @@ export class SyncApiEndpoint extends STACK {
 
     // BLOCKS
     const api = this.SetUpApi()
+    this.SetUpManifest(api);
     this.SetUpInbox(api);
     this.SetUpCustomDomain(api);
     this.SetUpFirewall(api);
@@ -57,9 +61,18 @@ export class SyncApiEndpoint extends STACK {
   private SetUpInbox(api: API) {
     // All changes to the API must be done on the same stack
     // because CDK doesn't redeploy the API after an import.
-    LAMBDA
-      .Import(this, SyncApiHandlers.RECEIVER)
-      .AddApiMethod(api, 'inbox', 'POST');
+    SyncApiHandlers
+      .GetReceiverFn(this)
+      .AddApiMethod(api, 'inbox', ['GET', 'POST']);
+  }
+
+
+  private SetUpManifest(api: API) {
+    // All changes to the API must be done on the same stack
+    // because CDK doesn't redeploy the API after an import.
+    ManifesterBucket
+      .GetViewerFn(this)
+      .AddApiMethod(api, 'manifest', ['GET']);
   }
 
   

@@ -74,7 +74,8 @@ export class SyncApiDkim extends STACK {
       .GrantLambdaInvocation()
       .AddEnvironment('KeyPairRotatorFn', keyPairRotatorFn.FunctionName());
 
-    CUSTOM.New('Custom', cfnFn);
+    CUSTOM
+      .New('Custom', cfnFn);
   }
 
 

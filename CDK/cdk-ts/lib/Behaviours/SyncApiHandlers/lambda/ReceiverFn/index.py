@@ -1,28 +1,29 @@
-# 📚 SyncApi.ReceiverFn
+# 📚 SyncApiHandlers-ReceiverFn
+# TODO: on [handler], catch internal validation exceptions, and return a 400
 
-from typing import Dict, Optional
 import boto3
-from urllib import request, parse
-import base64
-from base64 import b64encode, b64decode
-from hashlib import sha256
+from urllib.request import urlopen
 import os
 import json
-import copy
-import re
-import sys
 from copy import deepcopy
+import datetime
 
 
-tableName = os.environ['TABLE']
-dynamodbClient = boto3.resource('dynamodb')
-table = dynamodbClient.Table(tableName)
+table = None
+def db():
+    global table
+    if not table:
+        tableName = os.environ['TABLE']
+        print (f'{tableName=}')
+        
+        dynamodbClient = boto3.resource('dynamodb')
+        table = dynamodbClient.Table(tableName)
+    return table
 
 
 # 👉 https://www.fernandomc.com/posts/ten-examples-of-getting-data-from-dynamodb-with-python-and-boto3/
 def getItem(table, id):
     print (f'{id=}')
-    print (f'{tableName=}')
 
     response = table.get_item(
         Key = { 'ID': id }
@@ -40,7 +41,7 @@ def getItem(table, id):
 # 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
 lambdaClient = boto3.client('lambda')
 def invoke(functionName, params):
-    print(f'invoke.invoking [{functionName}]({params})...')
+    print(f'{elapsed()} invoke.invoking [{functionName}]({params})...')
     
     response = lambdaClient.invoke(
         FunctionName = functionName,
@@ -54,126 +55,335 @@ def invoke(functionName, params):
 
     
 # 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
-def canonicalize(object: any) -> str:
-    canonicalized = json.dumps(object, separators=(',', ':'))
+def canonicalize(received: any) -> str:
+    print(f'{elapsed()} Canonicalizing...')
+
+    copy = deepcopy(received)
+    del copy['Signature']
+    del copy['Hash']
+
+    canonicalized = json.dumps(copy, separators=(',', ':'))
     print(f'{canonicalized=}')
     return canonicalized    
 
 
 # REQUEST { hostname }
 # RESPONSE: str
-def invokeDkimReader(event):
+# 👉️ https://developers.google.com/speed/public-dns/docs/doh
+# 👉️ https://developers.google.com/speed/public-dns/docs/doh/json
+# 👉️ https://dns.google/resolve?name=dtfw._domainkey.38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org&type=TXT&do=1
+def invokeDkimReader(envelope, checks):
+    print(f'{elapsed()} Invoke dns.google...')
+    
+    header = getHeader(envelope)
+    domain = getHeaderFrom(header)
+    hostname = f'dtfw._domainkey.{domain}'
+    checks.append(f'Valid domain?: {hostname}')
+    
+    url = f'https://dns.google/resolve?name={hostname}&type=TXT&do=1'
+    with urlopen(url) as response:
+        body = response.read()
+
+    print(f'{elapsed()} Validate dns.google...')
+    resp = json.loads(body)
+    isDnsSec = (resp['AD'] == True)
+    checks.append(f'IsDnsSec?: {isDnsSec}')
+    if not isDnsSec:
+        raise Exception(f"Sender is not DNSSEC protected.")
+    
+    dkim = None
+    exists = 'Answer' in resp
+    checks.append(f'Exists?: {exists}')
+    if exists:
+        for answer in resp['Answer']:
+            if answer['type'] == 16:
+                dkim = answer['data']
+
+    isDkimSetUp = (dkim != None)
+    checks.append(f'DKIM set?: {isDkimSetUp}')
+    if not isDkimSetUp:
+        raise Exception(f"Sender DKIM not found for dtfw.")
+    
+    public_key = None
+    for part in dkim.split(';'):
+        elems = part.split('=')
+        if elems[0] == 'p' and len(elems) == 2:
+            public_key = elems[1];
+    
+    hasPublicKey = (public_key != None)
+    checks.append(f'Public Key set?: {hasPublicKey}')
+    if not hasPublicKey:
+        raise Exception(f"Public key not found on sender DKIM.")
+    
+    return public_key
+    
+
+# REQUEST { hostname }
+# RESPONSE: str
+def invokeDkimReader_deprecated(event):
     print(f'invokeDkimReader: {event=}')
     
     domain = event['Header']['From']
-    hostname = 'dtfw._domainkey.' + domain
+    hostname = f'dtfw._domainkey.{domain}'
     return invoke(
         os.environ['DKIM_READER_FN'],
         { 
             'hostname': hostname 
-        })
+        })    
+
+
+def getHeader(event):
+    #print(f'getHeader: {event=}')
+    if 'Header' not in event:
+        raise Exception(f'Header missing!')
+    return event['Header']
+
+
+def getHeaderFrom(header):
+    print(f'getHeaderFrom: {header=}')
+    if 'From' not in header or header['From'] == '':
+        raise Exception(f'Header.From missing!')
+    return header['From']
+
+
+def getHeaderTo(header):
+    #print(f'getHeaderTo: {header=}')
+    if 'To' not in header or header['To'].strip() == '':
+        raise Exception(f'Header.To missing!')
+    return header['To']
     
 
+def getHeaderSubject(header):
+    #print(f'getHeaderSubject: {header=}')
+    if 'Subject' not in header or header['Subject'].strip() == '':
+        raise Exception(f'Header.Subject missing!')
+    return header['Subject']
 
-def getFrom(event):
-    print(f'getFrom: {event=}')
-    return event['Header']['From']
 
-
-def getTo(event):
-    print(f'getTo: {event=}')
-    return event['Header']['To']
+def getSignature(envelope):
+    #print(f'getSignature: {envelope=}')
+    if 'Signature' not in envelope or envelope['Signature'].strip() == '':
+        raise Exception(f'Signature missing!')
+    return envelope['Signature']
     
 
-def getSubject(event):
-    print(f'getSubject: {event=}')
-    return event['Header']['Subject']
-    
+def getHash(envelope):
+    #print(f'getHash: {envelope=}')
+    if 'Hash' not in envelope:
+        raise Exception(f'Hash missing!')
+    return envelope['Hash']
 
-def validateTo(received: any):
-    print(f'validateTo: {received=}')
+
+def getBody(envelope):
+    #print(f'getBody: {envelope=}')
     
-    if getTo(received).lower() != os.environ['DOMAIN_NAME']:
-        a = getTo(received).lower()
-        b = os.environ['DOMAIN_NAME']
-        raise Exception(f'Wrong domain. Expected [{b}], but received [{a}].')
+    if 'Body' not in envelope or envelope['Body'] == '':
+        raise Exception(f'Body missing!')
+
+    return envelope['Body']
+
+
+def validateTo(envelope: any, checks):
+    #print(f'validateTo: {envelope=}')
+    
+    header = getHeader(envelope)
+    to = getHeaderTo(header).lower()
+    me = os.environ['DOMAIN_NAME']
+
+    if to != me:
+        raise Exception(f'Wrong domain. Expected [{me}], but received [{to}]!')
+    checks.append(f'For me?: {True}')
 
 
 # REQUEST { text, publicKey, signature }
 # RESPONSE { hash, isVerified }
 def invokeValidator(text, publicKey, signature):
-    return invoke(os.environ['VALIDATOR_FN'], {
+    print(f'{elapsed()} Invoking validator...')
+
+    validator = invoke(os.environ['VALIDATOR_FN'], {
         'text': text,
         'publicKey': publicKey,
         'signature': signature
     })
+    print(f'{validator=}')
+    return validator;
 
 
-def validateSignature(received: any):
+def validateHash(envelope, validator, checks):
+    expected = validator['hash']
+    received = getHash(envelope)
     
-    copy = deepcopy(received)
-    del copy['Signature']
-    del copy['Hash']
-    text = canonicalize(copy)
+    isHashValid = (expected == received)
+    checks.append(f'Valid hash?: {isHashValid}')
 
-    publicKey = invokeDkimReader(received)
-    signature = received['Signature']
-    verification = invokeValidator(text, publicKey, signature)
-    print(f'{verification=}')
-
-    if verification['hash'] != received['Hash']:
-        a = verification['hash']
-        b = received['Hash']
-        raise Exception(f'Wrong hash: expected [{a}] but received [{b}].')
-
-    if not verification['isVerified']:
-        raise Exception(f'Signature not valid.')
-
-    return verification
+    if not isHashValid:
+        raise Exception(f'Wrong hash: expected [{expected}] but received [{received}]!')
 
 
-def handler(event, context):
-    print(f'{event=}')
+def validateSignature(validator, checks):
+    isVerified = validator['isVerified']
+    checks.append(f'Valid signature?: {isVerified}')
+
+    if not isVerified:
+        raise Exception(f'Invalid signature!')
+
+
+def validateHashAndSignature(envelope: any, checks, speed):
+    print(f'{elapsed()} Validating signature...')
     
-    if 'httpMethod' in event and 'body' in event:
-        event = json.loads(event['body'])
+    started = startWatch()
+    signature = getSignature(envelope)
+    text = canonicalize(envelope)
+    publicKey = invokeDkimReader(envelope, checks)
+    speed['Get DKIM over DNSSEC'] = stopWatch(started)
 
-    received = event
-    validateTo(received)
-    validation = validateSignature(received) 
+    started = startWatch()
+    validator = invokeValidator(text, publicKey, signature)
+    validateHash(envelope, validator, checks)
+    validateSignature(validator, checks)
+    speed['Verify signature'] = stopWatch(started)
+
+
+def validateHeader(envelope):
+    print(f'{elapsed()} Validating header...')
+
+    header = getHeader(envelope)
+    getHeaderTo(header)
+    getHeaderSubject(header)
+
+
+def validate(envelope, speed):
+    print(f'{elapsed()} Validating...')
     
-    # EXECUTE THE ACTION
-    subject = getSubject(received)
-    target = getItem(table=table, id=subject)
+    error = None
+    checks = []
+    
+    try:
+        validateHeader(envelope)
+        validateTo(envelope, checks)
+        validateHashAndSignature(envelope, checks, speed) 
+    except Exception as e:
+        if hasattr(e, 'message'):
+            error = f'{e.message}'
+        else:
+            error = f'{e}'
+    
+    ret = {
+        'Error': error,
+        'Checks': checks
+    }
+
+    print(f'{ret=}')
+    return ret
+
+
+def execute(validation, envelope, speed):
+    print(f'{elapsed()} Executing...')
+    started = startWatch()
+
+    if validation['Error']:
+        ret = { 
+            'Result': 'Ignored, invalid envelope!'
+        }
+        print(f'{ret=}')
+        return ret
+
+    header = getHeader(envelope)
+    subject = getHeaderSubject(header)
+    target = getItem(table=db(), id=subject)
     
     answer = None 
     if (target):
         answer = invoke(
             functionName=target['Target'], 
-            params=received)
-    
-    print(f'Building the output...')
+            params=envelope)
+
+    ret = {
+        'Result': 'Executed',
+        'Target': target,
+        'Answer': answer
+    }    
+    print(f'{ret=}')
+
+    speed['Execute method'] = stopWatch(started)
+    return ret
+
+
+def httpResponse(code, body):
+    return {
+        'statusCode': code,
+        'body': json.dumps(body)
+    }
+
+
+def output(envelope, validation, execution, speed):
+    print(f'{elapsed()} Building the output...')
+
     output = {
-        'Executed': {
-            'Subject': subject,
-            'Target': target,
-            'Answer': answer
-        },
+        'Speed': speed,
+        'Execution': execution,
         'Validation': validation,
-        'Received': received
+        'Received': envelope
     }
 
     print ('Returning...')
-    if validation['isVerified'] != True:
-        return {
-            'statusCode': 400,
-            'body': json.dumps(output)
-        }
+    if validation['Error']:
+        return httpResponse(400, output)
+    return httpResponse(200, output)
 
-    return {
-        'statusCode': 200,
-        'body': json.dumps(output)
-    }
+
+def startWatch():
+    return datetime.datetime.now()
+
+def stopWatch(start):
+    current = datetime.datetime.now()
+    elapsed = (current - start)
+    output = round(elapsed.total_seconds() * 1000)
+    return f'{output} ms'
+    
+
+timerStart = datetime.datetime.now()
+def elapsed():
+    global timerStart
+    current = datetime.datetime.now()
+    elapsed = (current - timerStart)
+    timerStart = current
+    output = round(elapsed.total_seconds() * 1000)
+    return f'''--> Elapsed: {output} ms
+.
+'''
+
+def printElapsed():
+    print(f"--- {elapsed()} milliseconds elapsed")
+
+
+def parse(event):
+    envelope = {}
+    if 'httpMethod' not in event:
+        envelope = event
+    elif 'body' in event and event['body'] != None:
+        envelope = json.loads(event['body'])
+    elif event['httpMethod'] == 'GET':
+        envelope = {}
+
+    return envelope 
+
+
+def handler(event, context):
+    print(f'{event=}')
+
+    envelope = parse(event)
+    print(f'{envelope=}')
+    if envelope == {}:
+        return httpResponse(200, { 'Result': 'Inbox is working :)' })
+
+    speed = {}
+    started = startWatch()
+    validation = validate(envelope, speed)
+    execution = execute(validation, envelope, speed)
+    speed['Total handling'] = stopWatch(started)
+
+    return output(envelope, validation, execution, speed)
     
 
     

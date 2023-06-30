@@ -54,5 +54,11 @@ export class BUS extends CONSTRUCT {
       return this.NewFromName(scope, name);
     }
 
+    public static Default(scope: STACK): BUS {
+      const sup = events.EventBus.fromEventBusName(scope, 'default', 'default');
+      const ret = new BUS(scope, sup, sup.eventBusName);
+      return ret;
+    }
+
 }
 

@@ -38,10 +38,7 @@ export class Messenger extends STACK {
     });
 
     // IMPORTS
-    const senderSync = LAMBDA
-      .Import(this, SyncApiHandlers.SENDER);
-    const receierSync = LAMBDA
-      .Import(this, SyncApiHandlers.RECEIVER);
+    const senderSync = SyncApiHandlers.GetSenderFn(this);
   
     // BUS
     const bus = BUS

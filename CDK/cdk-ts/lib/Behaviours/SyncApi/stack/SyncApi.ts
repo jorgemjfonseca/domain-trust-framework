@@ -5,12 +5,14 @@ import { DomainDns } from '../../DomainDns/stack/DomainDns';
 import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
 import { SyncApiEndpoint } from '../../SyncApiEndpoint/stack/SyncApiEndpoint';
 import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
+import { ManifesterBucket } from '../../ManifesterBucket/stack/ManifesterBucket';
 
 export interface SyncApiDependencies {
   domainDns: DomainDns,
   syncApiDkim: SyncApiDkim;
   syncApiEndpoint: SyncApiEndpoint;
   syncApiHandlers: SyncApiHandlers;
+  manifesterBucket: ManifesterBucket;
 }
 
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
@@ -22,6 +24,7 @@ export class SyncApi extends STACK {
     ret.addDependency(deps.syncApiDkim);
     ret.addDependency(deps.syncApiEndpoint);
     ret.addDependency(deps.syncApiHandlers);
+    ret.addDependency(deps.manifesterBucket);
     return ret;
   }
 

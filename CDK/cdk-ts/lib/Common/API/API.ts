@@ -275,9 +275,7 @@ export class API extends CONSTRUCT {
     public SendToWorkflow(wf: WORKFLOW, resource: cdk.aws_apigateway.Resource) {
       throw Error('Not tested properly, use a SendToLambda() instead.');
 
-      const credentialsRole = new iam.Role(this.Scope, "getRole", {
-        assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),
-      });
+      const credentialsRole = this.ApiRole();
       
       credentialsRole.attachInlinePolicy(
         new iam.Policy(this.Scope, "getPolicy", {
@@ -324,7 +322,7 @@ export class API extends CONSTRUCT {
 
     private SetAutoScaling(fn: LAMBDA, name: string): lambda.Alias {
 
-      const liveAlias = new lambda.Alias(this, fn.Name+'Alias', {
+      const liveAlias = new lambda.Alias(this, name+'Alias', {
         aliasName: 'live',
         version: fn.Super.currentVersion,
       })
@@ -342,42 +340,85 @@ export class API extends CONSTRUCT {
     }
 
 
-    SendToLambda(fn: LAMBDA, name: string, method: string = "POST"): LAMBDA {
+    SendToLambda(fn: LAMBDA, name: string, methods: string[] = ["POST"]): LAMBDA {
 
       const resource = 
         this.GetResourceAtPath("/" + name?.toLowerCase()) ??
         this.AddResource(name);
 
-      const liveAlias = this.SetAutoScaling(fn, name);
+      //const liveAlias = this.SetAutoScaling(fn, name);
 
-      resource.addMethod(method, 
-        new apiGW.LambdaIntegration(liveAlias, {
-          proxy: true,
-          integrationResponses: [
-            { statusCode: '200' },
-            { statusCode: '400' },
-            { statusCode: '500' }
-          ]
-        }), {
-          methodResponses: [
-            { statusCode: '200' },
-            { statusCode: '400' },
-            { statusCode: '500' }
-          ]
-        });
+      methods?.forEach((method) => {
+        resource.addMethod(method, 
+          new apiGW.LambdaIntegration(fn.Super, {
+            proxy: true,
+            integrationResponses: [
+              { statusCode: '200' },
+              { statusCode: '400' },
+              { statusCode: '500' }
+            ]
+          }), {
+            methodResponses: [
+              { statusCode: '200' },
+              { statusCode: '400' },
+              { statusCode: '500' }
+            ]
+          });
+      });
 
       // Grant permission to execute
       // 👉 https://stackoverflow.com/questions/62201988/aws-cdk-how-to-grant-invoke-permissions-on-a-lambda-to-api-gateway-before-depl
       fn.Super.addPermission('PermitAPIGInvocation', {
-        principal: new iam.ServicePrincipal('apigateway.amazonaws.com'),
-        //sourceArn: this.Super.arnForExecuteApi('*')
+        principal: this.ApiServicePrinciple(),
+        sourceArn: this.Super.arnForExecuteApi('*'),
+        action: "lambda:InvokeFunction"
       });
 
-      // 👉 https://stackoverflow.com/questions/55900479/cross-stack-lambda-and-api-gateway-permissions-with-aws-cdk
-      fn.Super.grantInvoke(
-        new iam.ServicePrincipal('apigateway.amazonaws.com'));
+      // 👉 https://github.com/aws/aws-cdk/issues/8116
+      this.ApiRole().attachInlinePolicy(
+        new iam.Policy(this.Scope, "Policy"+name, {
+          statements: [
+            new iam.PolicyStatement({
+              actions: ["lambda:InvokeFunction"],
+              effect: iam.Effect.ALLOW,
+              resources: [fn.Super.functionArn],
+            }),
+          ],
+        })
+      );
+            
+      new lambda.CfnPermission(this, `CfnPermission${name}`, {
+        action: 'lambda:InvokeFunction',
+        functionName: fn.FunctionName(),
+        principal: 'apigateway.amazonaws.com',
+        sourceArn: `arn:aws:execute-api:${this.Scope.region}:${this.Scope.account}:${this.Super.restApiId}/*/*`,
+      });
 
       return fn;
+    }
+
+
+    // 👉 https://stackoverflow.com/questions/55900479/cross-stack-lambda-and-api-gateway-permissions-with-aws-cdk
+    // 👉 https://jun711.github.io/aws/aws-api-gateway-invoke-lambda-function-permission/
+    // 👉 https://github.com/aws/aws-cdk/issues/8116
+    private apiRole: iam.Role;
+    ApiRole() {
+      if (!this.apiRole)
+        this.apiRole = new iam.Role(this.Scope, "getRole", {
+          assumedBy: this.ApiServicePrinciple(),
+        });
+      return this.apiRole;
+    }
+
+
+    ApiServicePrinciple():iam.ServicePrincipal {
+      return new iam.ServicePrincipal('apigateway.amazonaws.com', {
+        conditions: {
+          ArnEquals: {
+            'aws:SourceArn': `arn:aws:execute-api:${this.Scope.region}:${this.Scope.account}:${this.Super.restApiId}/*/*`,
+          }
+        }
+      });
     }
 
 
