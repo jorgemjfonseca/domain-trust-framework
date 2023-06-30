@@ -15,7 +15,7 @@ export class ProfileActor extends STACK {
 
     LAMBDA
       .Import(this, VaultActor.DISCLOSE_FN)
-      .ReadsFromDynamoDB(userData);
+      .ReadsFromDynamoDB(userData, 'USERDATA');
 
   }
 }

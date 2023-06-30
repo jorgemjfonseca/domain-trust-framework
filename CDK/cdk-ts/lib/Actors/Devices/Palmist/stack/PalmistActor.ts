@@ -21,7 +21,7 @@ export class PalmistActor extends STACK {
 
     LAMBDA
       .New(this, 'RegisterHandlerFn')
-      .WritesToDynamoDB(devices)
+      .WritesToDynamoDB(devices, 'DEVICES')
       .HandlesMessenger('Palmist-Register');
 
     LAMBDA
@@ -38,7 +38,7 @@ export class PalmistActor extends STACK {
 
     LAMBDA
       .New(this, 'SearchHandlerFn')
-      .WritesToDynamoDB(devices)
+      .WritesToDynamoDB(devices, 'DEVICES')
       .HandlesMessenger('Palmist-Search');
 
     LAMBDA
@@ -49,7 +49,7 @@ export class PalmistActor extends STACK {
 
     LAMBDA
       .New(this, 'SuppressedHandlerFn')
-      .WritesToDynamoDB(devices)
+      .WritesToDynamoDB(devices, 'DEVICES')
       .HandlesMessenger('Palmist-Suppressed');
 
   }

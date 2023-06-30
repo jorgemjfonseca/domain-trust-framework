@@ -8,7 +8,7 @@ import { SyncApi } from '../lib/Behaviours/SyncApi/stack/SyncApi';
 import { DomainDns } from '../lib/Behaviours/DomainDns/stack/DomainDns';
 import { Publisher } from '../lib/Behaviours/Publisher/stack/Publisher';
 import { SubscriberBehaviour as Subscriber } from '../lib/Behaviours/Subscriber/stack/SubscriberBehaviour';
-import { ListenerActor as Listener } from '../lib/Actors/Backbone/Listener/stack/ListenerActor';
+import { Listener as Listener } from '../lib/Actors/Backbone/Listener/stack/Listener';
 import { Graph } from '../lib/Actors/Backbone/Graph/stack/GraphActor';
 import { AuthorityActor } from '../lib/Actors/Market/Authority/stack/AuthorityActor';
 import { CollectorActor } from '../lib/Actors/Market/Collector/stack/CollectorActor';
@@ -135,9 +135,10 @@ host.addDependency(domain);
 // ===========================
 // Actors/Backbone
 
-const listener = new Listener(app);
-listener.addDependency(domain);
-listener.addDependency(publisher);
+const listener = Listener.New(app, {
+    domain, 
+    publisher
+});
 
 const graphDB = new GraphDB(app);
 

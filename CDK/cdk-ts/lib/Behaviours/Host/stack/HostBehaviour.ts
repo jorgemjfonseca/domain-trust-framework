@@ -22,22 +22,22 @@ export class HostBehaviour extends STACK {
 
     LAMBDA
       .New(this, "CheckInHandlerFn")
-      .WritesToDynamoDB(sessions)
+      .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesSyncApi('Host-CheckIn');
 
     LAMBDA
       .New(this, "TalkerHandlerFn")
-      .WritesToDynamoDB(sessions)
+      .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Host-Talker');
 
     LAMBDA
       .New(this, "CheckOutHandlerFn")
-      .WritesToDynamoDB(sessions)
+      .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Host-CheckOut');
 
     LAMBDA
       .New(this, "AbandonedHandlerFn")
-      .WritesToDynamoDB(sessions)
+      .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Host-Abandoned');
 
     LAMBDA
@@ -48,13 +48,13 @@ export class HostBehaviour extends STACK {
 
     LAMBDA
       .New(this, "UploadHandlerFn")
-      .ReadsFromDynamoDB(sessions)
-      .WritesToDynamoDB(files)
+      .ReadsFromDynamoDB(sessions, 'SESSIONS')
+      .WritesToDynamoDB(files, 'FILES')
       .HandlesSyncApi('Host-Upload');
 
     LAMBDA
       .New(this, "FoundHandlerFn")
-      .WritesToDynamoDB(sessions)
+      .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Host-Found');
 
   }

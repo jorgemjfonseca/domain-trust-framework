@@ -18,12 +18,12 @@ export class CollectorActor extends STACK {
 
     LAMBDA
       .New(this, 'CollectHandlerFn')
-      .WritesToDynamoDB(collections)
+      .WritesToDynamoDB(collections, 'COLLECTIONS')
       .HandlesMessenger('Collector-Collect');
 
     LAMBDA
       .New(this, 'RefundHandlerFn')
-      .WritesToDynamoDB(refunds)
+      .WritesToDynamoDB(refunds, 'REFUNDS')
       .HandlesMessenger('Collector-Refund');
 
     LAMBDA

@@ -17,7 +17,7 @@ export class CellTriggerActor extends STACK {
 
     LAMBDA
       .New(this, 'TriggerHandlerFn')
-      .WritesToDynamoDB(devices)
+      .WritesToDynamoDB(devices, 'DEVICES')
       .HandlesMessenger('CellTrigger-Trigger');
 
     LAMBDA

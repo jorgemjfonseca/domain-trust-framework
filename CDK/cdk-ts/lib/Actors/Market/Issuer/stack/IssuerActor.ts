@@ -14,12 +14,12 @@ export class IssuerActor extends STACK {
 
     LAMBDA
       .New(this, 'DownloadHandlerFn')
-      .ReadsFromDynamoDB(credentials)
+      .ReadsFromDynamoDB(credentials, 'CREDENTIALS')
       .HandlesSyncApi('Issuer-Download');
 
     LAMBDA
       .New(this, 'StatusHandlerFn')
-      .ReadsFromDynamoDB(credentials)
+      .ReadsFromDynamoDB(credentials, 'CREDENTIALS')
       .HandlesMessenger('Issuer-Status');
 
   }

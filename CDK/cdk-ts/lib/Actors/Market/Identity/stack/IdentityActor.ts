@@ -15,12 +15,12 @@ export class IdentityActor extends STACK {
 
     LAMBDA
       .New(this, 'ConfirmEmailHandlerFn')
-      .WritesToDynamoDB(otps)
+      .WritesToDynamoDB(otps, 'OTPS')
       .HandlesMessenger('Identity-ConfirmEmail');
 
     LAMBDA
       .New(this, 'ConfirmPhoneHandlerFn')
-      .WritesToDynamoDB(otps)
+      .WritesToDynamoDB(otps, 'OTPS')
       .HandlesMessenger('Identity-ConfirmPhone');
 
   }

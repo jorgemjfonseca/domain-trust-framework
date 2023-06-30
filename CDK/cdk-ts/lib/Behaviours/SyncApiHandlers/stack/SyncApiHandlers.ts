@@ -81,7 +81,7 @@ export class SyncApiHandlers extends STACK {
     // RECEIVER FUNCTION
     LAMBDA
       .New(this, "ReceiverFn")
-      .ReadsFromDynamoDB(map)
+      .ReadsFromDynamoDB(map, 'MAP')
       .InvokesLambda(dkimReaderFn, 'DKIM_READER_FN')
       .InvokesLambda(validatorFn, 'VALIDATOR_FN')
       .AddEnvironment('DOMAIN_NAME', domainName)

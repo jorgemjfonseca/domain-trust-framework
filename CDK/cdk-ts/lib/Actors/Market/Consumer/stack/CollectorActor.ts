@@ -15,7 +15,7 @@ export class ConsumerActor extends STACK {
 
     LAMBDA
       .New(this, 'UploadHandlerFn')
-      .ReadsFromDynamoDB(binds)
+      .ReadsFromDynamoDB(binds, 'BINDS')
       .HandlesMessenger('Consumer-Upload');
 
     LAMBDA

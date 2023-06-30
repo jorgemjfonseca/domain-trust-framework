@@ -14,7 +14,7 @@ export class SubscriberBehaviour extends STACK {
 
     const senderFn = LAMBDA
       .New(this, "SubscriberFn")
-      .WritesToDynamoDB(dedups)
+      .WritesToDynamoDB(dedups, 'DEDUPS')
       .HandlesMessenger('Subscriber-Publish');
 ;
 

@@ -15,46 +15,46 @@ export class Graph extends STACK {
 
     LAMBDA
       .New(this, 'ConsumeHandlerFn')
-      .WritesToDynamoDB(domainsTable)
+      .WritesToDynamoDB(domainsTable, 'DOMAINS')
       //.WritesToNeptune(neptune)
       .HandlesMessenger('Graph-Consume');
 
     LAMBDA
       .New(this, 'TrustedHandlerFn')
-      .ReadsFromDynamoDB(domainsTable)
+      .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Graph-Trusted');
 
     LAMBDA
       .New(this, 'TrustsHandlerFn')
-      .ReadsFromDynamoDB(domainsTable)
+      .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Graph-Trusts');
 
     LAMBDA
       .New(this, 'IdentityHandlerFn')
-      .ReadsFromDynamoDB(domainsTable)
+      .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .HandlesSyncApi('Graph-Identity');
 
     LAMBDA
       .New(this, 'QueryableHandlerFn')
-      .ReadsFromDynamoDB(domainsTable)
+      .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Graph-Queryable');      
 
     LAMBDA
       .New(this, 'TranslateHandlerFn')
-      .ReadsFromDynamoDB(domainsTable)
+      .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .HandlesSyncApi('Graph-Translate');
 
     LAMBDA
       .New(this, 'PublicKeyHandlerFn')
-      .ReadsFromDynamoDB(domainsTable)
+      .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .HandlesSyncApi('Graph-PublicKey');
 
     LAMBDA
       .New(this, 'SchemaHandlerFn')
-      .ReadsFromDynamoDB(domainsTable)
+      .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .HandlesSyncApi('Graph-Schema');      
 
     LAMBDA

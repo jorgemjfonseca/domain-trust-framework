@@ -42,27 +42,27 @@ export class Publisher extends STACK {
     LAMBDA
       .New(this, 'PublisherFn')
       .TriggeredBySQS(publishQueue)
-      .ReadsFromDynamoDB(subscribers)
+      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
       .PublishesToQueue(fanOutQueue);
 
     LAMBDA
       .New(this, 'RegisterHandlerFn')
-      .WritesToDynamoDB(subscribers)
+      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Publisher-Register');
 
     LAMBDA
       .New(this, 'UnregisterHandlerFn')
-      .WritesToDynamoDB(subscribers)
+      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Publisher-Unregister');
 
     LAMBDA
       .New(this, 'SubscribeHandlerFn')
-      .WritesToDynamoDB(subscribers)
+      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Publisher-Subscribe');
 
     LAMBDA
       .New(this, 'UpdatedHandlerFn')
-      .WritesToDynamoDB(updates)
+      .WritesToDynamoDB(updates, 'UPDATES')
       .PublishesToQueue(publishQueue)
       .HandlesMessenger('Publisher-Updated');
 

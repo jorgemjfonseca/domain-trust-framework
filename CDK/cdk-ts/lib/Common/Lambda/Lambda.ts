@@ -420,18 +420,15 @@ export class LAMBDA extends CONSTRUCT {
       return name;
     }
 
-    public WritesToDynamoDB(dynamo: DYNAMO, alias?: string): LAMBDA {
+    public WritesToDynamoDB(dynamo: DYNAMO, alias: string): LAMBDA {
       dynamo.Super.grantReadWriteData(this.Super);
-      const name = this.getTableParam(alias);
-      this.Super?.addEnvironment(name, dynamo.Super.tableName);
+      this.Super.addEnvironment(alias, dynamo.Super.tableName);
       return this;
     }
 
-    public ReadsFromDynamoDB(dynamo: DYNAMO, alias?: string): LAMBDA {
+    public ReadsFromDynamoDB(dynamo: DYNAMO, alias: string): LAMBDA {
       dynamo.Super.grantReadData(this.Super);
-      const name = this.getTableParam(alias);
-      if (this.Super.addEnvironment)
-        this.Super.addEnvironment(name, dynamo.Super.tableName);
+      this.Super.addEnvironment(alias, dynamo.Super.tableName);
       return this;
     }
 

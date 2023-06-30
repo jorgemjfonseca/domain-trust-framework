@@ -20,7 +20,7 @@ export class ManifesterAlerter extends STACK {
 
   public static New(scope: Construct, deps: ManifesterAlerterDependencies): ManifesterAlerter {
     const ret = new ManifesterAlerter(scope);
-    //ret.addDependency(deps.messenger);
+    ret.addDependency(deps.messenger);
     ret.addDependency(deps.manifesterBucket);
     return ret;
   }
