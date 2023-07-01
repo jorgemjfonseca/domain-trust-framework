@@ -30,6 +30,9 @@ export class Graph extends STACK {
     const domainsTable = DYNAMO
       .New(this, 'Domains', { stream: true });
 
+    const codesTable = DYNAMO
+      .New(this, 'Codes');
+
     LAMBDA
       .New(this, 'Consume')
       .WritesToDynamoDB(domainsTable, 'DOMAINS')
