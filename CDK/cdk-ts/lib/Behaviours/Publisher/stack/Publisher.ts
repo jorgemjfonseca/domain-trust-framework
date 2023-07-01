@@ -16,7 +16,7 @@ export class Publisher extends STACK {
   public static New(scope: Construct, deps: PublisherDependencies, props?: cdk.StackProps)
   {
     const ret = new Publisher(scope, props);
-    ret.addDependency(deps.domain);
+    //ret.addDependency(deps.domain);
     return ret;
   }
 

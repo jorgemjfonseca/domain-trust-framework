@@ -7,7 +7,7 @@ import { HostBehaviour as Host } from '../lib/Behaviours/Host/stack/HostBehaviou
 import { SyncApi } from '../lib/Behaviours/SyncApi/stack/SyncApi';
 import { DomainDns } from '../lib/Behaviours/DomainDns/stack/DomainDns';
 import { Publisher } from '../lib/Behaviours/Publisher/stack/Publisher';
-import { SubscriberBehaviour as Subscriber } from '../lib/Behaviours/Subscriber/stack/SubscriberBehaviour';
+import { Subscriber as Subscriber } from '../lib/Behaviours/Subscriber/stack/Subscriber';
 import { Listener as Listener } from '../lib/Actors/Backbone/Listener/stack/Listener';
 import { Graph } from '../lib/Actors/Backbone/Graph/stack/GraphActor';
 import { AuthorityActor } from '../lib/Actors/Market/Authority/stack/AuthorityActor';
@@ -18,7 +18,7 @@ import { IdentityActor } from '../lib/Actors/Market/Identity/stack/IdentityActor
 import { IssuerActor } from '../lib/Actors/Market/Issuer/stack/IssuerActor';
 import { PayerActor } from '../lib/Actors/Market/Payer/stack/PayerActor';
 import { PrinterActor } from '../lib/Actors/Market/Printer/stack/PrinterActor';
-import { ProfileActor } from '../lib/Actors/Market/Profile/stack/ProfileActor';
+import { Profile } from '../lib/Actors/Market/Profile/stack/ProfileActor';
 import { RecurrentActor } from '../lib/Actors/Market/Recurrent/stack/SellerActor';
 import { SellerActor } from '../lib/Actors/Market/Seller/stack/SellerActor';
 import { StorageActor } from '../lib/Actors/Market/Storage/stack/StorageActor';
@@ -164,7 +164,13 @@ new IdentityActor(app, {});
 new IssuerActor(app, {});
 new PayerActor(app, {});
 new PrinterActor(app, {});
-new ProfileActor(app, {});
+
+
+Profile.New(app, {
+    vault
+});
+
+
 new RecurrentActor(app, {});
 new SellerActor(app, {});
 new StorageActor(app, {});

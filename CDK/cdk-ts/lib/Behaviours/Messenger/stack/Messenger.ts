@@ -6,14 +6,6 @@ import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
 import { STACK } from '../../../Common/STACK/STACK';
 import { SyncApi } from '../../SyncApi/stack/SyncApi';
 
-
-declare module '../../../Common/LAMBDA/LAMBDA' {
-  interface LAMBDA {
-    HandlesMessenger(action: string): LAMBDA;
-    PublishesToMessenger(): LAMBDA;
-  }
-}
-
 export interface MessengerDependencies {
   syncApi: SyncApi
 }
@@ -66,9 +58,12 @@ export class Messenger extends STACK {
     
   }
 
+  private static GetPublisher(scope: STACK): LAMBDA {
+    return LAMBDA.Import(scope, Messenger.PUBLISHER);
+  }
 
   private static BusCache: BUS;
-  public static Bus(scope: STACK) {
+  public static GetBus(scope: STACK) {
     if (this.BusCache == null)
       this.BusCache = BUS
         .Import(scope, Messenger.BUS_NAME);
@@ -77,26 +72,34 @@ export class Messenger extends STACK {
 
 
   // EXTENSION
-  public static HandlesMessenger(scope: STACK, action: string, lambda: LAMBDA): LAMBDA {
+  public static HandlesMessenger(scope: STACK, action: string, fn: LAMBDA): LAMBDA {
     
     // Receive all messages for this action from the API, and sends to the bus.
-    const publisher = LAMBDA
-      .Import(scope, Messenger.PUBLISHER);
-    publisher.HandlesSyncApi(action);
+    Messenger
+      .GetPublisher(scope)
+      .HandlesSyncApi(action);
 
     // Receives all messages from this action from the Bus.
-    const bus = Messenger.Bus(scope);
-    lambda.SpeaksWithBus(bus, action);
-    return lambda;
+    Messenger
+      .GetBus(scope)
+      .SpeaksWithLambda(fn, action);
+
+    return fn;
   }
 
 
   // EXTENSION
   public static PublishesToMessenger(scope: STACK, lambda: LAMBDA): LAMBDA {
-    const bus = Messenger.Bus(scope);
+    const bus = Messenger.GetBus(scope);
     lambda.PublishesToBus(bus);
     return lambda;
   }
 
 }
 
+declare module '../../../Common/LAMBDA/LAMBDA' {
+  interface LAMBDA {
+    HandlesMessenger(action: string): LAMBDA;
+    PublishesToMessenger(): LAMBDA;
+  }
+}

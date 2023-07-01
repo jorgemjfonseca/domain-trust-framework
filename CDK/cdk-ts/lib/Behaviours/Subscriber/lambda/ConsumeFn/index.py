@@ -1,4 +1,4 @@
-# 📚 Publisher.Register
+# 📚 Subscriber.SubscriberFn
 
 # 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4
 

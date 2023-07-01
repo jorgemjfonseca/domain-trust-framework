@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as events from 'aws-cdk-lib/aws-events';
 import { STACK } from '../STACK/STACK';
 import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
+import { LAMBDA } from '../LAMBDA/LAMBDA';
 
 
 export class BUS extends CONSTRUCT {
@@ -58,6 +59,11 @@ export class BUS extends CONSTRUCT {
       const sup = events.EventBus.fromEventBusName(scope, 'default', 'default');
       const ret = new BUS(scope, sup, sup.eventBusName);
       return ret;
+    }
+
+    public SpeaksWithLambda(fn: LAMBDA, detailType: string): BUS {
+      fn.SpeaksWithBus(this, detailType);
+      return this;
     }
 
 }

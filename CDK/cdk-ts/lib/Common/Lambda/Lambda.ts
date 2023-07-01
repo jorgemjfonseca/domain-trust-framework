@@ -63,7 +63,7 @@ export class LAMBDA extends CONSTRUCT {
             scope.Name + id + "BasicExecutionRole", 
             'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'));
 
-        const sup = new lambda.Function(scope, id, {
+        const settings = {
           role: role,
 
           functionName: `${scope.Name}-${id}`,
@@ -85,9 +85,28 @@ export class LAMBDA extends CONSTRUCT {
             props?.handler 
             ?? props?.super?.handler 
             ?? 'index.handler',
-        });
+        };
 
-        const fn = new LAMBDA(scope, sup);
+        const python = [
+          lambda.Runtime.PYTHON_3_8,
+          lambda.Runtime.PYTHON_3_9,
+          lambda.Runtime.PYTHON_3_10
+        ];
+
+        if (python.includes(settings.runtime)) {
+          const layer = new lambda.LayerVersion(scope, id+'-Layer', {
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+            code: lambda.Code.fromAsset(path.join(__dirname, 'python-layer')),
+            compatibleArchitectures: [
+              lambda.Architecture.X86_64, 
+              lambda.Architecture.ARM_64
+            ],
+          });
+          settings.layers = [layer]
+        }
+
+        const fn = new LAMBDA(scope, 
+          new lambda.Function(scope, id, settings));
 
         //dlq.Super.grantSendMessages(fn.Super);
 

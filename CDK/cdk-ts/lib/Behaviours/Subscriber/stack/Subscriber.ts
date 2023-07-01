@@ -5,18 +5,25 @@ import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
 import { STACK } from '../../../Common/STACK/STACK';
 
 //https://quip.com/9ab7AO56kkxY/-Subscriber
-export class SubscriberBehaviour extends STACK {
+export class Subscriber extends STACK {
   constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, SubscriberBehaviour.name, props);
+    super(scope, Subscriber.name, props);
 
     const dedups = DYNAMO
       .New(this, "Deduplication");
 
-    const senderFn = LAMBDA
-      .New(this, "SubscriberFn")
-      .WritesToDynamoDB(dedups, 'DEDUPS')
-      .HandlesMessenger('Subscriber-Publish');
-;
+    LAMBDA
+      .New(this, "ConfirmFn")
+      .HandlesMessenger('Subscriber-Confirm');
 
+    LAMBDA
+      .New(this, "ConsumeFn")
+      .WritesToDynamoDB(dedups, 'DEDUPS')
+      .HandlesMessenger('Subscriber-Consume');
+
+    LAMBDA
+      .New(this, "UpdatedFn")
+      .WritesToDynamoDB(dedups, 'DEDUPS')
+      .HandlesMessenger('Subscriber-Updated');
   }
 }

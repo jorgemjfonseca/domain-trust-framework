@@ -7,10 +7,14 @@ import { STACK } from '../../../../Common/STACK/STACK';
 // https://quip.com/IZapAfPZPnOD
 export class VaultActor extends STACK {
 
-  public static readonly DISCLOSE_FN = 'Vault-DiscloseHandlerFn';
+  private static readonly DISCLOSE_FN = 'Vault-DiscloseHandlerFn';
   public static readonly BINDS = 'Vault-BindsTable';
   public static readonly WALLETS = 'Vault-WalletsTable';
 
+  private discloseFn: LAMBDA;
+  public GetDiscloseFn() {
+    return this.discloseFn;
+  }
 
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, VaultActor.name, props);
@@ -34,7 +38,7 @@ export class VaultActor extends STACK {
       .WritesToDynamoDB(binds, 'BINDS')
       .HandlesMessenger('Vault-Bind');
 
-    LAMBDA
+    this.discloseFn = LAMBDA
       .New(this, 'DiscloseHandlerFn')
       .WritesToDynamoDB(disclosures, 'DISCLOSURES')
       .HandlesMessenger('Vault-Disclose')

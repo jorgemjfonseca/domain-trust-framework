@@ -31,8 +31,8 @@ export class PYTHON {
 
         const baseEntry = path.join(LAMBDA.CallerDirname(), '../lambda/' + id);
 
-        const layer = new PythonLayerVersion(scope, id+'Layer', {
-            layerVersionName: id+'Layer',
+        const layer = new PythonLayerVersion(scope, id+'-Layer', {
+            layerVersionName: id+'-Layer',
             entry: baseEntry + 'Layer',
             compatibleRuntimes: [
                 Runtime.PYTHON_3_7,
