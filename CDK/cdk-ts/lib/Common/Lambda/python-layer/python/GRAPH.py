@@ -51,13 +51,14 @@ class GRAPH:
 
         return {
             "Trusted": True,
-            "Important": "Not yet implemented, always returns true"
+            "Important": "Not yet implemented, always returns True."
         }
     
     
     @staticmethod
     def _HandleTrusts(event):
         # 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA71b470c7a4c446e5b43adea7e
+        # TODO implement graph DB
 
         '''
         "Body": {
@@ -69,7 +70,11 @@ class GRAPH:
         '''
         
         print(f'{event}')
-        return {}
+        
+        return {
+            "Trusted": True,
+            "Important": "Not yet implemented, always returns True."
+        }
     
 
     @staticmethod

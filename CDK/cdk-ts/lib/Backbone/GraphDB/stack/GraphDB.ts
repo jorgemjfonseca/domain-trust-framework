@@ -10,7 +10,10 @@ export class GraphDB extends STACK {
   public static readonly NEPTUNE_PORT = "NeptunePort";
 
   constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, GraphDB.name, props);
+    super(scope, GraphDB.name, { 
+      description: 'Creates the Neptune DB.',
+      ...props
+    });
 
     const neptune = NEPTUNE
       .New(this, 'Neptune');

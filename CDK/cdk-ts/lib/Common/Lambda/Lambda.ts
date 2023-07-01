@@ -283,6 +283,7 @@ export class LAMBDA extends CONSTRUCT {
     //https://docs.dennisokeeffe.com/aws-cdk/dynamodb-stream
     //https://serverlessland.com/patterns/dynamodb-streams-lambda-dynamodb-cdk-dotnet
     public TriggeredByDynamoDB(dynamo: DYNAMO): LAMBDA {
+      dynamo.Super.grantReadData(this.Super);
       dynamo.Super.grantStreamRead(this.Super);
       this.Super.addEventSource(
         new sources.DynamoEventSource(

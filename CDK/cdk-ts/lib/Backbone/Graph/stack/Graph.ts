@@ -6,11 +6,13 @@ import { NEPTUNE } from '../../../Common/NEPTUNE/NEPTUNE';
 import { STACK } from '../../../Common/STACK/STACK';
 import { Domain } from '../../../Behaviours/Domain/stack/Domain';
 import { Subscriber } from '../../../Behaviours/Subscriber/stack/Subscriber';
+import { GraphDB } from '../../GraphDB/stack/GraphDB';
 
 
 export interface GraphDependencies {
   domain: Domain,
-  subscriber: Subscriber
+  subscriber: Subscriber,
+  graphDB: GraphDB
 }
 
 
@@ -21,6 +23,7 @@ export class Graph extends STACK {
     const ret = new Graph(scope, props);
     ret.addDependency(deps.domain);
     ret.addDependency(deps.subscriber);
+    //ret.addDependency(deps.graphDB);
     return ret;
   }
 
@@ -36,6 +39,7 @@ export class Graph extends STACK {
     LAMBDA
       .New(this, 'Consume')
       .WritesToDynamoDB(domainsTable, 'DOMAINS')
+      .WritesToDynamoDB(codesTable, 'CODES')
       //.WritesToNeptune(neptune)
       .HandlesMessenger('Graph-Consume');
 
@@ -65,6 +69,7 @@ export class Graph extends STACK {
     LAMBDA
       .New(this, 'Translate')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
+      .ReadsFromDynamoDB(codesTable, 'CODES')
       .HandlesSyncApi('Graph-Translate');
 
     LAMBDA
@@ -75,6 +80,7 @@ export class Graph extends STACK {
     LAMBDA
       .New(this, 'Schema')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
+      .ReadsFromDynamoDB(codesTable, 'CODES')
       .HandlesSyncApi('Graph-Schema');      
 
     LAMBDA

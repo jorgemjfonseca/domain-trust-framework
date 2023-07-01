@@ -135,17 +135,18 @@ host.addDependency(domain);
 // ===========================
 // Actors/Backbone
 
-const listener = Listener.New(app, {
+Listener.New(app, {
     domain, 
     publisher
 });
 
 const graphDB = new GraphDB(app);
 
-const graph = new Graph(app);
-listener.addDependency(domain);
-listener.addDependency(subscriber);
-listener.addDependency(graphDB);
+Graph.New(app, {
+    domain, 
+    subscriber, 
+    graphDB
+});
 
 // ==========================
 // Actors/Market

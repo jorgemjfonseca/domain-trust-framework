@@ -1,14 +1,7 @@
 # 📚 Publisher-FanOuter
 
-# 👉 https://quip.com/sBavA8QtRpXu/-Publisher
-
-from MSG import MSG
-from MESSENGER import MESSENGER
+from PUBLISHER import PUBLISHER
 
 def handler(event, context):
-    print(f'{event}')
-
-    msg = MSG(event)
-    msg.Subject('Subcriber-Update')
-    MESSENGER.Send(msg, source='Publisher-FanOuter')
+    return PUBLISHER._HandleFanOuter(event)
    
