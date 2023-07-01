@@ -1,3 +1,5 @@
+import os
+
 def test():
     return 'this is SYNCAPI test.'
 
