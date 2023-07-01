@@ -2,17 +2,12 @@
 
 import os
 
-from LAMBDA import LAMBDA
-from UTILS import UTILS
-from SECRETS import SECRETS
-from MSG import MSG
-from WEB import WEB
-
 
 # 👉️ https://hands-on.cloud/boto3-kms-tutorial/
 # REQUEST { privateKey, publicKey, text }
 # RESPONSE { hash, signature, isVerified }
 def sign(privateKey: str, publicKey, text) -> str:
+    from LAMBDA import LAMBDA
     return LAMBDA('SIGNER_FN').Invoke({
         'privateKey': privateKey,
         'publicKey': publicKey,
@@ -21,6 +16,7 @@ def sign(privateKey: str, publicKey, text) -> str:
     
 
 def get_keys(): 
+    from SECRETS import SECRETS
     return {
         'publicKey': SECRETS.Get('/dtfw/publicKey'),
         'privateKey': SECRETS.Get('/dtfw/privateKey')
@@ -28,6 +24,8 @@ def get_keys():
 
 
 def wrap_envelope(message: any):
+    from UTILS import UTILS
+
     defaults = {
         'Header': {
             'Correlation': UTILS.Correlation(),
@@ -57,6 +55,8 @@ def wrap_envelope(message: any):
 
 
 def sign_envelope(envelope: any):
+    from UTILS import UTILS
+
     keys = get_keys()
     canonicalized = UTILS.Canonicalize(envelope)
     signed = sign(keys['privateKey'], keys['publicKey'], canonicalized)
@@ -72,6 +72,9 @@ def sign_envelope(envelope: any):
 
 
 def send_envelope(envelope: any):
+    from WEB import WEB
+    from MSG import MSG
+
     to = MSG(envelope).To()
     url = f'https://dtfw.{to}/inbox'
     

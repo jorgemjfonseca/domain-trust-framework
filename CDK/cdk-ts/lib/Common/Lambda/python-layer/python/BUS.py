@@ -1,5 +1,5 @@
 import boto3
-from UTILS import UTILS
+
 
 def test():
     return 'this is a BUS test.'

@@ -1,9 +1,4 @@
 import boto3
-import os
-import json
-import uuid
-import datetime
-from urllib import request, parse
 import traceback
 import sys
 
@@ -15,6 +10,10 @@ def test():
 
 timestream = boto3.resource('dynamodb')
 class TIMESTREAM: 
+
+    ONE_GB_IN_BYTES = 1073741824
+    # Assuming the price of query is $0.01 per GB
+    QUERY_COST_PER_GB_IN_DOLLARS = 0.01 
 
     def run_query(self, query_string):
         try:
@@ -30,10 +29,10 @@ class TIMESTREAM:
         progress_percentage = query_status["ProgressPercentage"]
         print(f"Query progress so far: {progress_percentage}%")
 
-        bytes_scanned = float(query_status["CumulativeBytesScanned"]) / ONE_GB_IN_BYTES
+        bytes_scanned = float(query_status["CumulativeBytesScanned"]) / TIMESTREAM.ONE_GB_IN_BYTES
         print(f"Data scanned so far: {bytes_scanned} GB")
 
-        bytes_metered = float(query_status["CumulativeBytesMetered"]) / ONE_GB_IN_BYTES
+        bytes_metered = float(query_status["CumulativeBytesMetered"]) / TIMESTREAM.ONE_GB_IN_BYTES
         print(f"Data metered so far: {bytes_metered} GB")
 
         column_info = query_result['ColumnInfo']
@@ -101,9 +100,7 @@ class TIMESTREAM:
         else:
             return ""
         
-    ONE_GB_IN_BYTES = 1073741824
-    # Assuming the price of query is $0.01 per GB
-    QUERY_COST_PER_GB_IN_DOLLARS = 0.01 
+
 
     def cancel_query_based_on_query_status(self):
         try:

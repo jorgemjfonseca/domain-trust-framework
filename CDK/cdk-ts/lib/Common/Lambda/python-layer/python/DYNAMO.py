@@ -1,7 +1,7 @@
 import boto3
 import os
 from time import time
-from UTILS import UTILS
+
 
 
 def test():
@@ -102,14 +102,14 @@ class DYNAMO:
         if index != '':
             if start != '':
                 print ('my_scan(index="', index, '",start="', start, '")')
-                return table.scan(IndexName=index, ExclusiveStartKey=start);
+                return table.scan(IndexName=index, ExclusiveStartKey=start)
             print ('my_scan(index="', index, '")')
-            return table.scan(IndexName=index);
+            return table.scan(IndexName=index)
         elif start != '':
             print ('my_scan(start="', start, '")')
-            return table.scan(ExclusiveStartKey=start);
+            return table.scan(ExclusiveStartKey=start)
         print ('my_scan()')
-        return table.scan();
+        return table.scan()
         
 
     @staticmethod
@@ -122,7 +122,7 @@ class DYNAMO:
         while 'LastEvaluatedKey' in response:
             lastEvaluatedKey = response['LastEvaluatedKey']
             
-            response = my_scan(table, index, lastEvaluatedKey)
+            response = DYNAMO.my_scan(table, index, lastEvaluatedKey)
             print ('my_scanItems returned: ', len(response['Items']))
             items.extend(response['Items'])
             

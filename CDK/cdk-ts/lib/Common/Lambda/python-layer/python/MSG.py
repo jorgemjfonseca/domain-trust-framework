@@ -1,4 +1,3 @@
-from copy import deepcopy
 from UTILS import UTILS
 
 
@@ -19,7 +18,7 @@ class MSG:
 
     
     def Copy(self):
-        return deepcopy(self._envelope)
+        return UTILS.Copy(self._envelope)
     
 
     def Header(self) -> any:
@@ -134,7 +133,7 @@ class MSG:
 
     # 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
     def Canonicalize(self) -> str:
-        copy = deepcopy(self._envelope)
+        copy = UTILS.Copy(self._envelope)
         del copy['Signature']
         del copy['Hash']
 

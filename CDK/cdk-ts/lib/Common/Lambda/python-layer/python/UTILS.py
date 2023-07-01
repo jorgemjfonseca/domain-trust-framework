@@ -1,7 +1,7 @@
 import json
 import uuid
 import datetime
-
+from copy import deepcopy
 
 
 def test():
@@ -10,6 +10,12 @@ def test():
 
 class UTILS: 
 
+
+    @staticmethod
+    def Copy(obj):
+        return deepcopy(obj)
+    
+    
     # 👉️ https://stackoverflow.com/questions/37049289/how-do-i-convert-a-python-uuid-into-a-string
     @staticmethod
     def Correlation():

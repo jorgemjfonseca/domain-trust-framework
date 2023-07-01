@@ -1,6 +1,4 @@
-from UTILS import UTILS
 from MSG import MSG
-from BUS import BUS
 
 
 def test():
@@ -11,9 +9,9 @@ class MESSENGER:
     
 
     @staticmethod
-    def _publish(outbound:any, source:str, to:str=None):
+    def _publish(event:any, source:str, to:str=None):
         
-        msg = MSG(outbound)
+        msg = MSG(event)
 
         # Validate if there's a destination domain.
         if (to):
@@ -25,6 +23,7 @@ class MESSENGER:
         detailType = msg.Subject()
         envelope = msg.Envelope()
         
+        from BUS import BUS
         BUS.Publish(
             eventBusName= 'Messenger-Bus', 
             source= source,
@@ -48,3 +47,35 @@ class MESSENGER:
         out.Request(req.Envelope())
 
         MESSENGER._publish(out, source)
+
+
+    @staticmethod
+    def _HandlePublisher(event):
+        print(f'{event=}')
+
+        MESSENGER._publish(
+            event, 
+            source= 'Messenger-Publisher')
+
+
+    # 👉️ https://quip.com/NiUhAQKbj7zi
+    @staticmethod
+    def _HandleSender(event):
+        print(f'{event=}')
+
+        msg = MSG(event)
+        msg.Stamp()
+        envelope = msg.Envelope()
+        
+        from SYNCAPI import SYNCAPI
+        sent = SYNCAPI.Send(envelope)
+        return sent
+
+    '''
+    { 
+        "Header": {
+            "To": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org",
+            "Subject": "AnyMethod"
+        }
+    }
+    ''' 

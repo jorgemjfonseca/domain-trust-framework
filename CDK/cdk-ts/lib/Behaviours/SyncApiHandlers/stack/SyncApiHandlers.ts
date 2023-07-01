@@ -57,7 +57,7 @@ export class SyncApiHandlers extends STACK {
     const signer = SyncApiDkim.GetSigner(this);
 
     const senderFn = LAMBDA
-        .New(this, "SenderFn")
+        .New(this, "Sender")
         .InvokesLambda(signer, 'SIGNER_FN')
         .GrantSecretsManagerReadWrite()
         .Export(SyncApiHandlers.SENDER)
@@ -80,7 +80,7 @@ export class SyncApiHandlers extends STACK {
 
     // RECEIVER FUNCTION
     LAMBDA
-      .New(this, "ReceiverFn")
+      .New(this, "Receiver")
       .ReadsFromDynamoDB(map, 'MAP')
       .InvokesLambda(dkimReaderFn, 'DKIM_READER_FN')
       .InvokesLambda(validatorFn, 'VALIDATOR_FN')

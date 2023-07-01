@@ -1,7 +1,6 @@
 import boto3
 import os
 import json
-from UTILS import UTILS
 
 
 
