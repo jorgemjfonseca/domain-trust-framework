@@ -4,10 +4,27 @@ import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
 import { NEPTUNE } from '../../../Common/NEPTUNE/NEPTUNE';
 import { STACK } from '../../../Common/STACK/STACK';
+import { Domain } from '../../../Behaviours/Domain/stack/Domain';
+import { Subscriber } from '../../../Behaviours/Subscriber/stack/Subscriber';
 
-// https://quip.com/hgz4A3clvOes/-Graph
+
+export interface GraphDependencies {
+  domain: Domain,
+  subscriber: Subscriber
+}
+
+
+// 👉 https://quip.com/hgz4A3clvOes/-Graph
 export class Graph extends STACK {
-  constructor(scope: Construct, props?: cdk.StackProps) {
+
+  public static New(scope: Construct, deps: GraphDependencies, props?: cdk.StackProps) {
+    const ret = new Graph(scope, props);
+    ret.addDependency(deps.domain);
+    ret.addDependency(deps.subscriber);
+    return ret;
+  }
+
+  private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, Graph.name, props);
 
     const domainsTable = DYNAMO

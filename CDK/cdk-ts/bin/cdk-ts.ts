@@ -9,7 +9,7 @@ import { DomainDns } from '../lib/Behaviours/DomainDns/stack/DomainDns';
 import { Publisher } from '../lib/Behaviours/Publisher/stack/Publisher';
 import { Subscriber as Subscriber } from '../lib/Behaviours/Subscriber/stack/Subscriber';
 import { Listener as Listener } from '../lib/Backbone/Listener/stack/Listener';
-import { Graph } from '../lib/Backbone/Graph/stack/GraphActor';
+import { Graph } from '../lib/Backbone/Graph/stack/Graph';
 import { AuthorityActor } from '../lib/Actors/Authority/stack/AuthorityActor';
 import { CollectorActor } from '../lib/Actors/Collector/stack/CollectorActor';
 import { ConsumerActor } from '../lib/Actors/Consumer/stack/CollectorActor';
