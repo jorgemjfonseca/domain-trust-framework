@@ -12,7 +12,7 @@ def handler(event, context):
 
     domain = MSG(event).From()
     
-    subscribers.Upsert(domain, {
+    subscribers.Merge(domain, {
         'Domain': domain,
         'Filter': {},
         'Status': 'REGISTERED'

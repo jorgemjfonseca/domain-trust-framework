@@ -2,7 +2,7 @@
 
 # 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a
 
-from time import time
+
 from DYNAMO import DYNAMO
 from MSG import MSG
 from UTILS import UTILS
@@ -21,11 +21,13 @@ def handler(event, context):
         body,
         {
             "Publisher": msg.From(),
-            "TTL": int(time()) + (1 * 24 * 60 * 60)
+            "UpdateID": body['UpdateID'], 
+            "Timestamp": body['Timestamp'],
+            "TTL": DYNAMO.TTL(days=1)
         }
     ) 
 
-    table.Upsert(id, item)
+    table.Merge(id, item)
 
 '''
 "Body": {

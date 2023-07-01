@@ -1,5 +1,6 @@
 import boto3
 import os
+from time import time
 from UTILS import UTILS
 
 
@@ -13,7 +14,7 @@ class DYNAMO:
     def __init__(self, alias):
         self._table = DYNAMO._getTable(alias)
 
-    def Upsert(self, id, item):
+    def Merge(self, id, item):
         item['ID'] = id
         return DYNAMO._update_item(table=self._table, key='ID', body=item)
     
@@ -127,3 +128,8 @@ class DYNAMO:
             
         print ('get_items.totalItems:', len(items))
         return items
+
+
+    @staticmethod
+    def TTL(days):
+        return int(time()) + (days * 24 * 60 * 60)

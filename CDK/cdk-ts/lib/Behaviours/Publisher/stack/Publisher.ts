@@ -20,14 +20,25 @@ export class Publisher extends STACK {
     return ret;
   }
 
+  public static GetSubscribers(stack: STACK): DYNAMO {
+    return DYNAMO.Import(stack, Publisher.SUBSCRIBERS);
+  }
+
+  public static GetUpdates(stack: STACK): DYNAMO {
+    return DYNAMO.Import(stack, Publisher.UPDATES);
+  }
+
+  private static readonly SUBSCRIBERS = 'Subscribers';
+  private static readonly UPDATES = 'Updates';
+
   private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, Publisher.name, props);
 
     const subscribers = DYNAMO
-      .New(this, 'Subscribers');
+      .New(this, Publisher.SUBSCRIBERS);
 
     const updates = DYNAMO
-      .New(this, 'Updates');
+      .New(this, Publisher.UPDATES);
 
     const fanOutQueue = SQS
       .New(this, 'FanOutQueue');
@@ -37,12 +48,9 @@ export class Publisher extends STACK {
       .TriggeredBySQS(fanOutQueue)
       .PublishesToMessenger()
 
-    const publishQueue = SQS
-      .New(this, 'PublishQueue');
-
     LAMBDA
       .New(this, 'Publisher')
-      .TriggeredBySQS(publishQueue)
+      .TriggeredByDynamoDB(updates)
       .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
       .PublishesToQueue(fanOutQueue, 'FANOUT');
 
@@ -64,7 +72,6 @@ export class Publisher extends STACK {
     LAMBDA
       .New(this, 'Updated')
       .WritesToDynamoDB(updates, 'UPDATES')
-      .PublishesToQueue(publishQueue, 'PUBLISHER')
       .HandlesMessenger('Publisher-Updated');
 
     LAMBDA

@@ -24,20 +24,27 @@ export class Listener extends STACK {
   private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, Listener.name, props);
 
-    LAMBDA
-      .New(this, 'SubscribeHandlerFn')
-      .HandlesMessenger('Listener-Subscribe');
+    const subscribers = Publisher.GetSubscribers(this);
+    const updates = Publisher.GetUpdates(this);
 
     LAMBDA
-      .New(this, 'UpdatedHandlerFn')
-      .HandlesMessenger('Listener-Updated');
+      .New(this, 'Subscribe')
+      .HandlesMessenger('Listener-Subscribe')
+      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS');
 
     LAMBDA
-      .New(this, 'ConsumeHandlerFn')
-      .HandlesMessenger('Listener-Consume');
+      .New(this, 'Updated')
+      .HandlesMessenger('Listener-Updated')
+      .WritesToDynamoDB(updates, 'UPDATES');
 
     LAMBDA
-      .New(this, 'PublisherFn')
+      .New(this, 'Consume')
+      .HandlesMessenger('Listener-Consume')
+      .WritesToDynamoDB(updates, 'UPDATES')
+      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS');
+
+    LAMBDA
+      .New(this, 'Publisher')
       .HandlesMessenger('Listener-Publisher');
 
   }

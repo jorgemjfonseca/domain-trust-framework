@@ -1,6 +1,8 @@
-# 📚 Publisher-Subscribe
+# 📚 Listener-Subscribe
 
-# 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4
+# 👉 https://quip.com/FCSiAU7Eku0X/-Listener#temp:C:GLf0d5cf021894d4b6babb7e0f4d
+
+# Copied from Publisher-Subscribe
 
 
 from DYNAMO import DYNAMO
@@ -27,7 +29,12 @@ def handler(event, context):
         "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
     }
     "Body": {
-        "Filter": {}
+        "Filter": {
+            "Conditions": [{
+                "Action": "INCLUDE",
+                "Query": "iata.org/SSR/*"
+            }]
+        }
     }
 }
 '''

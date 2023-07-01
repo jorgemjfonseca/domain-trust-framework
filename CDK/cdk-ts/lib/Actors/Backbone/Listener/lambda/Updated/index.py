@@ -1,6 +1,11 @@
-# 📚 Publisher-Updated
+# 📚 Listener-Updated
 
-# 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK5a453bcdb55e4d41bcc57bbc6
+# 👉 https://quip.com/FCSiAU7Eku0X#temp:C:GLfc7d59b1cc13e4c4e89f85ba7f
+
+
+def handler(event, context):
+    print(f'{event}')
+
 
 from DYNAMO import DYNAMO
 from SQS import SQS
@@ -9,6 +14,7 @@ from UTILS import UTILS
 
 
 updates = DYNAMO('UPDATES')
+sqs = SQS('PUBLISHER')
 
 
 def handler(event, context):
@@ -25,11 +31,4 @@ def handler(event, context):
     
     updates.Merge(id, update)
     
-
-'''
-{
-    "Header": {
-        "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
-    }
-}
-'''
+    sqs.Send(update)
