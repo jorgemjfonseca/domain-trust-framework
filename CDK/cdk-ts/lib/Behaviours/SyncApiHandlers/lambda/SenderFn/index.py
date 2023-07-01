@@ -1,40 +1,37 @@
 # 📚 SyncApiHandlers-SenderFn
 
-import boto3
-from urllib import request, parse
 import os
-import json
-import uuid
-import datetime
-import dtfw
 
+from LAMBDA import LAMBDA
+from UTILS import UTILS
+from SECRETS import SECRETS
+from MSG import MSG
+from WEB import WEB
 
 
 # 👉️ https://hands-on.cloud/boto3-kms-tutorial/
 # REQUEST { privateKey, publicKey, text }
 # RESPONSE { hash, signature, isVerified }
 def sign(privateKey: str, publicKey, text) -> str:
-    return dtfw.LAMBDA('SIGNER_FN').Invoke({
+    return LAMBDA('SIGNER_FN').Invoke({
         'privateKey': privateKey,
         'publicKey': publicKey,
         'text': text
     })
     
 
-
-secretsmanager = boto3.client('secretsmanager')
 def get_keys(): 
     return {
-        'publicKey': secretsmanager.get_secret_value(SecretId='/dtfw/publicKey')['SecretString'],
-        'privateKey': secretsmanager.get_secret_value(SecretId='/dtfw/privateKey')['SecretString']
+        'publicKey': SECRETS.Get('/dtfw/publicKey'),
+        'privateKey': SECRETS.Get('/dtfw/privateKey')
     }
 
 
 def wrap_envelope(message: any):
     defaults = {
         'Header': {
-            'Correlation': dtfw.UTIL.Correlation(),
-            'Timestamp': dtfw.UTIL.Timestamp()
+            'Correlation': UTILS.Correlation(),
+            'Timestamp': UTILS.Timestamp()
         },
         'Body': {}
     }
@@ -61,7 +58,7 @@ def wrap_envelope(message: any):
 
 def sign_envelope(envelope: any):
     keys = get_keys()
-    canonicalized = dtfw.UTILS.Canonicalize(envelope)
+    canonicalized = UTILS.Canonicalize(envelope)
     signed = sign(keys['privateKey'], keys['publicKey'], canonicalized)
 
     if not signed['isVerified']:
@@ -75,10 +72,10 @@ def sign_envelope(envelope: any):
 
 
 def send_envelope(envelope: any):
-    to = envelope['Header']['To']
+    to = MSG(envelope).To()
     url = f'https://dtfw.{to}/inbox'
     
-    response = dtfw.UTILS.Post(url, envelope)
+    response = WEB.Post(url, envelope)
     return response
 
    

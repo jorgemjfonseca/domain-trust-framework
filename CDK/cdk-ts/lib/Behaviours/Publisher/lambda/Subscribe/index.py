@@ -2,14 +2,16 @@
 
 # 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4
 
-import dtfw 
 
-subscribers = dtfw.DYNAMO('SUBSCRIBERS')
+from DYNAMO import DYNAMO
+from MSG import MSG
+
+subscribers = DYNAMO('SUBSCRIBERS')
 
 def handler(event, context):
     print(f'{event}')
 
-    msg = dtfw.MSG(event)
+    msg = MSG(event)
     domain = msg.From()
     filter = msg.Body()['Filter']
     

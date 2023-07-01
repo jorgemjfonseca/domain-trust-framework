@@ -8,12 +8,7 @@ import dtfw
 def handler(event, context):
     print(f'{event}')
 
-    msg = dtfw.MSG(event)
-    msg.Subject('Subcriber-Update')
-    dtfw.MESSENGER.Send(
-        envelope= msg.Envelope(), 
-        source= 'Publisher-FanOuter'
-    )
+    # TODO with Timestream
     
 
 '''

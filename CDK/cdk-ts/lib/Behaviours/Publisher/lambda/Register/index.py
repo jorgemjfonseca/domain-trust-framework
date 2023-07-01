@@ -2,14 +2,15 @@
 
 # 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4
 
-import dtfw 
+from DYNAMO import DYNAMO
+from MSG import MSG
 
-subscribers = dtfw.DYNAMO('SUBSCRIBERS')
+subscribers = DYNAMO('SUBSCRIBERS')
 
 def handler(event, context):
     print(f'{event}')
 
-    domain = dtfw.MSG(event).From()
+    domain = MSG(event).From()
     
     subscribers.Upsert(domain, {
         'Domain': domain,

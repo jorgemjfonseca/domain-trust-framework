@@ -12,6 +12,7 @@ import { STACK } from '../STACK/STACK';
 export interface DYNAMOOptions {
   keyName?: string;
   stream?: boolean;
+  ttl?: string;
 }
 
 export class DYNAMO {
@@ -40,9 +41,10 @@ export class DYNAMO {
           billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
           stream: options.stream ? 
-            dynamodb.StreamViewType.NEW_AND_OLD_IMAGES : undefined
+            dynamodb.StreamViewType.NEW_AND_OLD_IMAGES : undefined,
+          timeToLiveAttribute: options.ttl
         });
-
+        
         const ret = new DYNAMO(scope, sup);
 
         return ret;

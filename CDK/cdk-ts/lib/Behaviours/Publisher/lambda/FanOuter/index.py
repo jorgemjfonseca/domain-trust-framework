@@ -1,25 +1,14 @@
-# 📚 Publisher-Register
+# 📚 Publisher-FanOuter
 
-# 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4
+# 👉 https://quip.com/sBavA8QtRpXu/-Publisher
 
-import dtfw 
-
+from MSG import MSG
+from MESSENGER import MESSENGER
 
 def handler(event, context):
     print(f'{event}')
 
-    msg = dtfw.MSG(event)
+    msg = MSG(event)
     msg.Subject('Subcriber-Update')
-    dtfw.MESSENGER.Send(
-        envelope= msg.Envelope(), 
-        source= 'Publisher-FanOuter'
-    )
-    
-
-'''
-{
-    "Header": {
-        "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
-    }
-}
-'''
+    MESSENGER.Send(msg, source='Publisher-FanOuter')
+   

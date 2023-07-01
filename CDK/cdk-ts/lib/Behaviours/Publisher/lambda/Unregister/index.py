@@ -2,15 +2,15 @@
 
 # 👉 https://quip.com/sBavA8QtRpXu#temp:C:IEK2b8247c67fae4d4487321c2e1
 
-import dtfw 
+from DYNAMO import DYNAMO
+from MSG import MSG
 
-subscribers = dtfw.DYNAMO('SUBSCRIBERS')
+subscribers = DYNAMO('SUBSCRIBERS')
 
 def handler(event, context):
     print(f'{event}')
 
-    domain = dtfw.MSG(event).From()
-    
+    domain = MSG(event).From()
     return subscribers.Delete(domain)
     
 

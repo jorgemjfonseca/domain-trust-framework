@@ -10,19 +10,21 @@ export class Subscriber extends STACK {
     super(scope, Subscriber.name, props);
 
     const dedups = DYNAMO
-      .New(this, "Deduplication");
+      .New(this, "Deduplication", {
+        ttl: "TTL"
+      });
 
     LAMBDA
-      .New(this, "ConfirmFn")
+      .New(this, "Confirm")
       .HandlesMessenger('Subscriber-Confirm');
 
     LAMBDA
-      .New(this, "ConsumeFn")
+      .New(this, "Consume")
       .WritesToDynamoDB(dedups, 'DEDUPS')
       .HandlesMessenger('Subscriber-Consume');
 
     LAMBDA
-      .New(this, "UpdatedFn")
+      .New(this, "Updated")
       .WritesToDynamoDB(dedups, 'DEDUPS')
       .HandlesMessenger('Subscriber-Updated');
   }

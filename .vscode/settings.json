@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./CDK/cdk-ts/lib/Common/LAMBDA/python-layer/python"
+    ]
+}

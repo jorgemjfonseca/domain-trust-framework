@@ -2,18 +2,23 @@
 
 # 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK5a453bcdb55e4d41bcc57bbc6
 
-import dtfw 
+from DYNAMO import DYNAMO
+from SQS import SQS
+from MSG import MSG
+from UTILS import UTILS
 
-updates = dtfw.DYNAMO('UPDATES')
-sqs = dtfw.SQS('PUBLISHER')
+
+updates = DYNAMO('UPDATES')
+sqs = SQS('PUBLISHER')
+
 
 def handler(event, context):
     print(f'{event}')
 
-    msg = dtfw.MSG(event)
+    msg = MSG(event)
     domain = msg.From()
     update = {
-        'UpdateID': dtfw.UUID(),
+        'UpdateID': UTILS.UUID(),
         'Domain': domain,
         'Timestamp': msg.Timestamp()
     }

@@ -1,69 +1,18 @@
 # 📚 SyncApiHandlers-ReceiverFn
 
-import boto3
-from urllib.request import urlopen
 import os
 import json
-from copy import deepcopy
-import datetime
+
+from DYNAMO import DYNAMO
+from LAMBDA import LAMBDA
+from MSG import MSG
+from TIMER import TIMER
+from UTILS import UTILS
+from WEB import WEB
 
 
-table = None
-def db():
-    global table
-    if not table:
-        tableName = os.environ['TABLE']
-        print (f'{tableName=}')
-        
-        dynamodbClient = boto3.resource('dynamodb')
-        table = dynamodbClient.Table(tableName)
-    return table
-
-
-# 👉 https://www.fernandomc.com/posts/ten-examples-of-getting-data-from-dynamodb-with-python-and-boto3/
-def getItem(table, id):
-    print (f'{id=}')
-
-    response = table.get_item(
-        Key = { 'ID': id }
-    )
-    print (f'getItem: {response=}')
+table = DYNAMO('TABLE')
     
-    if 'Item' not in response:
-        return None
-
-    item = response['Item']
-    print (f'{item=}')
-    return item
-
-
-# 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
-lambdaClient = boto3.client('lambda')
-def invoke(functionName, params):
-    print(f'{elapsed()} invoke.invoking [{functionName}]({params})...')
-    
-    response = lambdaClient.invoke(
-        FunctionName = functionName,
-        Payload=json.dumps(params),
-        LogType='Tail')
-    ret = json.loads(response['Payload'].read())
-    
-    print(f'invoke.returning {ret}')
-    return ret
-        
-
-    
-# 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
-def canonicalize(received: any) -> str:
-    print(f'{elapsed()} Canonicalizing...')
-
-    copy = deepcopy(received)
-    del copy['Signature']
-    del copy['Hash']
-
-    canonicalized = json.dumps(copy, separators=(',', ':'))
-    print(f'{canonicalized=}')
-    return canonicalized    
 
 
 # REQUEST { hostname }
@@ -72,19 +21,16 @@ def canonicalize(received: any) -> str:
 # 👉️ https://developers.google.com/speed/public-dns/docs/doh/json
 # 👉️ https://dns.google/resolve?name=dtfw._domainkey.38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org&type=TXT&do=1
 def invokeDkimReader(envelope, checks):
-    print(f'{elapsed()} Invoke dns.google...')
-    
-    header = getHeader(envelope)
-    domain = getHeaderFrom(header)
+    print(f'{TIMER.Elapsed()} Invoke dns.google...')
+
+    domain = MSG(envelope).From()
     hostname = f'dtfw._domainkey.{domain}'
     checks.append(f'Valid domain?: {hostname}')
     
     url = f'https://dns.google/resolve?name={hostname}&type=TXT&do=1'
-    with urlopen(url) as response:
-        body = response.read()
+    resp = WEB.GetJson(url)
 
-    print(f'{elapsed()} Validate dns.google...')
-    resp = json.loads(body)
+    print(f'{TIMER.Elapsed()} Validate dns.google...')
     isDnsSec = (resp['AD'] == True)
     checks.append(f'IsDnsSec?: {isDnsSec}')
     if not isDnsSec:
@@ -122,72 +68,17 @@ def invokeDkimReader(envelope, checks):
 def invokeDkimReader_deprecated(event):
     print(f'invokeDkimReader: {event=}')
     
-    domain = event['Header']['From']
+    domain = MSG(event).From()
     hostname = f'dtfw._domainkey.{domain}'
-    return invoke(
-        os.environ['DKIM_READER_FN'],
-        { 
-            'hostname': hostname 
-        })    
+    return LAMBDA('DKIM_READER_FN').Invoke({ 
+        'hostname': hostname 
+    })    
 
-
-def getHeader(event):
-    #print(f'getHeader: {event=}')
-    if 'Header' not in event:
-        raise Exception(f'Header missing!')
-    return event['Header']
-
-
-def getHeaderFrom(header):
-    print(f'getHeaderFrom: {header=}')
-    if 'From' not in header or header['From'] == '':
-        raise Exception(f'Header.From missing!')
-    return header['From']
-
-
-def getHeaderTo(header):
-    #print(f'getHeaderTo: {header=}')
-    if 'To' not in header or header['To'].strip() == '':
-        raise Exception(f'Header.To missing!')
-    return header['To']
     
-
-def getHeaderSubject(header):
-    #print(f'getHeaderSubject: {header=}')
-    if 'Subject' not in header or header['Subject'].strip() == '':
-        raise Exception(f'Header.Subject missing!')
-    return header['Subject']
-
-
-def getSignature(envelope):
-    #print(f'getSignature: {envelope=}')
-    if 'Signature' not in envelope or envelope['Signature'].strip() == '':
-        raise Exception(f'Signature missing!')
-    return envelope['Signature']
-    
-
-def getHash(envelope):
-    #print(f'getHash: {envelope=}')
-    if 'Hash' not in envelope:
-        raise Exception(f'Hash missing!')
-    return envelope['Hash']
-
-
-def getBody(envelope):
-    #print(f'getBody: {envelope=}')
-    
-    if 'Body' not in envelope or envelope['Body'] == '':
-        raise Exception(f'Body missing!')
-
-    return envelope['Body']
-
 
 def validateTo(envelope: any, checks):
-    #print(f'validateTo: {envelope=}')
-    
-    header = getHeader(envelope)
-    to = getHeaderTo(header).lower()
-    me = os.environ['DOMAIN_NAME']
+    to = MSG(envelope).To().lower()
+    me = os.environ['DOMAIN_NAME'].lower()
 
     if to != me:
         raise Exception(f'Wrong domain. Expected [{me}], but received [{to}]!')
@@ -197,20 +88,20 @@ def validateTo(envelope: any, checks):
 # REQUEST { text, publicKey, signature }
 # RESPONSE { hash, isVerified }
 def invokeValidator(text, publicKey, signature):
-    print(f'{elapsed()} Invoking validator...')
+    print(f'{TIMER.Elapsed()} Invoking validator...')
 
-    validator = invoke(os.environ['VALIDATOR_FN'], {
+    validator = LAMBDA('VALIDATOR_FN').Invoke({
         'text': text,
         'publicKey': publicKey,
         'signature': signature
     })
     print(f'{validator=}')
-    return validator;
+    return validator
 
 
 def validateHash(envelope, validator, checks):
     expected = validator['hash']
-    received = getHash(envelope)
+    received = MSG(envelope).Hash()
     
     isHashValid = (expected == received)
     checks.append(f'Valid hash?: {isHashValid}')
@@ -228,37 +119,30 @@ def validateSignature(validator, checks):
 
 
 def validateHashAndSignature(envelope: any, checks, speed):
-    print(f'{elapsed()} Validating signature...')
+    print(f'{TIMER.Elapsed()} Validating signature...')
     
-    started = startWatch()
-    signature = getSignature(envelope)
-    text = canonicalize(envelope)
+    started = TIMER.StartWatch()
+    msg = MSG(envelope)
+    signature = msg.Signature()
+    text = msg.Canonicalize()
     publicKey = invokeDkimReader(envelope, checks)
-    speed['Get DKIM over DNSSEC'] = stopWatch(started)
+    speed['Get DKIM over DNSSEC'] = TIMER.StopWatch(started)
 
-    started = startWatch()
+    started = TIMER.StartWatch()
     validator = invokeValidator(text, publicKey, signature)
     validateHash(envelope, validator, checks)
     validateSignature(validator, checks)
-    speed['Verify signature'] = stopWatch(started)
-
-
-def validateHeader(envelope):
-    print(f'{elapsed()} Validating header...')
-
-    header = getHeader(envelope)
-    getHeaderTo(header)
-    getHeaderSubject(header)
+    speed['Verify signature'] = TIMER.StopWatch(started)
 
 
 def validate(envelope, speed):
-    print(f'{elapsed()} Validating...')
+    print(f'{TIMER.Elapsed()} Validating...')
     
     error = None
     checks = []
     
     try:
-        validateHeader(envelope)
+        MSG(envelope).ValidateHeader()
         validateTo(envelope, checks)
         validateHashAndSignature(envelope, checks, speed) 
     except Exception as e:
@@ -277,8 +161,8 @@ def validate(envelope, speed):
 
 
 def execute(validation, envelope, speed):
-    print(f'{elapsed()} Executing...')
-    started = startWatch()
+    print(f'{TIMER.Elapsed()} Executing...')
+    started = TIMER.StartWatch()
 
     if validation['Error']:
         ret = { 
@@ -287,15 +171,13 @@ def execute(validation, envelope, speed):
         print(f'{ret=}')
         return ret
 
-    header = getHeader(envelope)
-    subject = getHeaderSubject(header)
-    target = getItem(table=db(), id=subject)
+    msg = MSG(envelope)
+    subject = msg.Subject()
+    target = DYNAMO.Get(subject)
     
     answer = None 
     if (target):
-        answer = invoke(
-            functionName=target['Target'], 
-            params=envelope)
+        answer = LAMBDA(target['Target']).Invoke(envelope)
 
     ret = {
         'Result': 'Executed',
@@ -304,19 +186,12 @@ def execute(validation, envelope, speed):
     }    
     print(f'{ret=}')
 
-    speed['Execute method'] = stopWatch(started)
+    speed['Execute method'] = TIMER.StopWatch(started)
     return ret
 
 
-def httpResponse(code, body):
-    return {
-        'statusCode': code,
-        'body': json.dumps(body)
-    }
-
-
 def output(envelope, validation, execution, speed):
-    print(f'{elapsed()} Building the output...')
+    print(f'{TIMER.Elapsed()} Building the output...')
 
     output = {
         'Speed': speed,
@@ -327,33 +202,8 @@ def output(envelope, validation, execution, speed):
 
     print ('Returning...')
     if validation['Error']:
-        return httpResponse(400, output)
-    return httpResponse(200, output)
-
-
-def startWatch():
-    return datetime.datetime.now()
-
-def stopWatch(start):
-    current = datetime.datetime.now()
-    elapsed = (current - start)
-    output = round(elapsed.total_seconds() * 1000)
-    return f'{output} ms'
-    
-
-timerStart = datetime.datetime.now()
-def elapsed():
-    global timerStart
-    current = datetime.datetime.now()
-    elapsed = (current - timerStart)
-    timerStart = current
-    output = round(elapsed.total_seconds() * 1000)
-    return f'''--> Elapsed: {output} ms
-.
-'''
-
-def printElapsed():
-    print(f"--- {elapsed()} milliseconds elapsed")
+        return UTILS.HttpResponse(400, output)
+    return UTILS.HttpResponse(200, output)
 
 
 def parse(event):
@@ -374,18 +224,18 @@ def handler(event, context):
     envelope = parse(event)
     print(f'{envelope=}')
     if envelope == {}:
-        return httpResponse(200, { 'Result': 'Inbox is working :)' })
+        return UTILS.HttpResponse(200, { 'Result': 'Inbox is working :)' })
 
     speed = {}
-    started = startWatch()
+    started = TIMER.StartWatch()
     validation = validate(envelope, speed)
     execution = execute(validation, envelope, speed)
-    speed['Total handling'] = stopWatch(started)
+    speed['Total handling'] = TIMER.StopWatch(started)
 
     return output(envelope, validation, execution, speed)
     
 
-    
+
     
 
 '''

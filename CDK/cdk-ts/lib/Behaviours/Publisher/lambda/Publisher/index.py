@@ -1,26 +1,20 @@
-# 📚 Publisher-Register
+# 📚 Publisher-Publisher
 
-# 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4
+# 👉 https://quip.com/sBavA8QtRpXu/-Publisher
 
-import dtfw 
 
-subscribers = dtfw.DYNAMO('SUBSCRIBERS')
-fanout = dtfw.SQS('FANOUT')
+from DYNAMO import DYNAMO
+from SQS import SQS
+from MSG import MSG
+
+subscribers = DYNAMO('SUBSCRIBERS')
+fanout = SQS('FANOUT')
 
 def handler(event, context):
     print(f'{event}')
 
-    body = dtfw.MSG(event).Body()
+    body = MSG(event).Body()
     for sub in subscribers.GetAll():
         to = sub['Domain']
-        msg = dtfw.MSG.Wrap(to, body)
+        msg = MSG().Wrap(to, body)
         fanout.Send(msg)
-    
-
-'''
-{
-    "Header": {
-        "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
-    }
-}
-'''

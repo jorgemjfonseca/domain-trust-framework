@@ -19,6 +19,7 @@ import { STACK } from '../STACK/STACK';
 import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 import { EC2_KEY } from '../KEY/EC2_KEY';
 import { APPCONFIG } from '../APPCONFIG/APPCONFIG';
+import { TIMESTREAM } from '../TIMESTREAM/TIMESTREAM';
 
 
 export interface LAMBDAparams {
@@ -451,6 +452,42 @@ export class LAMBDA extends CONSTRUCT {
       return this;
     }
 
+    
+
+    // 👉 https://docs.aws.amazon.com/timestream/latest/developerguide/accessing.html#getting-started.prereqs.iam-user
+    public WritesToTimestream(timestream: TIMESTREAM): LAMBDA {
+      
+      this.Super.role?.attachInlinePolicy(
+        new iam.Policy(this.Scope, "TimestreamPolicy", {
+          statements: [
+            new iam.PolicyStatement({
+              actions: [
+                "timestream:*",
+                "kms:DescribeKey",
+                "kms:CreateGrant",
+                "kms:Decrypt",
+                "dbqms:CreateFavoriteQuery",
+                "dbqms:DescribeFavoriteQueries",
+                "dbqms:UpdateFavoriteQuery",
+                "dbqms:DeleteFavoriteQueries",
+                "dbqms:GetQueryString",
+                "dbqms:CreateQueryHistory",
+                "dbqms:UpdateQueryHistory",
+                "dbqms:DeleteQueryHistory",
+                "dbqms:DescribeQueryHistory",
+                "s3:ListAllMyBuckets"
+              ],
+              effect: iam.Effect.ALLOW,
+              resources: [
+                timestream.Database.attrArn,
+                timestream.Table.attrArn
+              ],
+            }),
+          ],
+        }));
+
+      return this;
+    }
 
     public WritesToNeptune(neptune: NEPTUNE): LAMBDA {
       neptune.Super.grant(this.Super);
