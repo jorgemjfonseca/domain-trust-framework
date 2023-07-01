@@ -39,11 +39,11 @@ export class Messenger extends STACK {
 
     // SENDER FUNCTION 
     LAMBDA
-      .New(this, "SenderFn")
+      .New(this, "Sender")
       .InvokesLambda(senderSync, 'SENDER');
 
     // PUBLISHER FUNCTION
-    LAMBDA.New(this, "PublisherFn")
+    LAMBDA.New(this, "Publisher")
       .PublishesToBus(bus)
       .Export(Messenger.PUBLISHER);
 

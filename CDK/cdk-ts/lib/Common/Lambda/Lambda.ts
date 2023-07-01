@@ -293,9 +293,9 @@ export class LAMBDA extends CONSTRUCT {
     }
 
 
-    public PublishesToQueue(queue: SQS): LAMBDA {
+    public PublishesToQueue(queue: SQS, envName: string): LAMBDA {
       queue.Super.grantSendMessages(this.Super);
-      this.Super.addEnvironment("QUEUE_NAME", queue.Super.queueName);
+      this.Super.addEnvironment(envName, queue.Super.queueName);
       return this;
     }
 

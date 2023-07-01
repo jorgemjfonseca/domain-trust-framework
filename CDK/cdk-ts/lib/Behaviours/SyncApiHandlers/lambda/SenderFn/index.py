@@ -6,76 +6,21 @@ import os
 import json
 import uuid
 import datetime
+import dtfw
 
-
-
-# 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
-lambdaClient = boto3.client('lambda')
-def invoke(functionName, params):
-    print(f'invoking [{functionName}]({params})...')
-    
-    response = lambdaClient.invoke(
-        FunctionName = functionName,
-        Payload=json.dumps(params),
-        LogType='Tail')
-    
-    returned = json.loads(response['Payload'].read())
-    print(f'{returned=}')
-    return returned
 
 
 # 👉️ https://hands-on.cloud/boto3-kms-tutorial/
 # REQUEST { privateKey, publicKey, text }
 # RESPONSE { hash, signature, isVerified }
 def sign(privateKey: str, publicKey, text) -> str:
-    return invoke(os.environ['SIGNER_FN'], {
+    return dtfw.LAMBDA('SIGNER_FN').Invoke({
         'privateKey': privateKey,
         'publicKey': publicKey,
         'text': text
     })
     
-    
-# 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
-def canonicalize(object: any) -> str:
-    canonicalized = json.dumps(object, separators=(',', ':'))
-    print(f'{canonicalized=}')
-    return canonicalized
-    
-    
-# 👉️ https://stackoverflow.com/questions/36484184/python-make-a-post-request-using-python-3-urllib    
-def post(url: str, body: any) -> any:
-    print(f'{url=}')
-    print(f'body={json.dumps(body)}')
 
-    # data = parse.urlencode(body).encode()
-    # print(f'{data=}')
-    data = bytes(json.dumps(body), encoding='utf-8')
-    
-    req = request.Request(url=url, method='POST', data=data)
-    req.add_header('Content-Type', 'application/json')
-    resp = request.urlopen(req)
-    
-    charset=resp.info().get_content_charset()
-    if charset == None:
-        charset = 'utf-8'
-    content=resp.read().decode(charset)
-    
-    print(f'{content=}')
-    return content
-
-
-# 👉️ https://stackoverflow.com/questions/53676600/string-formatting-of-utcnow
-def timestamp():
-    timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
-    print(f'{timestamp=}')
-    return timestamp
-
-
-# 👉️ https://stackoverflow.com/questions/37049289/how-do-i-convert-a-python-uuid-into-a-string
-def correlation():
-    correlation = str(uuid.uuid4());
-    print(f'{correlation=}')
-    return correlation
 
 secretsmanager = boto3.client('secretsmanager')
 def get_keys(): 
@@ -88,8 +33,8 @@ def get_keys():
 def wrap_envelope(message: any):
     defaults = {
         'Header': {
-            'Correlation': correlation(),
-            'Timestamp': timestamp()
+            'Correlation': dtfw.UTIL.Correlation(),
+            'Timestamp': dtfw.UTIL.Timestamp()
         },
         'Body': {}
     }
@@ -116,7 +61,7 @@ def wrap_envelope(message: any):
 
 def sign_envelope(envelope: any):
     keys = get_keys()
-    canonicalized = canonicalize(envelope)
+    canonicalized = dtfw.UTILS.Canonicalize(envelope)
     signed = sign(keys['privateKey'], keys['publicKey'], canonicalized)
 
     if not signed['isVerified']:
@@ -133,7 +78,7 @@ def send_envelope(envelope: any):
     to = envelope['Header']['To']
     url = f'https://dtfw.{to}/inbox'
     
-    response = post(url, envelope)
+    response = dtfw.UTILS.Post(url, envelope)
     return response
 
    

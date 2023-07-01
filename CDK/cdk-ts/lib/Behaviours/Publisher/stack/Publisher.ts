@@ -33,41 +33,42 @@ export class Publisher extends STACK {
       .New(this, 'FanOutQueue');
 
     LAMBDA
-      .New(this, 'FanOuterFn')
-      .TriggeredBySQS(fanOutQueue);
+      .New(this, 'FanOuter')
+      .TriggeredBySQS(fanOutQueue)
+      .PublishesToMessenger()
 
     const publishQueue = SQS
       .New(this, 'PublishQueue');
 
     LAMBDA
-      .New(this, 'PublisherFn')
+      .New(this, 'Publisher')
       .TriggeredBySQS(publishQueue)
       .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
-      .PublishesToQueue(fanOutQueue);
+      .PublishesToQueue(fanOutQueue, 'FANOUT');
 
     LAMBDA
-      .New(this, 'RegisterHandlerFn')
+      .New(this, 'Register')
       .WritesToDynamoDB(subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Publisher-Register');
 
     LAMBDA
-      .New(this, 'UnregisterHandlerFn')
+      .New(this, 'Unregister')
       .WritesToDynamoDB(subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Publisher-Unregister');
 
     LAMBDA
-      .New(this, 'SubscribeHandlerFn')
+      .New(this, 'Subscribe')
       .WritesToDynamoDB(subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Publisher-Subscribe');
 
     LAMBDA
-      .New(this, 'UpdatedHandlerFn')
+      .New(this, 'Updated')
       .WritesToDynamoDB(updates, 'UPDATES')
-      .PublishesToQueue(publishQueue)
+      .PublishesToQueue(publishQueue, 'PUBLISHER')
       .HandlesMessenger('Publisher-Updated');
 
     LAMBDA
-      .New(this, 'ReplayHandlerFn')
+      .New(this, 'Replay')
       .WritesToDynamoDB(updates, 'UPDATES')
       .WritesToDynamoDB(subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Publisher-Replay');
