@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { NEPTUNE } from '../../../../Common/NEPTUNE/NEPTUNE';
-import { STACK } from '../../../../Common/STACK/STACK';
+import { NEPTUNE } from '../../../Common/NEPTUNE/NEPTUNE';
+import { STACK } from '../../../Common/STACK/STACK';
 
 // https://quip.com/hgz4A3clvOes/-Graph
 export class GraphDB extends STACK {

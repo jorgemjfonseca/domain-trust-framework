@@ -1,9 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { LAMBDA } from '../../../../Common/LAMBDA/LAMBDA';
-import { STACK } from '../../../../Common/STACK/STACK';
-import { Domain } from '../../../../Behaviours/Domain/stack/Domain';
-import { Publisher } from '../../../../Behaviours/Publisher/stack/Publisher';
+import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
+import { STACK } from '../../../Common/STACK/STACK';
+import { Domain } from '../../../Behaviours/Domain/stack/Domain';
+import { Publisher } from '../../../Behaviours/Publisher/stack/Publisher';
 
 interface ListenerDependencies {
   domain: Domain,

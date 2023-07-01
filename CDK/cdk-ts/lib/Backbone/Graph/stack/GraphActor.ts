@@ -1,9 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { LAMBDA } from '../../../../Common/LAMBDA/LAMBDA';
-import { DYNAMO } from '../../../../Common/DYNAMO/DYNAMO';
-import { NEPTUNE } from '../../../../Common/NEPTUNE/NEPTUNE';
-import { STACK } from '../../../../Common/STACK/STACK';
+import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
+import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
+import { NEPTUNE } from '../../../Common/NEPTUNE/NEPTUNE';
+import { STACK } from '../../../Common/STACK/STACK';
 
 // https://quip.com/hgz4A3clvOes/-Graph
 export class Graph extends STACK {
