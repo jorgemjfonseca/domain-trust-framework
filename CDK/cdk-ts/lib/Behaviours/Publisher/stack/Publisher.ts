@@ -16,7 +16,7 @@ export class Publisher extends STACK {
   public static New(scope: Construct, deps: PublisherDependencies, props?: cdk.StackProps)
   {
     const ret = new Publisher(scope, props);
-    //ret.addDependency(deps.domain);
+    ret.addDependency(deps.domain);
     return ret;
   }
 
@@ -38,7 +38,9 @@ export class Publisher extends STACK {
       .New(this, Publisher.SUBSCRIBERS);
 
     const updates = DYNAMO
-      .New(this, Publisher.UPDATES);
+      .New(this, Publisher.UPDATES, {
+        stream: true
+      });
 
     const fanOutQueue = SQS
       .New(this, 'FanOutQueue');

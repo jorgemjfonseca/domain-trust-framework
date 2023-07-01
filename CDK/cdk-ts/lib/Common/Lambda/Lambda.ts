@@ -94,7 +94,7 @@ export class LAMBDA extends CONSTRUCT {
           lambda.Runtime.PYTHON_3_10
         ];
 
-        if (python.includes(settings.runtime)) {
+        if (false && python.includes(settings.runtime)) {
           const layer = new lambda.LayerVersion(scope, id+'-Layer', {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             code: lambda.Code.fromAsset(path.join(__dirname, 'python-layer')),

@@ -58,7 +58,7 @@ export class Graph extends STACK {
       .HandlesSyncApi('Graph-Schema');      
 
     LAMBDA
-      .New(this, 'PublisherFn')
+      .New(this, 'Publisher')
       .TriggeredByDynamoDB(domainsTable)
       .PublishesToMessenger();
 
