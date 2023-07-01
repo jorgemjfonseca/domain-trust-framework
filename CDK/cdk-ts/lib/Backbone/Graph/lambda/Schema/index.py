@@ -1,7 +1,6 @@
-# 📚 -
+# 📚 Graph-Schema
 
-# 👉 
-
+from GRAPH import GRAPH
 
 def handler(event, context):
-    print(f'{event}')
+    GRAPH._HandleSchema(event)

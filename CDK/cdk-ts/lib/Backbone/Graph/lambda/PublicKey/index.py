@@ -1,7 +1,6 @@
-# 📚 -
+# 📚 Graph-PublicKey
 
-# 👉 
-
+from GRAPH import GRAPH
 
 def handler(event, context):
-    print(f'{event}')
+    return GRAPH._HandlePublicKey(event)

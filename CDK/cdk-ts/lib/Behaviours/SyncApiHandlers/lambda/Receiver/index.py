@@ -193,7 +193,11 @@ def execute(validation, envelope, speed):
 def output(envelope, validation, execution, speed):
     print(f'{TIMER.Elapsed()} Building the output...')
 
-    output = {
+    output = {}
+    if execution != None and 'Answer' in execution:
+        output = execution['Answer']
+
+    output['Insights'] = {
         'Speed': speed,
         'Execution': execution,
         'Validation': validation,

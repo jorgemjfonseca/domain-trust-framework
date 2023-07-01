@@ -1,7 +1,6 @@
-# 📚 -
+# 📚 Graph-Identity
 
-# 👉 
-
+from GRAPH import GRAPH
 
 def handler(event, context):
-    print(f'{event}')
+    return GRAPH._HandleIdentity(event)
