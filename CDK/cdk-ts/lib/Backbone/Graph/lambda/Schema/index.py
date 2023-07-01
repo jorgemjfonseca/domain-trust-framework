@@ -3,4 +3,4 @@
 from GRAPH import GRAPH
 
 def handler(event, context):
-    GRAPH._HandleSchema(event)
+    return GRAPH._HandleSchema(event)

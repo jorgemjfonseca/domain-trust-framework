@@ -3,10 +3,8 @@ import os
 import json
 
 
-
 def test():
     return 'this is a SQS test.'
-
 
 
 sqs = boto3.client("sqs")

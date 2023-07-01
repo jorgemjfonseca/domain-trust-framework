@@ -16,8 +16,8 @@ def process():
 Identity:
   Domain: {domainName}
   Name: Random Domain
-  SmallIcon: https://picsum.photos/20/20
-  BigIcon: https://picsum.photos/100/100
+  SmallIcon: 'https://picsum.photos/20/20'
+  BigIcon: 'https://picsum.photos/100/100'
   Translations: 
     - Language: en-us
       Translation: Random Domain

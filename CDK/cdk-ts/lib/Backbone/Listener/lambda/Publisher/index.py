@@ -1,9 +1,8 @@
-# 📚 Listener-
+# 📚 Listener-Publisher
 
-# 👉 https://quip.com/FCSiAU7Eku0X/-Listener
-
+from LISTENER import LISTENER
 
 def handler(event, context):
-    print(f'{event}')
+    return LISTENER._HandlePublisher(event)
 
     

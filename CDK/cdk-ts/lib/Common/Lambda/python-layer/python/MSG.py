@@ -7,6 +7,7 @@ def test():
 
 class MSG:
     
+    
     def __init__(self, event={}):
         # check if it's a MSG object or a string.
         envelope = UTILS.TryCall(event, 'Envelope') 

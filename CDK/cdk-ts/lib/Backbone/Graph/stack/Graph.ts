@@ -47,41 +47,41 @@ export class Graph extends STACK {
       .New(this, 'Trusted')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
-      .HandlesSyncApi('Graph-Trusted');
+      .HandlesSyncApi('Graph-Trusted', { ignoreValidation: true });
 
     LAMBDA
       .New(this, 'Trusts')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
-      .HandlesSyncApi('Graph-Trusts');
+      .HandlesSyncApi('Graph-Trusts', { ignoreValidation: true });
 
     LAMBDA
       .New(this, 'Identity')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
-      .HandlesSyncApi('Graph-Identity');
+      .HandlesSyncApi('Graph-Identity', { ignoreValidation: true });
 
     LAMBDA
       .New(this, 'Queryable')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
-      .HandlesSyncApi('Graph-Queryable');      
+      .HandlesSyncApi('Graph-Queryable', { ignoreValidation: true });
 
     LAMBDA
       .New(this, 'Translate')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .ReadsFromDynamoDB(codesTable, 'CODES')
-      .HandlesSyncApi('Graph-Translate');
+      .HandlesSyncApi('Graph-Translate', { ignoreValidation: true });
 
     LAMBDA
       .New(this, 'PublicKey')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
-      .HandlesSyncApi('Graph-PublicKey');
+      .HandlesSyncApi('Graph-PublicKey', { ignoreValidation: true });
 
     LAMBDA
       .New(this, 'Schema')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .ReadsFromDynamoDB(codesTable, 'CODES')
-      .HandlesSyncApi('Graph-Schema');      
+      .HandlesSyncApi('Graph-Schema', { ignoreValidation: true });      
 
     LAMBDA
       .New(this, 'Publisher')

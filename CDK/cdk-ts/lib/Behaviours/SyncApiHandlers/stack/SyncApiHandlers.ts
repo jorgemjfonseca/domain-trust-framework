@@ -88,15 +88,22 @@ export class SyncApiHandlers extends STACK {
       .Export(SyncApiHandlers.RECEIVER);
 
     // REGISTER EXTENSION
-    LAMBDA.prototype.HandlesSyncApi = function(action: string) {
-      SyncApiHandlers.HandlesSyncApi(this.Scope, action, this);
-      return this;
-    };
+    LAMBDA
+      .prototype
+      .HandlesSyncApi = function(action: string, props?: HandlesSyncApiParameters) {
+        SyncApiHandlers.HandlesSyncApi(this.Scope, action, this, props);
+        return this;
+      };
 
   }
   
 
-  public static HandlesSyncApi(scope: STACK, action: string, fn: LAMBDA) 
+
+  public static HandlesSyncApi(
+    scope: STACK, 
+    action: string, 
+    fn: LAMBDA, 
+    props?: HandlesSyncApiParameters) 
   {
     const map = DYNAMO
       .Import(scope, SyncApiHandlers.MAP);
@@ -104,7 +111,8 @@ export class SyncApiHandlers extends STACK {
     // Register the function name.
     map.PutItem({
       'ID': {'S':action},
-      'Target': {'S':fn.FunctionName()}
+      'Target': {'S':fn.FunctionName()},
+      'IgnoreValidation': {'BOOL':props?.ignoreValidation}
     });
 
     // Add invoke permission.
@@ -116,8 +124,13 @@ export class SyncApiHandlers extends STACK {
 }
 
 
+interface HandlesSyncApiParameters {
+  ignoreValidation?: boolean,
+}
+
+
 declare module '../../../Common/LAMBDA/LAMBDA' {
   interface LAMBDA {
-    HandlesSyncApi(action: string): LAMBDA;
+    HandlesSyncApi(action: string, props?: HandlesSyncApiParameters): LAMBDA;
   }
 }
