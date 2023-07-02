@@ -7,6 +7,7 @@ class DOMAIN:
     def __init__(self, domain):
         self._domain = domain
         self._manifest = None
+        self._manifest_yaml = None
         self._googleDns = None
     
 
@@ -14,18 +15,22 @@ class DOMAIN:
         return f'https://dtfw.{self._domain}/{path}'
 
 
-    def Manifest(self) -> str:
+    def GetManifest(self) -> any:
         if self._manifest:
             return self._manifest
         
-        endpoint = self.Endpoint('manifest')
-        from WEB import WEB
-        self._manifest = WEB.Get(endpoint)
+        if self._manifest_yaml == None:
+            endpoint = self.Endpoint('manifest')
+            from WEB import WEB
+            self._manifest_yaml = WEB.Get(endpoint)
+
+        from UTILS import UTILS
+        self._manifest = UTILS.FromYaml(self._manifest_yaml)
 
         return self._manifest
     
 
-    def GoogleDns(self) -> any:
+    def GetGoogleDns(self) -> any:
         '''
         👉️ https://developers.google.com/speed/public-dns/docs/doh
         👉️ https://developers.google.com/speed/public-dns/docs/doh/json
@@ -45,13 +50,13 @@ class DOMAIN:
 
 
     def IsDnsSec(self) -> bool:
-        resp = self.GoogleDns()
+        resp = self.GetGoogleDns()
         isDnsSec = (resp['AD'] == True)
         return isDnsSec
     
 
     def Dkim(self) -> any:
-        resp = self.GoogleDns()
+        resp = self.GetGoogleDns()
         dkim = None
         exists = 'Answer' in resp
         if exists:

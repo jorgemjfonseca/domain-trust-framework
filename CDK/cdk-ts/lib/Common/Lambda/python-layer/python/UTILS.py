@@ -1,8 +1,6 @@
-import json
-import uuid
-import datetime
-from copy import deepcopy
+# 📚 UTILS
 
+import json
 
 def test():
     return 'this is a UTILS test.'
@@ -12,20 +10,83 @@ class UTILS:
 
 
     @staticmethod
-    def FromYaml(string: str) -> any:
-        return {
-            'Alert': 'UTILS.FromYaml is not yet implemented'
-        }
+    def FromJson(text: str) -> any:
+        return json.loads(text)
+        
+    
+    @staticmethod
+    def ToJson(obj: any) -> str:
+        return json.dumps(obj)
+    
+    
+    @staticmethod
+    def FromYaml(text: str) -> any:
+        ''' 
+        👉 https://yaml.readthedocs.io/en/latest/detail.html
+        👉 https://stackoverflow.com/questions/50846431/converting-a-yaml-file-to-json-object-in-python
+        👉 https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
+        👉 https://yaml.readthedocs.io/en/latest/
+        👉 https://lyz-code.github.io/blue-book/coding/python/ruamel_yaml/
+        '''
+
+        # "products:\n  - item 1\n  - item 2\n"
+        
+        from ruamel.yaml import YAML
+        from io import StringIO 
+        
+        yaml = YAML()
+        stream = StringIO(text)
+        data = yaml.load(stream)
+        stream.close()
+        
+        return data
+        
+        
+    @staticmethod
+    def ToYaml(obj: any) -> str:
+        ''' 👉 https://lyz-code.github.io/blue-book/coding/python/ruamel_yaml/ '''
+        # {'products': ['item 1', 'item 2']}
+        
+        from ruamel.yaml import YAML
+        from io import StringIO 
+        
+        # Configure YAML formatter
+        yaml = YAML()
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        yaml.allow_duplicate_keys = True
+        yaml.explicit_start = False
+        
+        # Return the output to a string
+        stream = StringIO()
+        yaml.dump(obj, stream)
+        text = stream.getvalue()
+        stream.close()
+    
+        return text
+
+
+    @staticmethod
+    def FromJsonToYaml(text: str) -> str:
+        obj = UTILS.FromJson(text)
+        return UTILS.ToYaml(obj)
+        
+        
+    @staticmethod
+    def FromYamlToJson(text: str) -> str:
+        obj = UTILS.FromYaml(text)
+        return UTILS.ToJson(obj)
 
 
     @staticmethod
     def Copy(obj):        
+        from copy import deepcopy
         return deepcopy(obj)
     
 
     @staticmethod
     def UUID():
         ''' 👉️ https://stackoverflow.com/questions/37049289/how-do-i-convert-a-python-uuid-into-a-string '''
+        import uuid
         return str(uuid.uuid4());
     
     
@@ -40,6 +101,7 @@ class UTILS:
     @staticmethod
     def Timestamp():
         ''' 👉️ https://stackoverflow.com/questions/53676600/string-formatting-of-utcnow '''
+        import datetime
         timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
         return timestamp
 
@@ -47,17 +109,37 @@ class UTILS:
     @staticmethod
     def Canonicalize(object: any) -> str:
         ''' 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces '''
+        import json
         canonicalized = json.dumps(object, separators=(',', ':'))
         print(f'{canonicalized=}')
         return canonicalized
     
 
     @staticmethod
-    def HttpResponse(code, body):
-        return {
+    def HttpResponse(code=200, body='', format='json'):
+
+        ret = {
             'statusCode': code,
-            'body': json.dumps(body)
         }
+
+        if format == 'json':
+            ret['body']: UTILS.ToJson(body)
+
+        elif format == 'yaml':
+            ret['body']: UTILS.ToYaml(body)
+            # contentType: text/yaml -> shows on browser (because all text/* are text)
+            # contentType: application/x-yaml -> downloads (or is it application/yaml?)
+            ret["headers"] = {
+                "content-type": 'text/yaml'
+            }
+
+        elif format == 'text':
+            ret['body']: body
+
+        else:
+            ret['body']: body
+
+        return ret
 
     
     @staticmethod

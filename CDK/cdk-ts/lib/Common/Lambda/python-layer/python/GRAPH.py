@@ -19,10 +19,11 @@ class GRAPH:
         from DYNAMO import DYNAMO
         for r in DYNAMO.Records(event):
 
-            from DOMAIN import DOMAIN
             domainName = r['Domain']
+            
+            from DOMAIN import DOMAIN
             domain = DOMAIN(domainName)
-            yaml = domain.Manifest()
+            yaml = domain.GetManifest()
 
             from UTILS import UTILS
             timestamp = UTILS.Timestamp()

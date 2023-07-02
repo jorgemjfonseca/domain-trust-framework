@@ -23,9 +23,9 @@ export class Graph extends STACK {
 
   public static New(scope: Construct, deps: GraphDependencies, props?: cdk.StackProps) {
     const ret = new Graph(scope, props);
-    ret.addDependency(deps.domain);
-    ret.addDependency(deps.subscriber);
-    ret.addDependency(deps.publisher);
+    //ret.addDependency(deps.domain);
+    //ret.addDependency(deps.subscriber);
+    //ret.addDependency(deps.publisher);
     //ret.addDependency(deps.graphDB);
     return ret;
   }

@@ -54,7 +54,6 @@ export class DomainDns extends STACK {
 
     CUSTOM.New('RegistererCfn', registererFn);
     
-    this.Export('DomainName', domainName);
     this.Export('HostedZoneId', dns.Super.hostedZoneId)
   }
 

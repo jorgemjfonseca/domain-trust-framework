@@ -8,6 +8,27 @@ class MANIFEST:
         self._manifest = manifest
     
 
+    def FromAppConfig(
+        CONFIG_APP: str = 'CONFIG_APP', 
+        CONFIG_ENV: str = 'CONFIG_ENV', 
+        CONFIG_PROFILE: str = 'CONFIG_PROFILE'
+    ) -> any:
+        
+        from APPCONFIG import APPCONFIG
+        yaml = APPCONFIG.Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
+
+        from UTILS import UTILS
+        obj = UTILS.FromYaml(yaml)
+
+        return obj
+    
+
+    def FromDomain(domainName) -> any:
+        from DOMAIN import DOMAIN
+        domain = DOMAIN(domainName)
+        return domain.GetManifest()
+
+
     def Trusts(self, domain, role, code) -> bool:
 
         if domain == None or role == None or code == None:

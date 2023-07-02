@@ -25,7 +25,7 @@ def invokeDkimReader(envelope, checks):
     checks.append(f'Valid domain?: {hostname}')
     
     d = DOMAIN(domain)
-    d.GoogleDns()
+    d.GetGoogleDns()
     print(f'{TIMER.Elapsed()} Validate dns.google...')
 
     isDnsSec = d.IsDnsSec()
