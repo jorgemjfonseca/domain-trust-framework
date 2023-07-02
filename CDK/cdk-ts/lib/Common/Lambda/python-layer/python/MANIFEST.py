@@ -2,11 +2,20 @@ def test():
     return 'this is a MANIFEST test.'
 
 
+import MANIFEST as MANIFEST
+
 class MANIFEST:
         
     def __init__(self, manifest: any = None):
-        self._manifest = manifest
+        if manifest is MANIFEST:
+            self._manifest = manifest.Manifest()
+        else:
+            self._manifest = manifest
     
+
+    def Manifest(self):
+        return self._manifest
+
 
     @staticmethod
     def FromAppConfig(
@@ -29,7 +38,7 @@ class MANIFEST:
         CONFIG_APP: str = 'CONFIG_APP', 
         CONFIG_ENV: str = 'CONFIG_ENV', 
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'
-    ) -> any:
+    ) -> str:
         
         from APPCONFIG import APPCONFIG
         yaml = APPCONFIG.Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
@@ -52,7 +61,6 @@ class MANIFEST:
     def FromDomain(domainName) -> any:
         from DOMAIN import DOMAIN
         domain = DOMAIN(domainName)
-
         return domain.GetManifest()
 
 
@@ -108,14 +116,78 @@ class MANIFEST:
         return False
     
 
-    def TryAtt(self, name:str, source: None) -> any:
-        ''' Returns a copy of the attribute, or None of it doesnt exist. '''
-        if not source:
-            source = self._manifest
+    @staticmethod
+    def _tryAtt(name:str, source:any, default=None) -> any:
+        ''' Returns a copy of the attribute, or [default] of it doesnt exist. '''
         if name in source:
             return source[name]
-        return None
+        return default
+
+
+    def TryAtt(self, name:str, source:any=None, default=None) -> any:
+        ''' Returns a copy of the attribute, or [default] of it doesnt exist. '''
+        if not source:
+            source = self._manifest
+        return MANIFEST._tryAtt(name, source, default)
     
 
     def Identity(self):
         return self.TryAtt('Identity')
+    
+
+    def Domain(self):
+        return self.TryAtt(
+            name= 'Domain',
+            source= self.Identity(),
+            default= '<MISSING>')
+        
+
+    def Name(self):
+        return self.TryAtt(
+            name= 'Name', 
+            source= self.Identity(), 
+            default= self.Domain())
+
+
+    def Translations(self, default=[]):
+        return self.TryAtt(
+            name= 'Translations',
+            source= self.Identity(),
+            default= default)
+    
+
+    def NameTranslation(self, language):
+        translations = self.Translations(default=[])
+        for translation in translations:
+            if 'Language' in translation:
+                if translation['Language'] == language:
+                    return translation['Translation']
+        return self.Name()
+    
+
+    @staticmethod
+    def CodeTranslation(item, language):
+        translations = MANIFEST._tryAtt('Translations', source=item, default=[])
+        for translation in translations:
+            if 'Language' in translation:
+                if translation['Language'] == language:
+                    return translation['Translation']
+        return item['ID']
+    
+
+    @staticmethod
+    def CodeSchema(item, output, version):
+        if not item:
+            return {}
+
+        schemas = MANIFEST._tryAtt('Schemas', source=item, default=[])
+        for schema in schemas:
+            if 'Output' in schema:
+                if schema['Output'] == output:
+                    if not version: 
+                        return schema
+                    if 'Version' not in schema:
+                        return schema
+                    if version == schema['Output']:
+                        return schema
+        return {}

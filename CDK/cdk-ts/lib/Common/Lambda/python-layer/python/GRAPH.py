@@ -16,15 +16,12 @@ class GRAPH:
         domains = DYNAMO('DOMAINS')
         domain = domains.Get(domainName)
         return domain
-    
+
 
     @staticmethod
     def _getDomainItemManifest(domainName):
 
-        from UTILS import UTILS
         item = GRAPH._getDomainItem(domainName)        
-        if not item:
-            UTILS.RaiseNotFoundException()
 
         from MANIFEST import MANIFEST
         raw = item['Manifest']
@@ -32,6 +29,14 @@ class GRAPH:
         # TODO: test if we need a UTILS.FromYaml/Json
 
         return manifest
+
+
+    @staticmethod
+    def _getCodeItem(code):
+        from DYNAMO import DYNAMO
+        codes = DYNAMO('CODES')
+        item = codes.Get(code)
+        return item
 
 
     @staticmethod
@@ -47,11 +52,10 @@ class GRAPH:
 
             from DOMAIN import DOMAIN
             domain = DOMAIN(domainName)
-            yaml = domain.GetManifest()
+            manifest = domain.GetManifest()
 
             from UTILS import UTILS
             timestamp = UTILS.Timestamp()
-            manifest = UTILS.FromYaml(yaml)
 
             domains = DYNAMO('DOMAINS')
             domains.Merge(domainName, {
@@ -65,6 +69,8 @@ class GRAPH:
     def _trusts(source, target, role, code):
 
         domain = GRAPH._getDomainItemManifest(source)
+        if not domain:
+            return False
 
         trust = domain.Trusts(
             domain=target, 
@@ -153,13 +159,13 @@ class GRAPH:
 
         domain = GRAPH._getDomainItemManifest(domainName)
         identity = domain.Identity()
-        
         return identity
     
 
     @staticmethod
     def _HandleQueryable(event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA44399e7e0bfc4609a560d6c4a '''
+        # TODO: implement the logic
 
         '''
         "Body": {
@@ -170,9 +176,14 @@ class GRAPH:
             }]
         }
         '''
-
         print(f'{event}')
-        return {}
+        
+        from MSG import MSG
+        msg = MSG(event)
+        binds = msg.TryAtt('Binds')
+        
+        binds['Alert'] = 'Logic not yet implemented, this is just an echo!'
+        return binds
     
 
     @staticmethod
@@ -186,14 +197,48 @@ class GRAPH:
             "Codes": ["iata.org/SSR/WCHR"]
         }
         '''
-
         print(f'{event}')
-        return {}
+
+        ret = {
+            "Language": language,
+            "Domains": [],
+            "Codes": []
+        }
+
+        from MSG import MSG
+        msg = MSG(event)
+
+        language = msg.TryAtt('Language')
+        domains = msg.TryAtt('Domains', default=[])
+        codes = msg.TryAtt('Codes', default=[])
+
+        if not language:
+            return ret
+        
+        for domain in domains:
+            manifest = GRAPH._getDomainItemManifest(domain)
+            translation = manifest.NameTranslation(language)
+            ret['Domains'].append({
+                'Domain': domain,
+                'Translation': translation
+            })
+
+        from MANIFEST import MANIFEST
+        for code in codes:
+            item = GRAPH._getCodeItem(code)
+            translation = MANIFEST.CodeTranslation(item, language)
+            ret['Codes'].append({
+                'Code': code,
+                'Translation': translation
+            })
+        
+        return ret
     
 
     @staticmethod
     def _HandlePublicKey(event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAe17e4b66e30846a7b82ecce0c '''
+        # TODO: implement when there's an old issuer who has rotated their keys.
 
         '''
         "Body": {
@@ -203,7 +248,9 @@ class GRAPH:
         '''
 
         print(f'{event}')
-        return {}
+        return {
+            'Alert': 'Not yet implemented!'
+        }
     
 
     @staticmethod
@@ -217,13 +264,39 @@ class GRAPH:
             "Version": "A"
         }
         '''
-
         print(f'{event}')
-        return {}
+
+        from MSG import MSG
+        msg = MSG(event)
+
+        code = msg.TryAtt('Code')
+        output = msg.TryAtt('Output')
+        version = msg.TryAtt('Version')
+
+        item = GRAPH._getCodeItem(code)
+
+        from MANIFEST import MANIFEST
+        schema = MANIFEST.CodeSchema(item=item, output=output, version=version)
+
+        return schema
     
 
     @staticmethod
     def _HandlePublisher(event):
         
+        from MSG import MSG
+        msg = MSG(event)
+        domainName = msg.From()
+        
+        from DOMAIN import DOMAIN
+        domain = DOMAIN(domainName)
+        manifest = domain.GetManifest()
+    
+        from DYNAMO import DYNAMO
+        domains = DYNAMO('DOMAINS')
+        codes = DYNAMO('CODES')
+
+        # Ignore older records by looking at the Timestamps (envelope+table)"
+
         print(f'{event}')
         return {}

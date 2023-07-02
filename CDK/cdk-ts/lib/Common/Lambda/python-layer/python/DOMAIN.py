@@ -1,21 +1,24 @@
 def test():
     return 'this is a DOMAIN test.'
 
+from MANIFEST import MANIFEST
 
 class DOMAIN:
         
-    def __init__(self, domain):
-        self._domain = domain
+    def __init__(self, domainName):
+        self._domainName = domainName
         self._manifest = None
         self._manifest_yaml = None
         self._googleDns = None
     
 
     def Endpoint(self, path='') -> str:
-        return f'https://dtfw.{self._domain}/{path}'
+        return f'https://dtfw.{self._domainName}/{path}'
 
 
     def GetManifest(self) -> any:
+        '''Fetches the manifest on the domains endpoint, and returns as an object.'''
+
         if self._manifest:
             return self._manifest
         
@@ -40,7 +43,7 @@ class DOMAIN:
         if self._googleDns:
             return self._googleDns
         
-        hostname = f'dtfw._domainkey.{self._domain}'
+        hostname = f'dtfw._domainkey.{self._domainName}'
         url = f'https://dns.google/resolve?name={hostname}&type=TXT&do=1'
 
         from WEB import WEB

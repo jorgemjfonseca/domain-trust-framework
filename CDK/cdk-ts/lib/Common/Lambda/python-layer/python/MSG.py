@@ -69,12 +69,12 @@ class MSG:
         return header['Correlation']
     
     
-    def TryAtt(self, name:str) -> any:
+    def TryAtt(self, name:str, default = None) -> any:
         ''' Returns a copy of the attribute from the body, or None of it doesnt exist. '''
         body = self.Body()
         if name in body:
             return body[name]
-        return None
+        return default
     
 
     def GetAtt(self, name:str) -> any:
