@@ -14,7 +14,6 @@ export interface SyncApiHandlersDependencies {
 export class SyncApiHandlers extends STACK {
 
   private static readonly MAP = 'SyncApiMap';
-  private static readonly MAPPER = 'SyncApiMapper';
 
   private static readonly SENDER = 'SyncApiSenderFn';
   private static readonly RECEIVER = 'SyncApiReceiverFn';

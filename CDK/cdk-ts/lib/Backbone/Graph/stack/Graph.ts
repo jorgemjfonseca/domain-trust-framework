@@ -7,11 +7,13 @@ import { STACK } from '../../../Common/STACK/STACK';
 import { Domain } from '../../../Behaviours/Domain/stack/Domain';
 import { Subscriber } from '../../../Behaviours/Subscriber/stack/Subscriber';
 import { GraphDB } from '../../GraphDB/stack/GraphDB';
+import { Publisher } from '../../../Behaviours/Publisher/stack/Publisher';
 
 
 export interface GraphDependencies {
   domain: Domain,
   subscriber: Subscriber,
+  publisher: Publisher,
   graphDB: GraphDB
 }
 
@@ -21,8 +23,9 @@ export class Graph extends STACK {
 
   public static New(scope: Construct, deps: GraphDependencies, props?: cdk.StackProps) {
     const ret = new Graph(scope, props);
-    //ret.addDependency(deps.domain);
-    //ret.addDependency(deps.subscriber);
+    ret.addDependency(deps.domain);
+    ret.addDependency(deps.subscriber);
+    ret.addDependency(deps.publisher);
     //ret.addDependency(deps.graphDB);
     return ret;
   }
@@ -58,7 +61,7 @@ export class Graph extends STACK {
       .HandlesSyncApi('Trusts@Graph', { ignoreValidation: true });
 
     LAMBDA
-      .New(this, 'Identity')
+      .New(this, 'Identity', { yaml: true })
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .HandlesSyncApi('Identity@Graph', { ignoreValidation: true });
 

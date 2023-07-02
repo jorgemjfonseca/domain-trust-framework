@@ -77,23 +77,51 @@ export class DYNAMO {
         value: this.Super.tableArn,
         exportName: alias + 'Arn',
       });
+      new cdk.CfnOutput(this.Super, alias + 'Stream', {
+        value: this.Super.tableStreamArn + '',
+        exportName: alias + 'Stream',
+      });
       return this;
     }
 
 
     public static Import(scope: STACK, alias: string): DYNAMO {
-      const name = cdk.Fn.importValue(alias);
-      const sup = dynamodb.Table.fromTableName(scope, alias, name);
+      const tableName = cdk.Fn.importValue(alias);
+     
+      /*
+      // this doesn't allow to import a table with a Stream.
+      // 👉 https://github.com/aws/aws-cdk/issues/7470
+      const sup = dynamodb.Table.fromTableName(
+        scope, 
+        scope.RandomName(alias), 
+        tableName);
+        */
+      
+      const tableArn = cdk.Fn.importValue(alias + 'Arn');
+
+      let tableStreamArn: string | undefined
+      tableStreamArn = cdk.Fn.importValue(alias + 'Stream');
+      if (!tableStreamArn)
+        tableStreamArn = undefined  
+      
+      const sup = dynamodb.Table.fromTableAttributes(
+        scope, 
+        scope.RandomName(alias), {
+          // tableArn, // only Arn or Name can be provided, not both.
+          tableName,
+          tableStreamArn
+        });
+
       const ret = new DYNAMO(scope, sup as cdk.aws_dynamodb.Table);
       return ret;
     }
 
 
 
-    // https://github.com/kevinvaningen/cdk-custom-resource-dynamo-insert-example/blob/main/lib/single-insert-custom-resource-construct.ts
-    // https://kevin-van-ingen.medium.com/aws-cdk-custom-resources-for-dynamodb-inserts-2d79cb1ae395
-    // https://stackoverflow.com/questions/62724486/aws-cdk-dynamodb-initial-data
-    // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.custom_resources.AwsSdkCall.html
+    // 👉 https://github.com/kevinvaningen/cdk-custom-resource-dynamo-insert-example/blob/main/lib/single-insert-custom-resource-construct.ts
+    // 👉 https://kevin-van-ingen.medium.com/aws-cdk-custom-resources-for-dynamodb-inserts-2d79cb1ae395
+    // 👉 https://stackoverflow.com/questions/62724486/aws-cdk-dynamodb-initial-data
+    // 👉 https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.custom_resources.AwsSdkCall.html
     public PutItem(item: any) {
       const table = this.Super;
       const scope = this.Scope;

@@ -29,6 +29,8 @@ export class DomainName extends STACK {
         paramName: '/dtfw/' + DomainName.DOMAIN_NAME,
         domainName: domainName
       });
+
+    this.Export('DomainName', domainName);
   }
 
   public static New(scope: Construct): DomainName {

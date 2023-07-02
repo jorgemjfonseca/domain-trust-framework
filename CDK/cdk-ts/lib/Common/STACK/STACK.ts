@@ -21,19 +21,26 @@ export class STACK extends cdk.Stack {
         this.Name = name;
     }
 
-    public Count: number = 0;
-    public Next(): number {
-        this.Count++;
-        return this.Count;
+
+    public NextMap: any = {};
+    public Next(seed?: string): number {
+        const safeSeed = seed ?? '';
+        let counter = 0;
+        if (safeSeed in this.NextMap)
+            counter = this.NextMap[safeSeed];
+        counter ++;
+        this.NextMap[safeSeed] = counter;
+        return counter;
     }
+
 
     public RandomName(seed?: string): string {
-        return (seed??'Random')
-            + this.Next()
-            //+ (Math.round(Math.random()*1000))
-            ;
+        const safeSeed = seed??'Random';
+        const ret = safeSeed + this.Next(safeSeed + '');
+        return ret.replace('@', '-');
     }
 
+    
     private ExportCfn(alias: string, value: string) {
         new cdk.CfnOutput(this, alias, {
             value: value,

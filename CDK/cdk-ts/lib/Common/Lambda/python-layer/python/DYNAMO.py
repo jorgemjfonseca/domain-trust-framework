@@ -140,7 +140,10 @@ class DYNAMO:
     
 
     def GetPageFromTimestamp(self, timestamp, exclusiveStartKey = {}):
-        ''' 👉 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html '''
+        ''' 
+        👉 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html 
+        👉 https://stackoverflow.com/questions/49344272/finding-items-between-2-dates-using-boto3-and-dynamodb-scan
+        '''
 
         from UTILS import UTILS
 

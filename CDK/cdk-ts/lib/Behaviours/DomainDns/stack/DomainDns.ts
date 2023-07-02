@@ -48,15 +48,14 @@ export class DomainDns extends STACK {
         runtime: LAMBDA.PYTHON_3_10,
         handler: 'index.on_event'
       })
-      .GrantRoute53FullAccess();
+      .GrantRoute53FullAccess()
+      .AddEnvironment('domainName', domainName)
+      .AddEnvironment('hostedZoneId', dns.Super.hostedZoneId)
 
-    CUSTOM
-      .New('RegistererCfn', registererFn, {
-        domainName: domainName,
-        hostedZoneId: dns.Super.hostedZoneId,
-        hostedZoneNameServers: dns.Super.hostedZoneNameServers
-      });
+    CUSTOM.New('RegistererCfn', registererFn);
     
+    this.Export('DomainName', domainName);
+    this.Export('HostedZoneId', dns.Super.hostedZoneId)
   }
 
 }

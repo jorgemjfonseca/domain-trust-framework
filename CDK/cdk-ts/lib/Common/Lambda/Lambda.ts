@@ -27,6 +27,7 @@ export interface LAMBDAparams {
   handler?: string;
   super?: cdk.aws_lambda.FunctionProps;
   description?: string;
+  yaml?: boolean;
 }
 
 
@@ -64,7 +65,7 @@ export class LAMBDA extends CONSTRUCT {
             scope.Name + id + "BasicExecutionRole", 
             'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'));
 
-        const settings = {
+        const settings: lambda.FunctionProps = {
           role: role,
 
           functionName: `${scope.Name}-${id}`,
@@ -72,7 +73,8 @@ export class LAMBDA extends CONSTRUCT {
           //deadLetterQueue: dlq.Super,
           memorySize: 1024, 
           timeout: cdk.Duration.seconds(30),
-
+          layers: [],
+          
           ...props?.super,
 
           runtime: 
@@ -95,15 +97,15 @@ export class LAMBDA extends CONSTRUCT {
         ];
 
         if (false && python.includes(settings.runtime)) {
-          const layer = new lambda.LayerVersion(scope, id+'-Layer', {
-            removalPolicy: cdk.RemovalPolicy.DESTROY,
-            code: lambda.Code.fromAsset(path.join(__dirname, 'python-layer')),
-            compatibleArchitectures: [
-              lambda.Architecture.X86_64, 
-              lambda.Architecture.ARM_64
-            ],
-          });
-          settings.layers = [layer]
+          settings.layers?.push(this.newLayer(scope, 'python-layer'))
+        }
+        
+        if (props?.yaml) {
+          // https://stackoverflow.com/questions/50846431/converting-a-yaml-file-to-json-object-in-python
+          // https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
+          // https://yaml.readthedocs.io/en/latest/
+          // https://lyz-code.github.io/blue-book/coding/python/ruamel_yaml/
+          settings.layers?.push(this.newLayer(scope, 'python-ruamel.yaml'))
         }
 
         const fn = new LAMBDA(scope, 
@@ -112,6 +114,18 @@ export class LAMBDA extends CONSTRUCT {
         //dlq.Super.grantSendMessages(fn.Super);
 
         return fn;
+    }
+
+    private static newLayer(scope: STACK, folder: string) {
+      const layer = new lambda.LayerVersion(scope, folder, {
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        code: lambda.Code.fromAsset(path.join(__dirname, folder)),
+        compatibleArchitectures: [
+          lambda.Architecture.X86_64, 
+          lambda.Architecture.ARM_64
+        ],
+      });
+      return layer
     }
 
     public static CallerDirname({ depth = 1 } = {}): string {
@@ -266,7 +280,8 @@ export class LAMBDA extends CONSTRUCT {
         }
       });
 
-      const dlq = DLQ.New(this.Scope, detailType+'-ByBus');
+      const dlq = DLQ.New(this.Scope, 
+          this.Scope.RandomName(detailType+'-ByBus'));
 
       eventRule.addTarget(
         new targets.LambdaFunction(this.Super, {

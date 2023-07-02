@@ -10,9 +10,10 @@ def test():
 
 class WEB: 
 
-    # 👉️ https://stackoverflow.com/questions/36484184/python-make-a-post-request-using-python-3-urllib    
     @staticmethod
     def Post(url: str, body: any) -> any:
+        ''' 👉️ https://stackoverflow.com/questions/36484184/python-make-a-post-request-using-python-3-urllib  '''
+    
         print(f'{url=}')
         print(f'body={json.dumps(body)}')
 
@@ -35,6 +36,9 @@ class WEB:
 
     @staticmethod
     def Get(url: str) -> str:
+        ''' 👉️ https://stackoverflow.com/questions/37819525/lambda-function-to-make-simple-http-request/71127429#71127429 '''
+        print (f'WEB.Get: {url=}')
+
         with urlopen(url) as response:
             body = response.read()
         return body

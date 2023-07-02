@@ -126,8 +126,10 @@ const publisher = Publisher.New(app, {
     domain
 });
 
-const subscriber = new Subscriber(app);
-subscriber.addDependency(domain);
+const subscriber = Subscriber.New(app, {
+    syncApi, 
+    messenger
+});
 
 const host = new Host(app);
 host.addDependency(domain);
@@ -137,7 +139,8 @@ host.addDependency(domain);
 
 Listener.New(app, {
     domain, 
-    publisher
+    publisher,
+    subscriber
 });
 
 const graphDB = new GraphDB(app);
@@ -145,6 +148,7 @@ const graphDB = new GraphDB(app);
 Graph.New(app, {
     domain, 
     subscriber, 
+    publisher,
     graphDB
 });
 

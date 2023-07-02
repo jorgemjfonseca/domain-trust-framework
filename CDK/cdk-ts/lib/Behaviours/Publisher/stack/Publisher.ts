@@ -40,7 +40,7 @@ export class Publisher extends STACK {
   private SetUpRegistration(): DYNAMO {
 
     const subscribers = DYNAMO
-      .New(this, Publisher.SUBSCRIBERS)
+      .New(this, 'Subscribers')
       .Export(Publisher.SUBSCRIBERS);
 
     LAMBDA
@@ -69,10 +69,10 @@ export class Publisher extends STACK {
   private SetUpFilter(): SQS {
 
     const sqs = SQS 
-      .New(this, 'Filter');
+      .New(this, 'FilterSqs');
 
     const filters = DYNAMO
-      .New(this, Publisher.FILTERS)
+      .New(this, 'Filters')
       .Export(Publisher.FILTERS);
 
     LAMBDA

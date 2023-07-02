@@ -12,6 +12,13 @@ class UTILS:
 
 
     @staticmethod
+    def FromYaml(string: str) -> any:
+        return {
+            'Alert': 'UTILS.FromYaml is not yet implemented'
+        }
+
+
+    @staticmethod
     def Copy(obj):        
         return deepcopy(obj)
     

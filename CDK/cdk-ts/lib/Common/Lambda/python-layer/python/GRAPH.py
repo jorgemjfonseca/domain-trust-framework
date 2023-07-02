@@ -2,10 +2,6 @@
 
 # TODO implement graph DB
 
-from UTILS import UTILS
-from DYNAMO import DYNAMO
-from MSG import MSG
-
 
 def test():
     return 'this is SUBSCRIBER test.'
@@ -20,10 +16,26 @@ class GRAPH:
 
         print(f'{event}')
 
+        from DYNAMO import DYNAMO
         for r in DYNAMO.Records(event):
-            domain = r['Domain']
-    
 
+            from DOMAIN import DOMAIN
+            domainName = r['Domain']
+            domain = DOMAIN(domainName)
+            yaml = domain.Manifest()
+
+            from UTILS import UTILS
+            timestamp = UTILS.Timestamp()
+            manifest = UTILS.FromYaml(yaml)
+
+            domains = DYNAMO('DOMAINS')
+            domains.Merge(domainName, {
+                'Domain': domainName,
+                'Timestamp': timestamp,
+                'Manifest': manifest
+            })
+            
+    
     @staticmethod
     def _HandleTrusted(event):
         ''' 👉 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
@@ -36,12 +48,25 @@ class GRAPH:
             "Code": "iata.org/SSR/WCHR"
         }
         '''
-
         print(f'{event}')
 
+        from MSG import MSG
+        msg = MSG(event)
+
+        domainName = msg.TryAtt('Domain')
+        role = msg.TryAtt('Role')
+        code = msg.TryAtt('Code')
+
+        from MANIFEST import MANIFEST
+        manifest = MANIFEST(yaml)
+        trusted = MANIFEST.Trusts(
+            domain=domainName, 
+            role=role, 
+            code=code)
+
         return {
-            "Trusted": True,
-            "Important": "Not yet implemented, always returns True."
+            'Trusted': trusted,
+            'Important': 'Not yet implemented, always returns True.'
         }
     
     
