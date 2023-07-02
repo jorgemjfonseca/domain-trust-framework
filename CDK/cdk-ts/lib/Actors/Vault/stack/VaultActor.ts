@@ -36,25 +36,25 @@ export class VaultActor extends STACK {
     LAMBDA
       .New(this, 'BindHandlerFn')
       .WritesToDynamoDB(binds, 'BINDS')
-      .HandlesMessenger('Vault-Bind');
+      .HandlesMessenger('Bind@Vault');
 
     this.discloseFn = LAMBDA
       .New(this, 'DiscloseHandlerFn')
       .WritesToDynamoDB(disclosures, 'DISCLOSURES')
-      .HandlesMessenger('Vault-Disclose')
+      .HandlesMessenger('Disclose@Vault')
       .Export(VaultActor.DISCLOSE_FN);
 
     LAMBDA
       .New(this, 'ContinueHandlerFn')
-      .HandlesMessenger('Vault-Continue');
+      .HandlesMessenger('Continue@Vault');
 
     LAMBDA
       .New(this, 'UnbindHandlerFn')
-      .HandlesMessenger('Vault-Unbind');
+      .HandlesMessenger('Unbind@Vault');
 
     LAMBDA
       .New(this, 'SuppressHandlerFn')
-      .HandlesMessenger('Vault-Suppress');
+      .HandlesMessenger('Suppress@Vault');
 
   }
 }

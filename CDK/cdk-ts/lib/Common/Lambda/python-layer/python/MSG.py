@@ -18,11 +18,14 @@ class MSG:
         return self._envelope
 
     
-    def Copy(self):
+    def Copy(self) -> any:
+        """ Returns a deep copy of the envelope. """
         return UTILS.Copy(self._envelope)
     
 
-    def Header(self) -> any:
+    def Header(self, header=None) -> any:
+        if header:
+            self._envelope['Header'] = header
         if 'Header' not in self._envelope:
             raise Exception(f'Header missing!')
         return self._envelope['Header']
@@ -66,10 +69,29 @@ class MSG:
         return header['Correlation']
     
     
+    def TryAtt(self, name:str) -> any:
+        ''' Returns a copy of the attribute from the body, or None of it doesnt exist. '''
+        body = self.Body()
+        if name in body:
+            return body[name]
+        return None
+    
 
-    def Body(self) -> any:
+    def GetAtt(self, name:str) -> any:
+        ''' Returns a copy of the attribute from the body, or raises an exception. '''
+        ret = self.TryAtt(name)
+        if ret == None:
+            raise Exception(f'Attribute not found: {name}')
+        return ret
+
+
+    def Body(self, body=None) -> any:
+        ''' Updates or returns a copy of the body. '''
+        if body:
+            self._envelope['Body'] = body
         if 'Body' not in self._envelope or self._envelope['Body'] == '':
-            raise Exception(f'Body missing!')
+            #raise Exception(f'Body missing!')
+            return {}
         if 'Body' in self._envelope:
             return self.Copy()['Body']
         return {}

@@ -21,7 +21,7 @@ export class ThingsActor extends STACK {
       .New(this, 'CreateHandlerFn')
       .WritesToDynamoDB(things, 'THINGS')
       .WritesToDynamoDB(privates, 'PRIVATES')
-      .HandlesMessenger('Things-Create');
+      .HandlesMessenger('Create@Things');
 
   }
 }

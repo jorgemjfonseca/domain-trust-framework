@@ -18,17 +18,17 @@ export class PrinterActor extends STACK {
     LAMBDA
       .New(this, 'DetailsHandlerFn')
       .ReadsFromDynamoDB(locators, 'LOCATORS')
-      .HandlesSyncApi('Printer-Details');
+      .HandlesSyncApi('Details@Printer');
 
     LAMBDA
       .New(this, 'GrabHandlerFn')
       .WritesToDynamoDB(locators, 'LOCATORS')
-      .HandlesSyncApi('Printer-Grab');
+      .HandlesSyncApi('Grab@Printer');
 
     LAMBDA
       .New(this, 'OrderHandlerFn')
       .WritesToDynamoDB(orders, 'ORDERS')
-      .HandlesMessenger('Printer-Order');
+      .HandlesMessenger('Order@Printer');
 
   }
 }

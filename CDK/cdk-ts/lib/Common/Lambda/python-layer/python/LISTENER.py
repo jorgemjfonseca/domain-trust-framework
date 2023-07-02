@@ -20,6 +20,11 @@ class LISTENER:
 
         print(f'{event}')
 
+        update = {}
+
+        from PUBLISHER import PUBLISHER
+        PUBLISHER.Publish(update)
+
 
     @staticmethod
     def _HandleSubscribe(event):

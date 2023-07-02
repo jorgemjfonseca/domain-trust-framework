@@ -4,11 +4,15 @@ import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { STACK } from '../../../Common/STACK/STACK';
 import { Domain } from '../../../Behaviours/Domain/stack/Domain';
 import { Publisher } from '../../../Behaviours/Publisher/stack/Publisher';
+import { Subscriber } from '../../../Behaviours/Subscriber/stack/Subscriber';
+
 
 interface ListenerDependencies {
   domain: Domain,
-  publisher: Publisher
+  publisher: Publisher,
+  subscriber: Subscriber,
 }
+
 
 //https://quip.com/FCSiAU7Eku0X/-Listener
 export class Listener extends STACK {
@@ -17,6 +21,7 @@ export class Listener extends STACK {
     const ret = new Listener(scope, props);
     ret.addDependency(deps.domain);
     ret.addDependency(deps.publisher);
+    ret.addDependency(deps.subscriber);
     return ret;
   }
 
@@ -24,28 +29,30 @@ export class Listener extends STACK {
   private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, Listener.name, props);
 
+    this.SetUpPublisher();
+    this.SetUpSubscriber();
+  }
+
+
+  private SetUpPublisher() {
+
     const subscribers = Publisher.GetSubscribers(this);
-    const updates = Publisher.GetUpdates(this);
-
-    LAMBDA
-      .New(this, 'Subscribe')
-      .HandlesMessenger('Listener-Subscribe')
-      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS');
-
-    LAMBDA
-      .New(this, 'Updated')
-      .HandlesMessenger('Listener-Updated')
-      .WritesToDynamoDB(updates, 'UPDATES');
-
-    LAMBDA
-      .New(this, 'Consume')
-      .HandlesMessenger('Listener-Consume')
-      .WritesToDynamoDB(updates, 'UPDATES')
-      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS');
 
     LAMBDA
       .New(this, 'Publisher')
-      .HandlesMessenger('Listener-Publisher');
-
+      .FiltersPublisher()
+      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
+      .PublishesToMessenger();
   }
+
+
+  private SetUpSubscriber() {
+
+    const dedups = Subscriber.GetDedups(this);
+
+    LAMBDA
+      .New(this, 'Subscriber')
+      .TriggeredByDynamoDB(dedups);
+  }
+
 }

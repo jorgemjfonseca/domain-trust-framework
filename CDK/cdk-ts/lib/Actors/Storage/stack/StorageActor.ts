@@ -19,7 +19,7 @@ export class StorageActor extends STACK {
       .New(this, 'CreateHandlerFn')
       .WritesToDynamoDB(things, 'THINGS')
       .WritesToDynamoDB(files, 'FILES')
-      .HandlesMessenger('Storage-Create');
+      .HandlesMessenger('Create@Storage');
 
   }
 }

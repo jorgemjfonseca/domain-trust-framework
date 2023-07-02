@@ -10,9 +10,9 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { STACK } from '../STACK/STACK';
 
 export interface DYNAMOOptions {
-  keyName?: string;
   stream?: boolean;
-  ttl?: string;
+  ttl?: boolean;
+  dated?: boolean
 }
 
 export class DYNAMO {
@@ -32,17 +32,34 @@ export class DYNAMO {
       options: DYNAMOOptions = {}
     ): DYNAMO {
 
+        const partitionKey = { 
+          name: 'ID', 
+          type: dynamodb.AttributeType.STRING 
+        };
+
+        const stream = options.stream 
+          ? dynamodb.StreamViewType.NEW_AND_OLD_IMAGES 
+          : undefined;
+
+        const timeToLiveAttribute = options.ttl
+          ? 'TTL'
+          : undefined;
+
+        const sortKey = options.dated
+          ? {
+            name: 'Timestamp',
+            type: dynamodb.AttributeType.STRING 
+          }
+          : undefined;
+
         const sup = new cdk.aws_dynamodb.Table(scope, id,{ 
           tableName: `${scope.Name}-${id}`,
-          partitionKey: { 
-            name: options.keyName ?? 'ID', 
-            type: dynamodb.AttributeType.STRING 
-          },
+          partitionKey: partitionKey,
+          sortKey: sortKey,
           billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
-          stream: options.stream ? 
-            dynamodb.StreamViewType.NEW_AND_OLD_IMAGES : undefined,
-          timeToLiveAttribute: options.ttl
+          stream: stream,
+          timeToLiveAttribute: timeToLiveAttribute
         });
         
         const ret = new DYNAMO(scope, sup);
@@ -66,7 +83,7 @@ export class DYNAMO {
 
     public static Import(scope: STACK, alias: string): DYNAMO {
       const name = cdk.Fn.importValue(alias);
-      const sup = dynamodb.Table.fromTableName(scope, scope.RandomName('Table'), name);
+      const sup = dynamodb.Table.fromTableName(scope, alias, name);
       const ret = new DYNAMO(scope, sup as cdk.aws_dynamodb.Table);
       return ret;
     }

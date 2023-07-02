@@ -19,16 +19,16 @@ export class CollectorActor extends STACK {
     LAMBDA
       .New(this, 'CollectHandlerFn')
       .WritesToDynamoDB(collections, 'COLLECTIONS')
-      .HandlesMessenger('Collector-Collect');
+      .HandlesMessenger('Collect@Collector');
 
     LAMBDA
       .New(this, 'RefundHandlerFn')
       .WritesToDynamoDB(refunds, 'REFUNDS')
-      .HandlesMessenger('Collector-Refund');
+      .HandlesMessenger('Refund@Collector');
 
     LAMBDA
       .New(this, 'UnsubscribeHandlerFn')
-      .HandlesSyncApi('Collector-Unsubscribe');
+      .HandlesSyncApi('Unsubscribe@Collector');
 
   }
 }

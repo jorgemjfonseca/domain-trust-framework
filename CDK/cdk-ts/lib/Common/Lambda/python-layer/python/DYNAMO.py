@@ -100,14 +100,18 @@ class DYNAMO:
     @staticmethod
     def my_scan(table, index, start):
         if index != '':
+            
             if start != '':
                 print ('my_scan(index="', index, '",start="', start, '")')
                 return table.scan(IndexName=index, ExclusiveStartKey=start)
+            
             print ('my_scan(index="', index, '")')
             return table.scan(IndexName=index)
+        
         elif start != '':
             print ('my_scan(start="', start, '")')
             return table.scan(ExclusiveStartKey=start)
+        
         print ('my_scan()')
         return table.scan()
         
@@ -133,3 +137,67 @@ class DYNAMO:
     @staticmethod
     def TTL(days):
         return int(time()) + (days * 24 * 60 * 60)
+    
+
+    def GetPageFromTimestamp(self, timestamp, exclusiveStartKey = {}):
+        ''' 👉 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html '''
+
+        from UTILS import UTILS
+
+        filter = {
+            #'TableName': TABLE_NAME,
+            #'IndexName': "main-index",
+            'Select': "ALL_ATTRIBUTES",
+            #'ExclusiveStartKey': exclusiveStartKey,
+            'ExpressionAttributeNames': {
+                "#f_up": "Timestamp"
+            },
+            'ExpressionAttributeValues': {
+                ":s_time": timestamp,
+                ":e_time": UTILS.Timestamp()
+            },
+            'FilterExpression': "#f_up between :s_time and :e_time",
+            'ScanIndexForward': "true"
+        }
+
+        if exclusiveStartKey:
+            response = self._table.scan(
+                FilterExpression=filter, 
+                ExclusiveStartKey=exclusiveStartKey)
+        else:
+            response = self._table.scan(
+                FilterExpression=filter)
+        
+        return response
+        '''
+        {
+            'Items': [...],
+            'LastEvaluatedKey': {...}
+        }
+        '''
+
+    @staticmethod
+    def Records(event):
+        ''' 
+        👉 https://stackoverflow.com/questions/63126782/how-to-desalinize-json-coming-from-dynamodb-stream 
+        👉 https://stackoverflow.com/questions/63050735/how-to-design-dynamodb-to-elastic-search-with-insert-modify-remove
+        👉 https://www.thelambdablog.com/getting-dynamodb-data-changes-with-streams-and-processing-them-with-lambdas-using-python/
+        👉 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.Lambda.Tutorial.html
+        '''
+
+        if 'Records' not in event:
+            return event
+        
+        result = []
+        for r in event['Records']:
+            tmp = {}
+
+            for k, v in r['dynamodb']['NewImage'].items():
+                if "S" in v.keys() or "BOOL" in v.keys():
+                    tmp[k] = v.get('S', v.get('BOOL', False))
+                elif 'NULL' in v:
+                    tmp[k] = None
+
+            result.append(tmp)
+
+        return result

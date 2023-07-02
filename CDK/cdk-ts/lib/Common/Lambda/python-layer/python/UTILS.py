@@ -12,28 +12,34 @@ class UTILS:
 
 
     @staticmethod
-    def Copy(obj):
+    def Copy(obj):        
         return deepcopy(obj)
     
+
+    @staticmethod
+    def UUID():
+        ''' 👉️ https://stackoverflow.com/questions/37049289/how-do-i-convert-a-python-uuid-into-a-string '''
+        return str(uuid.uuid4());
     
-    # 👉️ https://stackoverflow.com/questions/37049289/how-do-i-convert-a-python-uuid-into-a-string
+    
     @staticmethod
     def Correlation():
-        correlation = str(uuid.uuid4());
+        ''' 👉️ https://quip.com/NiUhAQKbj7zi#temp:C:XAYf6d35adc1f4e4f0795954ef86 '''
+        correlation = UTILS.UUID();
         print(f'{correlation=}')
         return correlation
 
 
-    # 👉️ https://stackoverflow.com/questions/53676600/string-formatting-of-utcnow
     @staticmethod
     def Timestamp():
+        ''' 👉️ https://stackoverflow.com/questions/53676600/string-formatting-of-utcnow '''
         timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
         return timestamp
 
 
-    # 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
     @staticmethod
     def Canonicalize(object: any) -> str:
+        ''' 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces '''
         canonicalized = json.dumps(object, separators=(',', ':'))
         print(f'{canonicalized=}')
         return canonicalized
@@ -46,18 +52,18 @@ class UTILS:
             'body': json.dumps(body)
         }
 
-
-    # 👉️ https://bobbyhadz.com/blog/python-check-if-object-has-method#check-if-an-object-has-a-specific-method-in-python
+    
     @staticmethod
     def TryCall(obj, name):
+        '''  👉️ https://bobbyhadz.com/blog/python-check-if-object-has-method#check-if-an-object-has-a-specific-method-in-python '''
         method = getattr(obj, name, None)
         if callable(method):
             return method()
         return obj
 
 
-    # 👉️ https://stackoverflow.com/questions/14839528/merge-two-objects-in-python
     @staticmethod
     def Merge(obj1, obj2):
+        ''' 👉️ https://stackoverflow.com/questions/14839528/merge-two-objects-in-python '''
         obj1.update(obj2)
         return obj1

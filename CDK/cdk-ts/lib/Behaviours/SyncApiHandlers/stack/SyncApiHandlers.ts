@@ -109,10 +109,12 @@ export class SyncApiHandlers extends STACK {
       .Import(scope, SyncApiHandlers.MAP);
       
     // Register the function name.
+    const ignoreValidation = props?.ignoreValidation 
+      ? 'True' : 'False';
     map.PutItem({
       'ID': {'S':action},
       'Target': {'S':fn.FunctionName()},
-      'IgnoreValidation': {'BOOL':props?.ignoreValidation}
+      'IgnoreValidation': {'S':ignoreValidation}
     });
 
     // Add invoke permission.

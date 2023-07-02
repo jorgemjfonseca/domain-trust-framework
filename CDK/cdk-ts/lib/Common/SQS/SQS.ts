@@ -12,16 +12,20 @@ export class SQS {
     Super: sqs.Queue;
     
 
+    private constructor(scope: STACK, sup: sqs.Queue){
+      this.Scope = scope;
+      this.Super = sup;
+    }
+
+
     public static New(
       scope: STACK , 
       id: string
     ): SQS {
 
-        const ret = new SQS();
-
         const dlq = DLQ.New(scope, id + "DLQ");
 
-        ret.Super = new sqs.Queue(scope, id,{ 
+        const sup = new sqs.Queue(scope, id,{ 
           queueName: `${scope.Name}-${id}`,
           enforceSSL: true,      
           deadLetterQueue: { 
@@ -30,10 +34,31 @@ export class SQS {
           }
         });
 
-        ret.Scope = scope;
+        const ret = new SQS(scope, sup);
         ret.Dlq = dlq;
 
         return ret;
+    }
+
+
+    public Export(alias: string): SQS {
+      new cdk.CfnOutput(this.Super, alias, {
+        value: this.Super.queueName,
+        exportName: alias,
+      });
+      new cdk.CfnOutput(this.Super, alias + 'Arn', {
+        value: this.Super.queueArn,
+        exportName: alias + 'Arn',
+      });
+      return this;
+    }
+
+
+    public static Import(scope: STACK, alias: string): SQS {
+      const arn = cdk.Fn.importValue(alias + 'Arn');
+      const sup = sqs.Queue.fromQueueArn(scope, alias, arn);
+      const ret = new SQS(scope, sup as sqs.Queue);
+      return ret;
     }
 
 
@@ -59,6 +84,8 @@ export class SQS {
     
       return this;
     }
+
+
     
 }
 

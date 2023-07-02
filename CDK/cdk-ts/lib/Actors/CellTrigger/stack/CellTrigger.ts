@@ -18,13 +18,13 @@ export class CellTriggerActor extends STACK {
     LAMBDA
       .New(this, 'Trigger')
       .WritesToDynamoDB(devices, 'DEVICES')
-      .HandlesMessenger('CellTrigger-Trigger');
+      .HandlesMessenger('Trigger@CellTrigger');
 
     LAMBDA
       .New(this, 'Order')
       .WritesToDynamoDB(orders, 'ORDERS')
       .WritesToDynamoDB(devices, 'DEVICES')
-      .HandlesMessenger('CellTrigger-Updated');
+      .HandlesMessenger('Updated@CellTrigger');
       
   }
 }

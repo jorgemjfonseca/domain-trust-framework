@@ -18,12 +18,12 @@ export class PayerActor extends STACK {
     LAMBDA
       .New(this, 'EndorseHandlerFn')
       .ReadsFromDynamoDB(endorsements, 'ENDORSEMENTS')
-      .HandlesMessenger('Payer-Endorse');
+      .HandlesMessenger('Endorse@Payer');
 
     LAMBDA
       .New(this, 'CollectHandlerFn')
       .ReadsFromDynamoDB(collections, 'COLLECTIONS')
-      .HandlesMessenger('Payer-Collect');
+      .HandlesMessenger('Collect@Payer');
 
   }
 }

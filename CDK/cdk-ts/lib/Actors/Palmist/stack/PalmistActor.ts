@@ -22,35 +22,35 @@ export class PalmistActor extends STACK {
     LAMBDA
       .New(this, 'RegisterHandlerFn')
       .WritesToDynamoDB(devices, 'DEVICES')
-      .HandlesMessenger('Palmist-Register');
+      .HandlesMessenger('Register@Palmist');
 
     LAMBDA
       .New(this, 'DisclosedHandlerFn')
       .WritesToDynamoDB(devices, 'DEVICES')
       .WritesToDynamoDB(disclosures, 'DISCLOSURES')
-      .HandlesSyncApi('Palmist-Disclosed');
+      .HandlesSyncApi('Disclosed@Palmist');
 
     LAMBDA
       .New(this, 'MatchHandlerFn')
       .WritesToDynamoDB(devices, 'DEVICES')
       .WritesToDynamoDB(delegates, 'DELEGATES')
-      .HandlesSyncApi('Palmist-Match');
+      .HandlesSyncApi('Match@Palmist');
 
     LAMBDA
       .New(this, 'SearchHandlerFn')
       .WritesToDynamoDB(devices, 'DEVICES')
-      .HandlesMessenger('Palmist-Search');
+      .HandlesMessenger('Search@Palmist');
 
     LAMBDA
       .New(this, 'DelegateHandlerFn')
       .WritesToDynamoDB(devices, 'DEVICES')
       .WritesToDynamoDB(delegates, 'DELEGATES')
-      .HandlesMessenger('Palmist-Delegate');
+      .HandlesMessenger('Delegate@Palmist');
 
     LAMBDA
       .New(this, 'SuppressedHandlerFn')
       .WritesToDynamoDB(devices, 'DEVICES')
-      .HandlesMessenger('Palmist-Suppressed');
+      .HandlesMessenger('Suppressed@Palmist');
 
   }
 }

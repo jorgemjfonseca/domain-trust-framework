@@ -8,7 +8,7 @@ from LAMBDA import LAMBDA
 from MSG import MSG
 from TIMER import TIMER
 from UTILS import UTILS
-from WEB import WEB
+from DOMAIN import DOMAIN
 
 
 table = DYNAMO('TABLE')
@@ -17,9 +17,6 @@ table = DYNAMO('TABLE')
 
 # REQUEST { hostname }
 # RESPONSE: str
-# 👉️ https://developers.google.com/speed/public-dns/docs/doh
-# 👉️ https://developers.google.com/speed/public-dns/docs/doh/json
-# 👉️ https://dns.google/resolve?name=dtfw._domainkey.38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org&type=TXT&do=1
 def invokeDkimReader(envelope, checks):
     print(f'{TIMER.Elapsed()} Invoke dns.google...')
 
@@ -27,53 +24,26 @@ def invokeDkimReader(envelope, checks):
     hostname = f'dtfw._domainkey.{domain}'
     checks.append(f'Valid domain?: {hostname}')
     
-    url = f'https://dns.google/resolve?name={hostname}&type=TXT&do=1'
-    resp = WEB.GetJson(url)
-
+    d = DOMAIN(domain)
+    d.GoogleDns()
     print(f'{TIMER.Elapsed()} Validate dns.google...')
-    isDnsSec = (resp['AD'] == True)
+
+    isDnsSec = d.IsDnsSec()
     checks.append(f'IsDnsSec?: {isDnsSec}')
     if not isDnsSec:
         raise Exception(f"Sender is not DNSSEC protected.")
-    
-    dkim = None
-    exists = 'Answer' in resp
-    checks.append(f'Exists?: {exists}')
-    if exists:
-        for answer in resp['Answer']:
-            if answer['type'] == 16:
-                dkim = answer['data']
 
-    isDkimSetUp = (dkim != None)
+    isDkimSetUp = d.IsDkimSetUp()
     checks.append(f'DKIM set?: {isDkimSetUp}')
     if not isDkimSetUp:
         raise Exception(f"Sender DKIM not found for dtfw.")
     
-    public_key = None
-    for part in dkim.split(';'):
-        elems = part.split('=')
-        if elems[0] == 'p' and len(elems) == 2:
-            public_key = elems[1];
-    
-    hasPublicKey = (public_key != None)
+    hasPublicKey = d.HasPublicKey()
     checks.append(f'Public Key set?: {hasPublicKey}')
     if not hasPublicKey:
         raise Exception(f"Public key not found on sender DKIM.")
     
-    return public_key
-    
-
-# REQUEST { hostname }
-# RESPONSE: str
-def invokeDkimReader_deprecated(event):
-    print(f'invokeDkimReader: {event=}')
-    
-    domain = MSG(event).From()
-    hostname = f'dtfw._domainkey.{domain}'
-    return LAMBDA('DKIM_READER_FN').Invoke({ 
-        'hostname': hostname 
-    })    
-
+    return d.PublicKey()
     
 
 def validateTo(envelope: any, checks):

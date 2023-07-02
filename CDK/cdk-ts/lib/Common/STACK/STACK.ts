@@ -41,7 +41,7 @@ export class STACK extends cdk.Stack {
         });
     }
 
-    private ExportSsm(alias: string, value: string) {
+    public ExportSsm(alias: string, value: string) {
         new ssm.StringParameter(
             this,
             this.RandomName(alias),

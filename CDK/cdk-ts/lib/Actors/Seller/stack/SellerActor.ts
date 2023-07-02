@@ -10,7 +10,7 @@ export class SellerActor extends STACK {
 
     LAMBDA
       .New(this, 'PaidHandlerFn')
-      .HandlesMessenger('Seller-Paid');
+      .HandlesMessenger('Paid@Seller');
 
   }
 }

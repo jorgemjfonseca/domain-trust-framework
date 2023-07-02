@@ -15,12 +15,12 @@ export class Issuer extends STACK {
     LAMBDA
       .New(this, 'Download')
       .ReadsFromDynamoDB(credentials, 'CREDENTIALS')
-      .HandlesSyncApi('Issuer-Download');
+      .HandlesSyncApi('Download@Issuer');
 
     LAMBDA
       .New(this, 'Status')
       .ReadsFromDynamoDB(credentials, 'CREDENTIALS')
-      .HandlesMessenger('Issuer-Status');
+      .HandlesMessenger('Status@Issuer');
 
   }
 }
