@@ -7,25 +7,21 @@ def test():
     return 'this is SUBSCRIBER test.'
 
 
+from DTFW import DTFW
+
 class GRAPH:
     
 
     @staticmethod
     def _getDomainItem(domainName):
-        from DYNAMO import DYNAMO
-        domains = DYNAMO('DOMAINS')
-        domain = domains.Get(domainName)
-        return domain
+        return DTFW.DYNAMO('DOMAINS').Get(domainName)
 
 
     @staticmethod
     def _getDomainItemManifest(domainName):
 
         item = GRAPH._getDomainItem(domainName)        
-
-        from MANIFEST import MANIFEST
-        raw = item['Manifest']
-        manifest = MANIFEST(raw)
+        manifest = DTFW.MANIFEST(item['Manifest'])
         # TODO: test if we need a UTILS.FromYaml/Json
 
         return manifest
@@ -33,10 +29,7 @@ class GRAPH:
 
     @staticmethod
     def _getCodeItem(code):
-        from DYNAMO import DYNAMO
-        codes = DYNAMO('CODES')
-        item = codes.Get(code)
-        return item
+        return DTFW.DYNAMO('CODES').Get(code)
 
 
     @staticmethod
@@ -50,15 +43,12 @@ class GRAPH:
 
             domainName = r['Domain']
 
-            from DOMAIN import DOMAIN
-            domain = DOMAIN(domainName)
-            manifest = domain.GetManifest()
+            manifest = DTFW.DOMAIN(domainName).GetManifest()
 
             from UTILS import UTILS
             timestamp = UTILS.Timestamp()
 
-            domains = DYNAMO('DOMAINS')
-            domains.Merge(domainName, {
+            DTFW.DYNAMO('DOMAINS').Merge(domainName, {
                 'Domain': domainName,
                 'Timestamp': timestamp,
                 'Manifest': manifest
@@ -94,8 +84,7 @@ class GRAPH:
         '''
         print(f'{event}')
 
-        from MSG import MSG
-        msg = MSG(event)
+        msg = DTFW.MSG(event)
 
         source = msg.From()
         target = msg.TryAtt('Domain')
@@ -126,8 +115,7 @@ class GRAPH:
         
         print(f'{event}')
         
-        from MSG import MSG
-        msg = MSG(event)
+        msg = DTFW.MSG(event)
 
         source = msg.TryAtt('Truster')
         target = msg.TryAtt('Domain')
@@ -153,13 +141,8 @@ class GRAPH:
         '''
         print(f'{event}')
 
-        from MSG import MSG
-        msg = MSG(event)
-        domainName = msg.TryAtt('Domain')
-
-        domain = GRAPH._getDomainItemManifest(domainName)
-        identity = domain.Identity()
-        return identity
+        domainName = DTFW.MSG(event).TryAtt('Domain')
+        return GRAPH._getDomainItemManifest(domainName).Identity()
     
 
     @staticmethod
@@ -178,10 +161,7 @@ class GRAPH:
         '''
         print(f'{event}')
         
-        from MSG import MSG
-        msg = MSG(event)
-        binds = msg.TryAtt('Binds')
-        
+        binds = DTFW.MSG(event).TryAtt('Binds')
         binds['Alert'] = 'Logic not yet implemented, this is just an echo!'
         return binds
     
@@ -205,8 +185,7 @@ class GRAPH:
             "Codes": []
         }
 
-        from MSG import MSG
-        msg = MSG(event)
+        msg = DTFW.MSG(event)
 
         language = msg.TryAtt('Language')
         domains = msg.TryAtt('Domains', default=[])
@@ -266,8 +245,7 @@ class GRAPH:
         '''
         print(f'{event}')
 
-        from MSG import MSG
-        msg = MSG(event)
+        msg = DTFW.MSG(event)
 
         code = msg.TryAtt('Code')
         output = msg.TryAtt('Output')
@@ -284,17 +262,11 @@ class GRAPH:
     @staticmethod
     def _HandlePublisher(event):
         
-        from MSG import MSG
-        msg = MSG(event)
-        domainName = msg.From()
+        domainName = DTFW.MSG(event).From()
+        manifest = DTFW.MANIFEST().LoadFromDomain(domainName)
         
-        from MANIFEST import MANIFEST
-        manifest = MANIFEST()
-        manifest.LoadFromDomain(domainName)        
-
-        from DYNAMO import DYNAMO
-        domains = DYNAMO('DOMAINS')
-        codes = DYNAMO('CODES')
+        domains = DTFW.DYNAMO('DOMAINS')
+        codes = DTFW.DYNAMO('CODES')
 
         # TODO: save the domain and code
         # TODO: Ignore older records by looking at the Timestamps (envelope+table)

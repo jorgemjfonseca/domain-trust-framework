@@ -5,7 +5,7 @@ from MANIFEST import MANIFEST
 
 class DOMAIN:
         
-    def __init__(self, domainName):
+    def __init__(self, domainName: str):
         self._domainName = domainName
         self._manifest = None
         self._manifest_yaml = None

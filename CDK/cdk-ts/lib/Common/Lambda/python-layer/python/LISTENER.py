@@ -4,6 +4,7 @@
 def test():
     return 'this is SUBSCRIBER test.'
 
+from DTFW import DTFW
 
 class LISTENER:
 
@@ -49,14 +50,11 @@ class LISTENER:
 
         # Copied from Publisher-Subscribe
 
-        from MSG import MSG
-        msg = MSG(event)
+        msg = DTFW.MSG(event)
         domain = msg.From()
         filter = msg.Body()['Filter']
-
-        from DYNAMO import DYNAMO
-        subscribers = DYNAMO('SUBSCRIBERS')
-        subscribers.Merge(domain, { 
+        
+        DTFW.DYNAMO('SUBSCRIBERS').Merge(domain, { 
             'Filter': filter,
             'Status': 'SUBSCRIBED'
         })
@@ -71,20 +69,14 @@ class LISTENER:
         from UTILS import UTILS
         id = UTILS.UUID() 
 
-        from MSG import MSG
-        msg = MSG(event)
-        domain = msg.From()
+        msg = DTFW.MSG(event)
         
         update = {
             'UpdateID': id,
-            'Domain': domain,
+            'Domain': msg.From(),
             'Timestamp': msg.Timestamp()
         }
 
-        from DYNAMO import DYNAMO
-        updates = DYNAMO('UPDATES')
-        updates.Merge(id, update)
+        DTFW.DYNAMO('UPDATES').Merge(id, update)
         
-        from SQS import SQS
-        sqs = SQS('PUBLISHER')
-        sqs.Send(update)
+        DTFW.SQS('PUBLISHER').Send(update)

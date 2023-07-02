@@ -2,6 +2,7 @@ def test():
     return 'this is a MANIFEST test.'
 
 
+from DTFW import DTFW
 import MANIFEST as MANIFEST
 
 class MANIFEST:
@@ -59,9 +60,7 @@ class MANIFEST:
 
     @staticmethod
     def _fromDomain(domainName) -> any:
-        from DOMAIN import DOMAIN
-        domain = DOMAIN(domainName)
-        return domain.GetManifest()
+        return DTFW.DOMAIN(domainName).GetManifest()
 
 
     def LoadFromDomain(self, domainName) -> any:
