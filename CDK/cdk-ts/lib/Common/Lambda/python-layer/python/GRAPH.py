@@ -288,15 +288,18 @@ class GRAPH:
         msg = MSG(event)
         domainName = msg.From()
         
-        from DOMAIN import DOMAIN
-        domain = DOMAIN(domainName)
-        manifest = domain.GetManifest()
-    
+        from MANIFEST import MANIFEST
+        manifest = MANIFEST()
+        manifest.LoadFromDomain(domainName)        
+
         from DYNAMO import DYNAMO
         domains = DYNAMO('DOMAINS')
         codes = DYNAMO('CODES')
 
-        # Ignore older records by looking at the Timestamps (envelope+table)"
+        # TODO: save the domain and code
+        # TODO: Ignore older records by looking at the Timestamps (envelope+table)
+        # TODO: Ignore codes that don't match the domain
+        # TODO: Handle codes that are delegate to other domains
 
         print(f'{event}')
         return {}

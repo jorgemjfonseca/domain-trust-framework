@@ -58,14 +58,14 @@ class MANIFEST:
         
 
     @staticmethod
-    def FromDomain(domainName) -> any:
+    def _fromDomain(domainName) -> any:
         from DOMAIN import DOMAIN
         domain = DOMAIN(domainName)
         return domain.GetManifest()
 
 
     def LoadFromDomain(self, domainName) -> any:
-        self._manifest = MANIFEST.FromDomain(domainName)
+        self._manifest = MANIFEST._fromDomain(domainName)
 
 
     def Trusts(self, domain, role, code) -> bool:
