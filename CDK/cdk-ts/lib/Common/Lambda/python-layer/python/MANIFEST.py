@@ -4,10 +4,11 @@ def test():
 
 class MANIFEST:
         
-    def __init__(self, manifest: any):
+    def __init__(self, manifest: any = None):
         self._manifest = manifest
     
 
+    @staticmethod
     def FromAppConfig(
         CONFIG_APP: str = 'CONFIG_APP', 
         CONFIG_ENV: str = 'CONFIG_ENV', 
@@ -23,10 +24,40 @@ class MANIFEST:
         return obj
     
 
+    @staticmethod
+    def RawAppConfig(
+        CONFIG_APP: str = 'CONFIG_APP', 
+        CONFIG_ENV: str = 'CONFIG_ENV', 
+        CONFIG_PROFILE: str = 'CONFIG_PROFILE'
+    ) -> any:
+        
+        from APPCONFIG import APPCONFIG
+        yaml = APPCONFIG.Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
+
+        return yaml
+    
+
+    def LoadFromAppConfig(
+        self,
+        CONFIG_APP: str = 'CONFIG_APP', 
+        CONFIG_ENV: str = 'CONFIG_ENV', 
+        CONFIG_PROFILE: str = 'CONFIG_PROFILE'
+    ):
+        self._manifest = MANIFEST.FromAppConfig(
+            CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE
+        )
+        
+
+    @staticmethod
     def FromDomain(domainName) -> any:
         from DOMAIN import DOMAIN
         domain = DOMAIN(domainName)
+
         return domain.GetManifest()
+
+
+    def LoadFromDomain(self, domainName) -> any:
+        self._manifest = MANIFEST.FromDomain(domainName)
 
 
     def Trusts(self, domain, role, code) -> bool:
@@ -75,3 +106,16 @@ class MANIFEST:
                         return True
 
         return False
+    
+
+    def TryAtt(self, name:str, source: None) -> any:
+        ''' Returns a copy of the attribute, or None of it doesnt exist. '''
+        if not source:
+            source = self._manifest
+        if name in source:
+            return source[name]
+        return None
+    
+
+    def Identity(self):
+        return self.TryAtt('Identity')

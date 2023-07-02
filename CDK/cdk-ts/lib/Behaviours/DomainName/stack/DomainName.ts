@@ -24,13 +24,15 @@ export class DomainName extends STACK {
       })
       .GrantSsmFullAccess();
 
+    // Generate a new Random name, if one doesn't yet exist.
+    // If it already exists, then ignore.
     CUSTOM
       .New('NamerFnRun', namerFn, {
         paramName: '/dtfw/' + DomainName.DOMAIN_NAME,
         domainName: domainName
       });
 
-    this.Export('DomainName', domainName);
+    this.ExportCfn('DomainName', domainName);
   }
 
   public static New(scope: Construct): DomainName {

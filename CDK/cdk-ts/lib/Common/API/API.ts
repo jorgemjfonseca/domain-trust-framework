@@ -376,7 +376,7 @@ export class API extends CONSTRUCT {
 
       // 👉 https://github.com/aws/aws-cdk/issues/8116
       this.ApiRole().attachInlinePolicy(
-        new iam.Policy(this.Scope, "Policy"+name, {
+        new iam.Policy(this.Scope, this.Scope.RandomName("Policy"+name), {
           statements: [
             new iam.PolicyStatement({
               actions: ["lambda:InvokeFunction"],

@@ -70,9 +70,19 @@ export class SyncApiEndpoint extends STACK {
   private SetUpManifest(api: API) {
     // All changes to the API must be done on the same stack
     // because CDK doesn't redeploy the API after an import.
+    
     ManifesterBucket
       .GetViewerFn(this)
       .AddApiMethod(api, 'manifest', ['GET']);
+
+    ManifesterBucket
+      .GetJsonViewer(this)
+      .AddApiMethod(api, 'manifest-json', ['GET']);
+
+    ManifesterBucket
+      .GetYamlViewer(this)
+      .AddApiMethod(api, 'manifest-yaml', ['GET']);
+
   }
 
   

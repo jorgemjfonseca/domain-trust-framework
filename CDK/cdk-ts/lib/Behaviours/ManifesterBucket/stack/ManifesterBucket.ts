@@ -1,11 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
-import { S3 } from '../../../Common/S3/S3';
 import { STACK } from '../../../Common/STACK/STACK';
 import { DomainName } from '../../DomainName/stack/DomainName';
 import { APPCONFIG } from '../../../Common/APPCONFIG/APPCONFIG';
-import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 
 
 export interface ManifesterBucketDependencies {
@@ -15,11 +13,21 @@ export interface ManifesterBucketDependencies {
 //https://quip.com/BfbEAAFo5aOV/-Manifester
 export class ManifesterBucket extends STACK {
 
-  public static readonly VIEWER_FN = 'DomainManifestViewerFn';
+  private static readonly JSON_VIEWER = 'DomainManifestJsonViewer';
+  private static readonly YAML_VIEWER = 'DomainManifestYamlViewer';
+  private static readonly VIEWER_FN = 'DomainManifestViewerFn';
   private static readonly CONFIG = 'ManifestConfigOut';
 
   public static GetViewerFn(scope: STACK) {
     return LAMBDA.Import(scope, this.VIEWER_FN);
+  }
+
+  public static GetYamlViewer(scope: STACK) {
+    return LAMBDA.Import(scope, this.YAML_VIEWER);
+  }
+
+  public static GetJsonViewer(scope: STACK) {
+    return LAMBDA.Import(scope, this.JSON_VIEWER);
   }
   
   public static GetConfigArn(): string {
@@ -51,69 +59,20 @@ Identity:
 
     // VIEWER LAMBDA
     LAMBDA
-      .New(this, "ViewerFn")
+      .New(this, "DefaultViewer")
       .ReadsAppConfig(appConfig)
       .Export(ManifesterBucket.VIEWER_FN);
 
-  }
-  
-}
-
-
-//https://quip.com/BfbEAAFo5aOV/-Manifester
-/**
- * @deprecated use the AppConfig version instead.
- */
-export class ManifesterBucketS3 extends STACK {
-
-  private static readonly BUCKET = 'DomainManifestBucket';
-  private static readonly FILE_NAME = 'DomainManifest.yaml';
-
-  public static GetBucket(scope: STACK) {
-    return S3.Import(scope, this.BUCKET);
-  }
-
-  
-  private CreateS3(bucketName: string) {
-    const s3 = S3
-      .New(this, 'ManifestBucket', { 
-        bucketName, 
-        versioned: true
-      })
-      .Export(ManifesterBucketS3.BUCKET);
-    return s3;
-  }
-
-  private constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, ManifesterBucket.name, { 
-      description: "Create the manifest's bucket & viewer.",
-      ...props
-    });
-
-    const domainName = DomainName.GetDomainName(this);   
-
-    const bucketName = `${'dtfw'}-${domainName}`;
-    const s3 = this.CreateS3(bucketName);
-
-    // VIEWER LAMBDA
     LAMBDA
-      .New(this, "ViewerFn")
-      .ReadsFromS3(s3)
-      .AddEnvironment('BUCKET_NAME', bucketName)
-      .AddEnvironment('FILE_NAME', ManifesterBucketS3.FILE_NAME)
-      .Export(ManifesterBucket.VIEWER_FN);
+      .New(this, "JsonViewer")
+      .ReadsAppConfig(appConfig)
+      .Export(ManifesterBucket.JSON_VIEWER);
 
-    // INIT LAMBDA
-    const initFn = LAMBDA
-      .New(this, 'CfnFn')
-      .WritesToS3(s3)
-      .AddEnvironment('BUCKET_NAME', bucketName)
-      .AddEnvironment('FILE_NAME', ManifesterBucketS3.FILE_NAME)
-      .AddEnvironment('DOMAIN_NAME', domainName);
-    
-    CUSTOM.New('CfnFnCustom', initFn);
+    LAMBDA
+      .New(this, "YamlViewer")
+      .ReadsAppConfig(appConfig)
+      .Export(ManifesterBucket.YAML_VIEWER);
 
   }
-
   
 }

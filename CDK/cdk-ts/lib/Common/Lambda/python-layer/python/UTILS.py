@@ -6,8 +6,25 @@ def test():
     return 'this is a UTILS test.'
 
 
+class NotFoundException(Exception):
+    pass
+
+class InvalidRequestException(Exception):
+    pass
+
+
 class UTILS: 
 
+
+    @staticmethod
+    def RaiseNotFoundException():
+        raise NotFoundException
+    
+
+    @staticmethod
+    def RaiseInvalidRequestException():
+        raise InvalidRequestException
+    
 
     @staticmethod
     def FromJson(text: str) -> any:

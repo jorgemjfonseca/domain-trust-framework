@@ -411,7 +411,7 @@ export class LAMBDA extends CONSTRUCT {
       this.GrantConfigUserAccess();
       
       this.Super.role?.attachInlinePolicy(
-        new iam.Policy(this.Scope, "PolicyConfig", {
+        new iam.Policy(this.Scope, this.Scope.RandomName("PolicyConfig"), {
           statements: [
             new iam.PolicyStatement({
               actions: [

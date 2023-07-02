@@ -41,7 +41,7 @@ export class STACK extends cdk.Stack {
     }
 
     
-    private ExportCfn(alias: string, value: string) {
+    public ExportCfn(alias: string, value: string) {
         new cdk.CfnOutput(this, alias, {
             value: value,
             exportName: alias,

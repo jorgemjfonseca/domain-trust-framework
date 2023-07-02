@@ -11,6 +11,30 @@ class GRAPH:
     
 
     @staticmethod
+    def _getDomainItem(domainName):
+        from DYNAMO import DYNAMO
+        domains = DYNAMO('DOMAINS')
+        domain = domains.Get(domainName)
+        return domain
+    
+
+    @staticmethod
+    def _getDomainItemManifest(domainName):
+
+        from UTILS import UTILS
+        item = GRAPH._getDomainItem(domainName)        
+        if not item:
+            UTILS.RaiseNotFoundException()
+
+        from MANIFEST import MANIFEST
+        raw = item['Manifest']
+        manifest = MANIFEST(raw)
+        # TODO: test if we need a UTILS.FromYaml/Json
+
+        return manifest
+
+
+    @staticmethod
     def _HandleConsumer(event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAeaf662df90ec442284b7aaef9 '''
 
@@ -20,7 +44,7 @@ class GRAPH:
         for r in DYNAMO.Records(event):
 
             domainName = r['Domain']
-            
+
             from DOMAIN import DOMAIN
             domain = DOMAIN(domainName)
             yaml = domain.GetManifest()
@@ -36,6 +60,19 @@ class GRAPH:
                 'Manifest': manifest
             })
             
+
+    @staticmethod
+    def _trusts(source, target, role, code):
+
+        domain = GRAPH._getDomainItemManifest(source)
+
+        trust = domain.Trusts(
+            domain=target, 
+            role=role, 
+            code=code)
+        
+        return trust
+
     
     @staticmethod
     def _HandleTrusted(event):
@@ -54,20 +91,16 @@ class GRAPH:
         from MSG import MSG
         msg = MSG(event)
 
-        domainName = msg.TryAtt('Domain')
+        source = msg.From()
+        target = msg.TryAtt('Domain')
         role = msg.TryAtt('Role')
         code = msg.TryAtt('Code')
 
-        from MANIFEST import MANIFEST
-        manifest = MANIFEST(yaml)
-        trusted = MANIFEST.Trusts(
-            domain=domainName, 
-            role=role, 
-            code=code)
+        trust = GRAPH._trusts(source, target, role, code)
 
         return {
-            'Trusted': trusted,
-            'Important': 'Not yet implemented, always returns True.'
+            'Trusted': trust,
+            'Important': 'Chained trust not yet implemented.'
         }
     
     
@@ -87,9 +120,19 @@ class GRAPH:
         
         print(f'{event}')
         
+        from MSG import MSG
+        msg = MSG(event)
+
+        source = msg.TryAtt('Truster')
+        target = msg.TryAtt('Domain')
+        role = msg.TryAtt('Role')
+        code = msg.TryAtt('Code')
+
+        trust = GRAPH._trusts(source, target, role, code)
+
         return {
-            "Trusted": True,
-            "Important": "Not yet implemented, always returns True."
+            'Trusted': trust,
+            'Important': 'Chained trust not yet implemented.'
         }
     
 
@@ -102,9 +145,16 @@ class GRAPH:
             "Domain": "example.com"
         }
         '''
-        
         print(f'{event}')
-        return {}
+
+        from MSG import MSG
+        msg = MSG(event)
+        domainName = msg.TryAtt('Domain')
+
+        domain = GRAPH._getDomainItemManifest(domainName)
+        identity = domain.Identity()
+        
+        return identity
     
 
     @staticmethod
