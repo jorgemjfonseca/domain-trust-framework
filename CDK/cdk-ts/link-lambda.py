@@ -1,3 +1,13 @@
+''' 📚 LINK LAMBDA ------------
+Links shared lambdas to each custom lambda's folder.
+This avoids adding the code to a shared custom layer.
+Goal: allow code can be edited directly on the AWS console.
+------------------------------- 
+cd ./domain-trust-framework/CDK/cdk-ts
+python3 ./link-lambda.py 
+------------------------------- '''
+
+
 import os
 
 path = '.'
