@@ -30,7 +30,7 @@ class GRAPH:
         return dtfw.Dynamo('CODES').Get(code)
 
 
-    def _HandleConsumer(self, event):
+    def HandleConsumer(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAeaf662df90ec442284b7aaef9 '''
 
         print(f'{event}')
@@ -58,7 +58,7 @@ class GRAPH:
             code=code)
         
     
-    def _HandleTrusted(self, event):
+    def HandleTrusted(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
         # TODO implement graph DB
 
@@ -85,7 +85,7 @@ class GRAPH:
         }
     
     
-    def _HandleTrusts(self, event):
+    def HandleTrusts(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA71b470c7a4c446e5b43adea7e '''
         # TODO implement graph DB
 

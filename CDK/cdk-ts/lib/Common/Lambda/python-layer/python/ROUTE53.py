@@ -71,7 +71,7 @@ class ROUTE53:
         return urllib.parse.quote_plus(ret)
     
 
-    def UpdateRecord(self, record_name, value):
+    def TXT(self, record_name, value):
         ''' https://stackoverflow.com/questions/38554754/cant-update-dns-record-on-route-53-using-boto3 '''
 
         print(f'ROUTE53.UpdateRecord()')

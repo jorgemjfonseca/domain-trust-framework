@@ -1,6 +1,6 @@
 # 📚 Graph-Identity
 
-from GRAPH import GRAPH
 
 def handler(event, context):
-    return GRAPH._HandleIdentity(event)
+    from DTFW import DTFW
+    return DTFW().Graph().HandleIdentity(event)

@@ -5,7 +5,6 @@ import os
 import json
 
 
-
 def test():
     return 'this is a LAMBDA test.'
 
@@ -19,7 +18,7 @@ class LAMBDA:
 
 
     # 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
-    def Invoke(self, params:any):
+    def Invoke(self, params:any={}):
         print(f'invoking [{self.name}]({params})...')
         
         response = lambdaClient.invoke(
@@ -27,7 +26,13 @@ class LAMBDA:
             Payload=json.dumps(params),
             LogType='Tail')
         
+        print({
+            'StatusCode': response["StatusCode"]
+        })
+
+        if response['StatusCode'] != 200:
+            raise Exception(response['Payload'].read())
+        
         returned = json.loads(response['Payload'].read())
         print(f'{returned=}')
         return returned
-

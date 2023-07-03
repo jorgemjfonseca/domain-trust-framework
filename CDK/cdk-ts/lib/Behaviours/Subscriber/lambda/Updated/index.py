@@ -1,6 +1,6 @@
 # 📚 Subscriber-Updated
 
-from SUBSCRIBER import SUBSCRIBER
 
 def handler(event, context):
-    return SUBSCRIBER._HandleUpdate(event)
+    from DTFW import DTFW
+    return DTFW().Subscriber().HandleUpdate(event)

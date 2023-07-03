@@ -1,6 +1,5 @@
 # 📚 Listener-Consume
 
-from LISTENER import LISTENER
-
 def handler(event, context):
-    return LISTENER._HandleConsume(event)
+    from DTFW import DTFW
+    return DTFW().Listener().HandleConsume(event)

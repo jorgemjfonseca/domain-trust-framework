@@ -34,7 +34,7 @@ export class ManifesterAlerter extends STACK {
     const sqs = SQS.New(this, 'AlerterSqs');
 
     // ALERT LAMBDA
-    LAMBDA.New(this, "AlerterFn")
+    LAMBDA.New(this, "Alerter")
       .TriggeredBySQS(sqs)
       .PublishesToMessenger();
 

@@ -1,9 +1,6 @@
 # 📚 ManifesterBucket-JsonViewer
 
-def handler(event, context):
 
-    from MANIFEST import MANIFEST
-    manifest = MANIFEST.FromAppConfig()
-    
-    from UTILS import UTILS
-    return UTILS.HttpResponse(body=manifest, format='json')
+def handler(event, context):
+    from DTFW import DTFW
+    return DTFW().Manifester().HandleJsonViewer()

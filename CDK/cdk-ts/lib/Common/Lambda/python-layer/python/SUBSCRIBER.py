@@ -11,7 +11,7 @@ def test():
 class SUBSCRIBER:
 
 
-    def _HandlerConfirm(self, event):
+    def HandlerConfirm(self, event):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISd5cf963122f7a4faeb4e862c70 '''
         
         print(f'{event}')
@@ -22,19 +22,7 @@ class SUBSCRIBER:
             source= 'Subscriber-Confirm')
         
 
-    def Consume(self, replay, items, token):
-
-        consume = { 'Updates': items }
-        if token:
-            consume['Token'] = token
-
-        dtfw.Messenger().Reply(
-            request= replay, 
-            body= consume,
-            source= 'Subscriber-Consume')
-
-
-    def _HandleConsume(self, page):
+    def HandleConsume(self, page):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISd000c9e83bc4945b293024175e '''
 
         # TODO Consider removing duplicates 
@@ -61,18 +49,18 @@ class SUBSCRIBER:
             single = dtfw.Msg()
             single.Header(list.Header())
             single.Body(update)
-            self._HandleUpdate(single)
+            self.HandleUpdate(single)
 
         # Ask for the next group of updates.
         token = list.Att('Token')
         if (token):
-            dtfw.Publisher().Next(
+            dtfw.Messenger().Reply(
                 request= page, 
-                token= token,
+                body= { 'Token': token },
                 source='Subscriber-Consume')
 
 
-    def _HandleUpdate(self, event):
+    def HandleUpdate(self, event):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a '''
 
         '''

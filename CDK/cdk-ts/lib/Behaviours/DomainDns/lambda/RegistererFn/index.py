@@ -8,7 +8,7 @@ def on_create(event):
     hosted_zone_id = os.environ['hostedZoneId']  
 
     from DTFW import DTFW
-    DTFW.RegisterDomain(hosted_zone_id)
+    DTFW().RegisterDomain(hosted_zone_id)
     
     return {'PhysicalResourceId': 'custom'}
 

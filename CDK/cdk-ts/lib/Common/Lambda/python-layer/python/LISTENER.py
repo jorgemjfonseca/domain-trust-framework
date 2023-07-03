@@ -12,13 +12,13 @@ dtfw = DTFW()
 class LISTENER:
 
 
-    def _HandleConsume(self, event):
+    def HandleConsume(self, event):
         # 👉 https://quip.com/FCSiAU7Eku0X#temp:C:GLfcf27fefa09924f62b4f449abb
 
         print(f'{event}')
 
 
-    def _HandlePublisher(self, event):
+    def HandlePublisher(self, event):
         # 👉 https://quip.com/FCSiAU7Eku0X/-Listener
 
         print(f'{event}')

@@ -48,7 +48,7 @@ class MESSENGER:
         self._publish(out, source)
 
 
-    def _HandlePublisher(self, event):
+    def HandlePublisher(self, event):
         print(f'{event=}')
 
         self._publish(
@@ -57,7 +57,7 @@ class MESSENGER:
 
 
     # 👉️ https://quip.com/NiUhAQKbj7zi
-    def _HandleSender(self, event):
+    def HandleSender(self, event):
         print(f'{event=}')
 
         msg = dtfw.Msg(event)

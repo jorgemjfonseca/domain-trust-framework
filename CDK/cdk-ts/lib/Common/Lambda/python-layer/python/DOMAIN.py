@@ -10,15 +10,15 @@ def test():
 
 class DOMAIN:
         
-    def __init__(self, domainName: str):
-        self._domainName = domainName
+    def __init__(self, domain:str=None):
+        self._domain = domain
         self._manifest = None
-        self._manifest_yaml = None
-        self._googleDns = None
+        self._yaml = None
+        self._google = None
     
 
     def Endpoint(self, path='') -> str:
-        return f'https://dtfw.{self._domainName}/{path}'
+        return f'https://dtfw.{self._domain}/{path}'
 
 
     def Manifest(self) -> any:
@@ -27,42 +27,42 @@ class DOMAIN:
         if self._manifest:
             return self._manifest
         
-        if self._manifest_yaml == None:
+        if self._yaml == None:
             endpoint = self.Endpoint('manifest')
             
-            self._manifest_yaml = dtfw.Web.Get(endpoint)
+            self._yaml = dtfw.Web().Get(endpoint)
 
-        self._manifest = dtfw.Utils().FromYaml(self._manifest_yaml)
+        self._manifest = dtfw.Utils().FromYaml(self._yaml)
 
         return self._manifest
     
 
-    def GetGoogleDns(self) -> any:
+    def GoogleDns(self) -> any:
         '''
         👉️ https://developers.google.com/speed/public-dns/docs/doh
         👉️ https://developers.google.com/speed/public-dns/docs/doh/json
         👉️ https://dns.google/resolve?name=dtfw._domainkey.38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org&type=TXT&do=1
         '''
 
-        if self._googleDns:
-            return self._googleDns
+        if self._google:
+            return self._google
         
-        hostname = f'dtfw._domainkey.{self._domainName}'
+        hostname = f'dtfw._domainkey.{self._domain}'
         url = f'https://dns.google/resolve?name={hostname}&type=TXT&do=1'
 
-        self._googleDns = dtfw.Web().GetJson(url)
+        self._google = dtfw.Web().GetJson(url)
         
-        return self._googleDns
+        return self._google
 
 
     def IsDnsSec(self) -> bool:
-        resp = self.GetGoogleDns()
+        resp = self.GoogleDns()
         isDnsSec = (resp['AD'] == True)
         return isDnsSec
     
 
     def Dkim(self) -> any:
-        resp = self.GetGoogleDns()
+        resp = self.GoogleDns()
         dkim = None
         exists = 'Answer' in resp
         if exists:
@@ -89,4 +89,3 @@ class DOMAIN:
     def HasPublicKey(self) -> bool:
         public_key = self.PublicKey()
         return public_key != None
-

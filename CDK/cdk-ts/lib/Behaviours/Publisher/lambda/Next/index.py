@@ -1,6 +1,6 @@
 # 📚 Publisher-Next
 
-from PUBLISHER import PUBLISHER
 
 def handler(event, context):
-    return PUBLISHER._HandleNext(event)
+    from DTFW import DTFW
+    return DTFW().Publisher().HandleNext(event)

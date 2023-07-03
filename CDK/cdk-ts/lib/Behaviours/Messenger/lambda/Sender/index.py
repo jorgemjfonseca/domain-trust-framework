@@ -1,7 +1,6 @@
-# 📚 Messenger-SenderFn
+# 📚 Messenger-Sender
 
-from MESSENGER import MESSENGER
 
 def handler(event, context):
-    MESSENGER._HandleSender(event)
-    
+    from DTFW import DTFW
+    return DTFW().Messenger().HandleSender(event)

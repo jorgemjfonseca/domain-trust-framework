@@ -1,6 +1,5 @@
 # 📚 Graph-Consume
 
-from GRAPH import GRAPH
-
 def handler(event, context):
-    return GRAPH._HandleConsumer(event)
+    from DTFW import DTFW
+    return DTFW().Graph().HandleConsumer(event)

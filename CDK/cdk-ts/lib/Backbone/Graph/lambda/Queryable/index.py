@@ -1,6 +1,5 @@
 # 📚 Graph-Queryable
 
-from GRAPH import GRAPH
-
 def handler(event, context):
-    return GRAPH._HandleQueryable(event)
+    from DTFW import DTFW
+    return DTFW().Graph().HandleQueryable(event)

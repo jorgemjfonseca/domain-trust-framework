@@ -1,6 +1,6 @@
 # 📚 Publisher-Subscribe
 
-from PUBLISHER import PUBLISHER
 
 def handler(event, context):
-    return PUBLISHER._HandleSubscribe(event)
+    from DTFW import DTFW
+    return DTFW().Publisher().HandleSubscribe(event)

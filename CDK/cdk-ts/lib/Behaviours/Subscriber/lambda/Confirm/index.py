@@ -1,6 +1,6 @@
 # 📚 Subscriber-Confirm
 
-from SUBSCRIBER import SUBSCRIBER
 
 def handler(event, context):
-    return SUBSCRIBER._HandlerConfirm(event)
+    from DTFW import DTFW
+    return DTFW().Subscriber().HandlerConfirm(event)

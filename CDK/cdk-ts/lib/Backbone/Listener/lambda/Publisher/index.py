@@ -1,8 +1,7 @@
 # 📚 Listener-Publisher
 
-from LISTENER import LISTENER
-
 def handler(event, context):
-    return LISTENER._HandlePublisher(event)
+    from DTFW import DTFW
+    return DTFW().Listener().HandlePublisher(event)
 
     

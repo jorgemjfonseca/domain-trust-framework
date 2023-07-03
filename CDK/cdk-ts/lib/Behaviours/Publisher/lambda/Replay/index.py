@@ -1,6 +1,6 @@
 # 📚 Publisher-Replay
 
-from PUBLISHER import PUBLISHER
 
 def handler(event, context):
-    return PUBLISHER._HandleReplay(event)
+    from DTFW import DTFW
+    return DTFW().Publisher().HandleReplay(event)

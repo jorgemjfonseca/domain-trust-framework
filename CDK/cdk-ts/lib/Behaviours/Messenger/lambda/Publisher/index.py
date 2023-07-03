@@ -1,12 +1,6 @@
 # 📚 Messenger-Publisher
 
-from MESSENGER import MESSENGER
 
-    
 def handler(event, context):
-    MESSENGER._HandlePublisher(event)
-
-
-'''
-
-'''
+    from DTFW import DTFW
+    return DTFW().Messenger().HandlePublisher(event)

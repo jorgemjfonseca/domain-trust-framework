@@ -1,6 +1,6 @@
-# 📚 Publisher-Outbounder
+# 📚 Publisher-Filter
 
-from PUBLISHER import PUBLISHER
 
 def handler(event, context):
-    return PUBLISHER._HandleOutbounder(event)
+    from DTFW import DTFW
+    return DTFW().Publisher().HandleFilter(event)
