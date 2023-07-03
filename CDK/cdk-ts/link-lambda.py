@@ -40,7 +40,16 @@ for f in source_files:
 ignores.sort()
 ignore = '\n'.join(ignores)
 
+
+def ReplaceFile(file, content):
+    fout = open(file, "wt")
+    fout.write(content)
+    fout.close()
+
+
 print ('Merging ignores...')
 for f in target_dirs:
     ignore_path = f + '/.gitignore'
-    print(ignore_path)
+    #print(ignore_path)
+
+ReplaceFile('./lib/Backbone/Graph/lambda/Consumer/.gitignore', ignore)
