@@ -10,6 +10,7 @@ def test():
 
 class SYNCAPI:
     
+    
     def Send(self, event: any): 
 
         msg = dtfw.Msg(event)
@@ -38,7 +39,7 @@ class SYNCAPI:
         dkim = key[:200] + '""' + key[200:]
         hostedZoneId= os.environ['hostedZoneId']
 
-        dtfw.Route53(hostedZoneId).TXT(
+        dtfw.Route53(hostedZoneId).AddTXT(
             record_name = os.environ['dkimRecordName'], 
             value = f'"v=DKIM1;k=rsa;p={dkim};"')    
         
@@ -55,3 +56,26 @@ class SYNCAPI:
 
         # Store the key pair in Secrets Manager
         dtfw.Lambda('SecretSetterFn').Invoke(keys)
+
+
+    def HandleSecretSetter(self, event):
+        '''
+        {
+            "publicKey": "my-public-key",
+            "privateKey": "my-private-key"
+        }
+        '''
+        print(f'{event=}')
+
+        dtfw.Secrets().Set('/dtfw/publicKey', value=event['publicKey'])
+        dtfw.Secrets().Set('/dtfw/privateKey', value=event['privateKey'])
+
+
+    def HandleSetAlias(self):
+        import os
+        r53 = dtfw.Route53(os.environ['hostedZoneId'])
+
+        r53.AddApiGW(
+            customDomain = os.environ['customDomain'], 
+            apiHostedZoneId = os.environ['apiHostedZoneId'],
+            apiAlias = os.environ['apiAlias'])

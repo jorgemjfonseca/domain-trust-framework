@@ -54,7 +54,7 @@ class ROUTE53:
     # 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/route53/client/get_dnssec.html#            
     # 👉 https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetDNSSEC.html
     # 👉 https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring-dnssec-enable-signing.html
-    def DX(self, unquoted=False):
+    def AddDX(self, unquoted=False):
         print(f'ROUTE53.DX()')
 
         resp = r53.get_dnssec(
@@ -71,7 +71,7 @@ class ROUTE53:
         return urllib.parse.quote_plus(ret)
     
 
-    def TXT(self, record_name, value):
+    def AddTXT(self, record_name, value):
         ''' https://stackoverflow.com/questions/38554754/cant-update-dns-record-on-route-53-using-boto3 '''
 
         print(f'ROUTE53.UpdateRecord()')
@@ -100,3 +100,28 @@ class ROUTE53:
                 "Changes": changes
             })
         
+
+    def AddApiGW(self, customDomain, apiHostedZoneId, apiAlias):
+        
+        changes = [
+            {
+                "Action": "UPSERT",
+                "ResourceRecordSet": {
+                    "Name": customDomain,
+                    "Type": 'A',
+                    'AliasTarget': {
+                        'HostedZoneId': apiHostedZoneId,
+                        'DNSName': apiAlias,
+                        'EvaluateTargetHealth': True
+                    }
+                }
+            },
+        ]
+        print(f'{changes=}')
+        
+        r53.change_resource_record_sets(
+            HostedZoneId = self._hosted_zone_id,
+            ChangeBatch = {
+                "Comment": 'API Gateway custom domain',
+                "Changes": changes
+            })

@@ -121,17 +121,14 @@ export class SyncApiEndpoint extends STACK {
         runtime: LAMBDA.PYTHON_3_10,
         handler: 'index.on_event'
       })
-      .GrantRoute53FullAccess();
+      .GrantRoute53FullAccess()
+      .AddEnvironment('apiDomain', domainName.domainName)
+      .AddEnvironment('apiHostedZoneId', domainName.domainNameAliasHostedZoneId)
+      .AddEnvironment('apiAlias', domainName.domainNameAliasDomainName)
+      .AddEnvironment('customDomain', 'dtfw.'+rootDomain)
+      .AddEnvironment('hostedZoneId', dns.Super.hostedZoneId);
     
-    CUSTOM
-      .New('Custom', setAliasFn, {
-        //apiEndpoint: api.DefaultDomain(), 
-        apiDomain: domainName.domainName,
-        apiHostedZoneId: domainName.domainNameAliasHostedZoneId,
-        apiAlias: domainName.domainNameAliasDomainName,
-        customDomain: 'dtfw.'+rootDomain,
-        hostedZoneId: dns.Super.hostedZoneId,
-      });
+    CUSTOM.New('Custom', setAliasFn);
       
     // Test 👉 https://www.sslshopper.com/ssl-checker.html
     // Test 👉 https://www.digicert.com/help/

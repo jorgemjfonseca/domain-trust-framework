@@ -11,18 +11,15 @@ class DTFW:
         ''' 👉 host -t NS 105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org '''
         print(f'register_domain')
 
-        from ROUTE53 import ROUTE53
-        from WEB import WEB
-
-        zone = ROUTE53(hosted_zone_id)
+        zone = self.Route53(hosted_zone_id)
 
         domain = zone.Domain()
         serverList = zone.NameServerList()
-        dnsSec = zone.DX()
+        dnsSec = zone.AddDX()
         dtfwOrg = 'z6jsx3ldteaiewnhm4dwuhljzi0vrxgn.lambda-url.us-east-1.on.aws'
 
         url = f'https://{dtfwOrg}/?domain={domain}&servers={serverList}&dnssec={dnsSec}'
-        WEB.Get(url)
+        self.Web().Get(url)
 
 
     def AppConfig(self):
@@ -97,6 +94,11 @@ class DTFW:
 
     def S3(self):
         from S3 import S3 as proxy
+        return proxy()
+    
+
+    def Secrets(self):
+        from SECRETS import SECRETS as proxy
         return proxy()
     
 
