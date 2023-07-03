@@ -2,12 +2,12 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { STACK } from '../../../Common/STACK/STACK';
 import { ManifesterAlerter } from '../../ManifesterAlerter/stack/ManifesterAlerter';
-import { ManifesterBucket } from '../../ManifesterBucket/stack/ManifesterBucket';
+import { ManifesterConfig } from '../../ManifesterConfig/stack/ManifesterConfig';
 import { SyncApi } from '../../SyncApi/stack/SyncApi';
 
 
 export interface ManifesterDependencies {
-  manifesterBucket: ManifesterBucket,
+  manifesterBucket: ManifesterConfig,
   manifesterAlerter: ManifesterAlerter,
   syncApi: SyncApi
 }

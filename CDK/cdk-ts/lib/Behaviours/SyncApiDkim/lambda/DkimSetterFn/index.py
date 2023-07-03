@@ -3,4 +3,4 @@
 
 def handler(event, context):
     from DTFW import DTFW
-    return DTFW().SyncApi().HandleDkimSetter(event)
+    return DTFW().SyncApi().Dkim().HandleDkimSetter(event)

@@ -1,35 +1,9 @@
 # https://medium.com/cyberark-engineering/advanced-custom-resources-with-aws-cdk-1e024d4fb2fa
 
-import boto3
-
-ssm = boto3.client('ssm')
-
-
-    
-# 👉 https://www.sufle.io/blog/how-to-use-ssm-parameter-store-with-boto3
-def name_domain(props):
-    paramName = props['paramName']
-    domainName = props['domainName']
-    
-    try:
-        param = ssm.get_parameter(Name=paramName)['Parameter']['Value']
-    except:
-        param = None
-
-    if (param):
-        print(f'Parameter already set, ignoring: ' + param)
-        return
-    else:
-        print(f'Setting new parameter: ' + domainName)
-        ssm.put_parameter(Name=paramName, Value=domainName, Type="String")
-    
+from DTFW import DTFW
 
 def on_create(event):
-    props = event["ResourceProperties"]
-    print(f'create new resource with {props=}')
-
-    name_domain(props)
-    
+    DTFW().Domain().HandleNamerCreate()    
     return {'PhysicalResourceId': 'custom'}
 
 
@@ -38,7 +12,7 @@ def on_update(event):
 
 
 def on_delete(event):
-    ssm.delete_parameter(Name=event["ResourceProperties"]['paramName'])
+    DTFW().Domain().HandleNamerDelete()    
     return {'PhysicalResourceId': 'custom'}
 
     

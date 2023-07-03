@@ -22,15 +22,13 @@ export class DomainName extends STACK {
         runtime: LAMBDA.PYTHON_3_10,
         handler: 'index.on_event'
       })
-      .GrantSsmFullAccess();
+      .GrantSsmFullAccess()
+      .AddEnvironment('paramName', '/dtfw/' + DomainName.DOMAIN_NAME)
+      .AddEnvironment('domainName', domainName);
 
     // Generate a new Random name, if one doesn't yet exist.
     // If it already exists, then ignore.
-    CUSTOM
-      .New('NamerFnRun', namerFn, {
-        paramName: '/dtfw/' + DomainName.DOMAIN_NAME,
-        domainName: domainName
-      });
+    CUSTOM.New('NamerFnRun', namerFn);
 
     this.ExportCfn('DomainName', domainName);
   }

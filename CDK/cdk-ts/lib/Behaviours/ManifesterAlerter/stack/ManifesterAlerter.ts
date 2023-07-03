@@ -3,14 +3,14 @@ import { Construct } from 'constructs';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { STACK } from '../../../Common/STACK/STACK';
 import { Messenger } from '../../Messenger/stack/Messenger';
-import { ManifesterBucket } from '../../ManifesterBucket/stack/ManifesterBucket';
+import { ManifesterConfig } from '../../ManifesterConfig/stack/ManifesterConfig';
 import { APPCONFIG } from '../../../Common/APPCONFIG/APPCONFIG';
 import { SQS } from '../../../Common/SQS/SQS';
 
 
 export interface ManifesterAlerterDependencies {
   messenger: Messenger,
-  manifesterBucket: ManifesterBucket
+  manifesterBucket: ManifesterConfig
 }
 
 //https://quip.com/BfbEAAFo5aOV/-Manifester
@@ -38,7 +38,7 @@ export class ManifesterAlerter extends STACK {
       .TriggeredBySQS(sqs)
       .PublishesToMessenger();
 
-    const configArn = ManifesterBucket.GetConfigArn();
+    const configArn = ManifesterConfig.GetConfigArn();
     this.Export('ConfigArn', configArn);
 
     const extension = APPCONFIG.PublishToSQS(this, configArn, sqs)

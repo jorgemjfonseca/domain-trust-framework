@@ -34,7 +34,7 @@ import { SyncApiHandlers } from '../lib/Behaviours/SyncApiHandlers/stack/SyncApi
 import { DomainName } from '../lib/Behaviours/DomainName/stack/DomainName';
 import { Domain } from '../lib/Behaviours/Domain/stack/Domain';
 import { DomainDnsKey } from '../lib/Behaviours/DomainDnsKey/stack/DomainDnsKey';
-import { ManifesterBucket } from '../lib/Behaviours/ManifesterBucket/stack/ManifesterBucket';
+import { ManifesterConfig } from '../lib/Behaviours/ManifesterConfig/stack/ManifesterConfig';
 import { ManifesterAlerter } from '../lib/Behaviours/ManifesterAlerter/stack/ManifesterAlerter';
 
 
@@ -73,7 +73,7 @@ const syncApiHandlers = SyncApiHandlers.New(app, {
 });
 
 // ✅ Manifest's config & viewer: done
-const manifesterBucket = ManifesterBucket.New(app, {
+const manifesterBucket = ManifesterConfig.New(app, {
     domainName
 });
 

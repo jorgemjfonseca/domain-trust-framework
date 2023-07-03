@@ -10,12 +10,12 @@ import { ROUTE53 } from '../../../Common/ROUTE53/ROUTE53';
 import { CUSTOM } from '../../../Common/CUSTOM/CUSTOM';
 import { DomainName } from '../../DomainName/stack/DomainName';
 import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
-import { ManifesterBucket } from '../../ManifesterBucket/stack/ManifesterBucket';
+import { ManifesterConfig } from '../../ManifesterConfig/stack/ManifesterConfig';
 
 export interface SyncApiEndpointDependencies {
   domainDns: DomainDns,
   syncApiHandlers: SyncApiHandlers,
-  manifesterBucket: ManifesterBucket
+  manifesterBucket: ManifesterConfig
 }
 
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
@@ -71,15 +71,15 @@ export class SyncApiEndpoint extends STACK {
     // All changes to the API must be done on the same stack
     // because CDK doesn't redeploy the API after an import.
     
-    ManifesterBucket
+    ManifesterConfig
       .GetViewerFn(this)
       .AddApiMethod(api, 'manifest', ['GET']);
 
-    ManifesterBucket
+    ManifesterConfig
       .GetJsonViewer(this)
       .AddApiMethod(api, 'manifest-json', ['GET']);
 
-    ManifesterBucket
+    ManifesterConfig
       .GetYamlViewer(this)
       .AddApiMethod(api, 'manifest-yaml', ['GET']);
 

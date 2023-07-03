@@ -13,7 +13,7 @@ export class STACK extends cdk.Stack {
             // 👉 https://github.com/aws-samples/aws-cdk-examples/issues/238
             env: {
                 account: process.env.CDK_DEPLOY_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT, 
-                region: process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION             
+                region: 'eu-west-1' // process.env.CDK_DEPLOY_REGION || process.env.CDK_DEFAULT_REGION             
             },
             terminationProtection: false,
             ...props

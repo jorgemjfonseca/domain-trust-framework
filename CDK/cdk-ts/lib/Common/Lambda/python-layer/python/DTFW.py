@@ -7,21 +7,6 @@ def test():
 class DTFW:
     
   
-    def RegisterDomain(self, hosted_zone_id):
-        ''' 👉 host -t NS 105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org '''
-        print(f'register_domain')
-
-        zone = self.Route53(hosted_zone_id)
-
-        domain = zone.Domain()
-        serverList = zone.NameServerList()
-        dnsSec = zone.AddDX()
-        dtfwOrg = 'z6jsx3ldteaiewnhm4dwuhljzi0vrxgn.lambda-url.us-east-1.on.aws'
-
-        url = f'https://{dtfwOrg}/?domain={domain}&servers={serverList}&dnssec={dnsSec}'
-        self.Web().Get(url)
-
-
     def AppConfig(self):
         from APPCONFIG import APPCONFIG as proxy
         return proxy()
@@ -100,11 +85,16 @@ class DTFW:
     def Secrets(self):
         from SECRETS import SECRETS as proxy
         return proxy()
-    
+
 
     def Sqs(self, alias:str):
         from SQS import SQS as proxy
         return proxy(alias)
+    
+
+    def Ssm(self):
+        from SSM import SSM as proxy
+        return proxy()
     
 
     def Subscriber(self):
@@ -114,6 +104,11 @@ class DTFW:
 
     def SyncApi(self):
         from SYNCAPI import SYNCAPI as proxy
+        return proxy()
+    
+
+    def Timer(self):
+        from TIMER import TIMER as proxy
         return proxy()
     
 

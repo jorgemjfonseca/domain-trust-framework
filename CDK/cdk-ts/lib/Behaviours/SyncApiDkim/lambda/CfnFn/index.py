@@ -5,7 +5,7 @@
 
 def on_create(event):
     from DTFW import DTFW
-    DTFW().SyncApi().HandleDkimCfn()
+    DTFW().SyncApi().Dkim().HandleDkimCfn()
     return {'PhysicalResourceId': 'custom'}
 
 

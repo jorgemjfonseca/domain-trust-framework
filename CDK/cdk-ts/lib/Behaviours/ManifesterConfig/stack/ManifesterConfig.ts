@@ -6,12 +6,12 @@ import { DomainName } from '../../DomainName/stack/DomainName';
 import { APPCONFIG } from '../../../Common/APPCONFIG/APPCONFIG';
 
 
-export interface ManifesterBucketDependencies {
+export interface ManifesterConfigDependencies {
   domainName: DomainName
 }
 
 //https://quip.com/BfbEAAFo5aOV/-Manifester
-export class ManifesterBucket extends STACK {
+export class ManifesterConfig extends STACK {
 
   private static readonly JSON_VIEWER = 'DomainManifestJsonViewer';
   private static readonly YAML_VIEWER = 'DomainManifestYamlViewer';
@@ -31,17 +31,17 @@ export class ManifesterBucket extends STACK {
   }
   
   public static GetConfigArn(): string {
-    return APPCONFIG.ImportArn(ManifesterBucket.CONFIG);
+    return APPCONFIG.ImportArn(ManifesterConfig.CONFIG);
   }
 
-  public static New(scope: Construct, deps: ManifesterBucketDependencies): ManifesterBucket {
-    const ret = new ManifesterBucket(scope);
+  public static New(scope: Construct, deps: ManifesterConfigDependencies): ManifesterConfig {
+    const ret = new ManifesterConfig(scope);
     ret.addDependency(deps.domainName);
     return ret;
   }
  
   private constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, ManifesterBucket.name, { 
+    super(scope, ManifesterConfig.name, { 
       description: "Create the manifest's config & viewer.",
       ...props
     });
@@ -53,25 +53,31 @@ export class ManifesterBucket extends STACK {
       .NewYaml(this, 'Manifest', `
 Identity:
     Domain: ${domainName}
-    Name: Random Domain`
-      )
+    Name: Random Domain
+    SmallIcon: 'https://picsum.photos/20/20'
+    BigIcon: 'https://picsum.photos/100/100'
+    Translations: 
+      - Language: en-us
+        Translation: Random Domain
+      - Language: pt-br
+        Translation: Domínio Aleatório`)
       .Export('ManifestConfigOut');
 
     // VIEWER LAMBDA
     LAMBDA
       .New(this, "DefaultViewer")
       .ReadsAppConfig(appConfig)
-      .Export(ManifesterBucket.VIEWER_FN);
+      .Export(ManifesterConfig.VIEWER_FN);
 
     LAMBDA
       .New(this, "JsonViewer")
       .ReadsAppConfig(appConfig)
-      .Export(ManifesterBucket.JSON_VIEWER);
+      .Export(ManifesterConfig.JSON_VIEWER);
 
     LAMBDA
       .New(this, "YamlViewer")
       .ReadsAppConfig(appConfig)
-      .Export(ManifesterBucket.YAML_VIEWER);
+      .Export(ManifesterConfig.YAML_VIEWER);
 
   }
   

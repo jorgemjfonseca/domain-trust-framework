@@ -89,3 +89,51 @@ class DOMAIN:
     def HasPublicKey(self) -> bool:
         public_key = self.PublicKey()
         return public_key != None
+
+
+    def HandleRegisterer(self):
+        ''' 👉 host -t NS 105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org '''
+        print(f'register_domain')
+
+        import os
+        hosted_zone_id = os.environ['hostedZoneId']  
+
+        zone = dtfw.Route53(hosted_zone_id)
+
+        domain = zone.Domain()
+        serverList = zone.NameServerList()
+        dnsSec = zone.AddDX()
+        dtfwOrg = 'z6jsx3ldteaiewnhm4dwuhljzi0vrxgn.lambda-url.us-east-1.on.aws'
+
+        url = f'https://{dtfwOrg}/?domain={domain}&servers={serverList}&dnssec={dnsSec}'
+        dtfw.Web().Get(url)
+
+
+    def HandleNamerCreate(self):
+        ''' 
+        Generate a new Random name, if one doesn't yet exist.
+        If it already exists, then ignore.
+        👉 https://www.sufle.io/blog/how-to-use-ssm-parameter-store-with-boto3
+        '''
+
+        import os
+        paramName = os.environ['paramName']
+        domainName = os.environ['domainName']
+        
+        try:
+            param = dtfw.Ssm().Get(paramName)
+        except:
+            param = None
+
+        if (param):
+            print(f'Parameter already set, ignoring: ' + param)
+            return
+        else:
+            print(f'Setting new parameter: ' + domainName)
+            dtfw.Ssm().Set(paramName, domainName)
+
+
+    def HandleNamerDelete(self):
+        import os
+        paramName = os.environ['paramName']
+        dtfw.Ssm().Delete(paramName)

@@ -5,14 +5,14 @@ import { DomainDns } from '../../DomainDns/stack/DomainDns';
 import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
 import { SyncApiEndpoint } from '../../SyncApiEndpoint/stack/SyncApiEndpoint';
 import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
-import { ManifesterBucket } from '../../ManifesterBucket/stack/ManifesterBucket';
+import { ManifesterConfig } from '../../ManifesterConfig/stack/ManifesterConfig';
 
 export interface SyncApiDependencies {
   domainDns: DomainDns,
   syncApiDkim: SyncApiDkim;
   syncApiEndpoint: SyncApiEndpoint;
   syncApiHandlers: SyncApiHandlers;
-  manifesterBucket: ManifesterBucket;
+  manifesterBucket: ManifesterConfig;
 }
 
 // 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
