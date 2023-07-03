@@ -87,7 +87,7 @@ export class LAMBDA extends CONSTRUCT {
           handler: 
             props?.handler 
             ?? props?.super?.handler 
-            ?? 'index.handler',
+            ?? '_index.handler',
         };
 
         const python = [
