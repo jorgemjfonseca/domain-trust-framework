@@ -50,6 +50,5 @@ def ReplaceFile(file, content):
 print ('Merging ignores...')
 for f in target_dirs:
     ignore_path = f + '/.gitignore'
+    ReplaceFile(ignore_path, ignore)
     #print(ignore_path)
-
-ReplaceFile('./lib/Backbone/Graph/lambda/Consumer/.gitignore', ignore)
