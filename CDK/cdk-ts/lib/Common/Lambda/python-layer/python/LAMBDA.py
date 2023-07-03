@@ -1,7 +1,8 @@
+# 📚 LAMBDA
+
 import boto3
 import os
 import json
-from urllib import request, parse
 
 
 
@@ -13,11 +14,12 @@ lambdaClient = boto3.client('lambda')
 class LAMBDA:
 
     def __init__(self, alias):
-        self.name = os.environ[alias]
+        if alias:
+            self.name = os.environ[alias]
 
 
     # 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
-    def Invoke(self, params):
+    def Invoke(self, params:any):
         print(f'invoking [{self.name}]({params})...')
         
         response = lambdaClient.invoke(

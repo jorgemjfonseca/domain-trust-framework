@@ -1,3 +1,8 @@
+# 📚 SUBSCRIBER
+
+from DTFW import DTFW
+dtfw = DTFW()
+
 
 def test():
     return 'this is SUBSCRIBER test.'
@@ -6,35 +11,30 @@ def test():
 class SUBSCRIBER:
 
 
-    @staticmethod
-    def _HandlerConfirm(event):
+    def _HandlerConfirm(self, event):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISd5cf963122f7a4faeb4e862c70 '''
         
         print(f'{event}')
 
-        from MESSENGER import MESSENGER
-        MESSENGER.Reply(
+        dtfw.Messenger().Reply(
             request= event, 
             body= { "Confirmed": True },
             source= 'Subscriber-Confirm')
         
 
-    @staticmethod
-    def Consume(replay, items, token):
+    def Consume(self, replay, items, token):
 
         consume = { 'Updates': items }
         if token:
             consume['Token'] = token
 
-        from MESSENGER import MESSENGER
-        MESSENGER.Reply(
+        dtfw.Messenger().Reply(
             request= replay, 
             body= consume,
             source= 'Subscriber-Consume')
 
 
-    @staticmethod
-    def _HandleConsume(page):
+    def _HandleConsume(self, page):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISd000c9e83bc4945b293024175e '''
 
         # TODO Consider removing duplicates 
@@ -54,28 +54,25 @@ class SUBSCRIBER:
         '''
         print(f'{page}')
 
-        from MSG import MSG
-        list = MSG(page)
+        list = dtfw.Msg(page)
 
         # Execute individual updates.
         for update in list.Body()['Updates']:
-            single = MSG()
+            single = dtfw.Msg()
             single.Header(list.Header())
             single.Body(update)
-            SUBSCRIBER._HandleUpdate(single)
+            self._HandleUpdate(single)
 
         # Ask for the next group of updates.
-        token = list.TryAtt('Token')
+        token = list.Att('Token')
         if (token):
-            from PUBLISHER import PUBLISHER
-            PUBLISHER.Next(
+            dtfw.Publisher().Next(
                 request= page, 
                 token= token,
                 source='Subscriber-Consume')
 
 
-    @staticmethod
-    def _HandleUpdate(event):
+    def _HandleUpdate(self, event):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a '''
 
         '''
@@ -88,26 +85,21 @@ class SUBSCRIBER:
 
         print(f'{event}')
         
-        from MSG import MSG
-        msg = MSG(event)
-        body = msg.Body()
+        msg = dtfw.Msg(event)
 
-        id = body['UpdateID']
-
-        from DYNAMO import DYNAMO
         required = {
             'Publisher': msg.From(),
-            'UpdateID': body['UpdateID'], 
-            'Timestamp': body['Timestamp'],
-            'TTL': DYNAMO.TTL(days=1)
+            'UpdateID': msg.Att('UpdateID', default= dtfw.Utils().UUID()), 
+            'Timestamp': msg.Att('Timestamp', default= dtfw.Utils().Timestamp()),
+            'TTL': dtfw.Dynamo().TTL(days=1)
         }
 
-        from UTILS import UTILS
-        item = UTILS.Merge(
-            body,
+        item = dtfw.Utils().Merge(
+            msg.Body(),
             required
         ) 
 
-        table = DYNAMO('DEDUPS')
-        table.Merge(id, item)
+        dtfw.Dynamo('DEDUPS').Merge(
+            id= msg.Att('UpdateID'), 
+            item= item)
         

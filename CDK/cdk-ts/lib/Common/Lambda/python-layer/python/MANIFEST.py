@@ -1,9 +1,11 @@
+# 📚 MANIFEST
+
+from DTFW import DTFW
+dtfw = DTFW()
+
 def test():
     return 'this is a MANIFEST test.'
 
-
-from DTFW import DTFW
-import MANIFEST as MANIFEST
 
 class MANIFEST:
         
@@ -18,8 +20,8 @@ class MANIFEST:
         return self._manifest
 
 
-    @staticmethod
     def FromAppConfig(
+        self, 
         CONFIG_APP: str = 'CONFIG_APP', 
         CONFIG_ENV: str = 'CONFIG_ENV', 
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'
@@ -28,14 +30,13 @@ class MANIFEST:
         from APPCONFIG import APPCONFIG
         yaml = APPCONFIG.Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
 
-        from UTILS import UTILS
-        obj = UTILS.FromYaml(yaml)
+        obj = dtfw.Utils().FromYaml(yaml)
 
         return obj
     
 
-    @staticmethod
     def RawAppConfig(
+        self, 
         CONFIG_APP: str = 'CONFIG_APP', 
         CONFIG_ENV: str = 'CONFIG_ENV', 
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'
@@ -53,18 +54,18 @@ class MANIFEST:
         CONFIG_ENV: str = 'CONFIG_ENV', 
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'
     ):
-        self._manifest = MANIFEST.FromAppConfig(
+        self._manifestManifest.FromAppConfig(
             CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE
         )
         
 
-    @staticmethod
-    def _fromDomain(domainName) -> any:
-        return DTFW.DOMAIN(domainName).GetManifest()
+    def _fromDomain(self, domain) -> any:
+        return dtfw.DOMAIN(domain).GetManifest()
 
 
-    def LoadFromDomain(self, domainName) -> any:
-        self._manifest = MANIFEST._fromDomain(domainName)
+    def Fetch(self, domain) -> any:
+        ''' Loads a manifest by reading the remote domain name. '''
+        self._manifest = self._fromDomain(domain)
 
 
     def Trusts(self, domain, role, code) -> bool:
@@ -116,77 +117,49 @@ class MANIFEST:
     
 
     @staticmethod
-    def _tryAtt(name:str, source:any, default=None) -> any:
+    def _att(name:str, source:any, default=None) -> any:
         ''' Returns a copy of the attribute, or [default] of it doesnt exist. '''
         if name in source:
             return source[name]
         return default
 
 
-    def TryAtt(self, name:str, source:any=None, default=None) -> any:
+    def Att(self, name:str, source:any=None, default=None) -> any:
         ''' Returns a copy of the attribute, or [default] of it doesnt exist. '''
         if not source:
             source = self._manifest
-        return MANIFEST._tryAtt(name, source, default)
+        return MANIFEST._att(name, source, default)
     
 
     def Identity(self):
-        return self.TryAtt('Identity')
+        return self.Att('Identity')
     
 
     def Domain(self):
-        return self.TryAtt(
+        return self.Att(
             name= 'Domain',
             source= self.Identity(),
             default= '<MISSING>')
         
 
     def Name(self):
-        return self.TryAtt(
+        return self.Att(
             name= 'Name', 
             source= self.Identity(), 
             default= self.Domain())
 
 
     def Translations(self, default=[]):
-        return self.TryAtt(
+        return self.Att(
             name= 'Translations',
             source= self.Identity(),
             default= default)
     
 
-    def NameTranslation(self, language):
+    def Translate(self, language):
         translations = self.Translations(default=[])
         for translation in translations:
             if 'Language' in translation:
                 if translation['Language'] == language:
                     return translation['Translation']
         return self.Name()
-    
-
-    @staticmethod
-    def CodeTranslation(item, language):
-        translations = MANIFEST._tryAtt('Translations', source=item, default=[])
-        for translation in translations:
-            if 'Language' in translation:
-                if translation['Language'] == language:
-                    return translation['Translation']
-        return item['ID']
-    
-
-    @staticmethod
-    def CodeSchema(item, output, version):
-        if not item:
-            return {}
-
-        schemas = MANIFEST._tryAtt('Schemas', source=item, default=[])
-        for schema in schemas:
-            if 'Output' in schema:
-                if schema['Output'] == output:
-                    if not version: 
-                        return schema
-                    if 'Version' not in schema:
-                        return schema
-                    if version == schema['Output']:
-                        return schema
-        return {}

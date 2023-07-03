@@ -1,5 +1,8 @@
+# 📚 APPCONFIG
+
 import boto3
 import os
+
 
 def test():
     return 'this is a APPCONFIG test.'
@@ -8,8 +11,9 @@ def test():
 appconfig = boto3.client('appconfigdata')
 class APPCONFIG:
         
-    @staticmethod
+
     def Get(
+        self,    
         CONFIG_APP: str = 'CONFIG_APP', 
         CONFIG_ENV: str = 'CONFIG_ENV', 
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'

@@ -1,7 +1,11 @@
+# 📚 DYNAMO
+
 import boto3
 import os
 from time import time
 
+from DTFW import DTFW
+dtfw = DTFW()
 
 
 def test():
@@ -11,33 +15,32 @@ def test():
 dynamo = boto3.resource('dynamodb')
 class DYNAMO:
     
-    def __init__(self, alias):
-        self._table = DYNAMO._getTable(alias)
+    def __init__(self, alias=None):
+        if alias:
+            self._table = self._getTable(alias)
 
     def Merge(self, id, item):
         item['ID'] = id
-        return DYNAMO._update_item(table=self._table, key='ID', body=item)
+        return self._update_item(table=self._table, key='ID', body=item)
     
     def Get(self, id):
-        return DYNAMO._getItem(self._table, id)
+        return self._getItem(self._table, id)
     
     def Delete(self, id):
-        return DYNAMO._delete_item(self._table, 'ID', id)
+        return self._delete_item(self._table, 'ID', id)
     
     def GetAll(self):
-        return DYNAMO._get_items(self)
+        return self._get_items(self)
 
 
-    @staticmethod
-    def _getTable(alias):
+    def _getTable(self, alias):
         table = dynamo.Table(os.environ[alias])
         return table
 
 
 
     # 👉 https://www.fernandomc.com/posts/ten-examples-of-getting-data-from-dynamodb-with-python-and-boto3/
-    @staticmethod
-    def _getItem(table, id):
+    def _getItem(self, table, id):
         print (f'{id=}')
 
         response = table.get_item(
@@ -53,8 +56,7 @@ class DYNAMO:
         return item
 
 
-    @staticmethod
-    def _get_update_params(k, body):
+    def _get_update_params(self, k, body):
         """Given a dictionary we generate an update expression and a dict of values
         to update a dynamodb table.
 
@@ -76,10 +78,9 @@ class DYNAMO:
 
         return "".join(update_expression)[:-1], update_values, update_names
             
-            
-    @staticmethod            
-    def _update_item(table, key, body):
-        a, v, n = DYNAMO._get_update_params(key, body)
+                  
+    def _update_item(self, table, key, body):
+        a, v, n = self._get_update_params(key, body)
         response = table.update_item(
             Key= {key: body[key]},
             UpdateExpression=a,
@@ -89,16 +90,14 @@ class DYNAMO:
         return response
 
 
-    @staticmethod
-    def _delete_item(table, key, id):
+    def _delete_item(self, table, key, id):
         response = table.delete_item(Key={ key: id })
         status_code = response['ResponseMetadata']['HTTPStatusCode']
         print(status_code)
         return status_code
         
 
-    @staticmethod
-    def my_scan(table, index, start):
+    def my_scan(self, table, index, start):
         if index != '':
             
             if start != '':
@@ -116,17 +115,16 @@ class DYNAMO:
         return table.scan()
         
 
-    @staticmethod
-    def _get_items(table, index=''):
+    def _get_items(self, table, index=''):
         
-        response = DYNAMO.my_scan(table, index, '')
+        response = self.my_scan(table, index, '')
         items = response['Items']
         print ('my_scan.Items returned: ', len(response['Items']))
         
         while 'LastEvaluatedKey' in response:
             lastEvaluatedKey = response['LastEvaluatedKey']
             
-            response = DYNAMO.my_scan(table, index, lastEvaluatedKey)
+            response = self.my_scan(table, index, lastEvaluatedKey)
             print ('my_scanItems returned: ', len(response['Items']))
             items.extend(response['Items'])
             
@@ -134,8 +132,7 @@ class DYNAMO:
         return items
 
 
-    @staticmethod
-    def TTL(days):
+    def TTL(self, days):
         return int(time()) + (days * 24 * 60 * 60)
     
 
@@ -144,8 +141,6 @@ class DYNAMO:
         👉 https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html 
         👉 https://stackoverflow.com/questions/49344272/finding-items-between-2-dates-using-boto3-and-dynamodb-scan
         '''
-
-        from UTILS import UTILS
 
         filter = {
             #'TableName': TABLE_NAME,
@@ -157,7 +152,7 @@ class DYNAMO:
             },
             'ExpressionAttributeValues': {
                 ":s_time": timestamp,
-                ":e_time": UTILS.Timestamp()
+                ":e_time": dtfw.Utils().Timestamp()
             },
             'FilterExpression': "#f_up between :s_time and :e_time",
             'ScanIndexForward': "true"
@@ -179,8 +174,8 @@ class DYNAMO:
         }
         '''
 
-    @staticmethod
-    def Records(event):
+
+    def Records(self, event):
         ''' 
         👉 https://stackoverflow.com/questions/63126782/how-to-desalinize-json-coming-from-dynamodb-stream 
         👉 https://stackoverflow.com/questions/63050735/how-to-design-dynamodb-to-elastic-search-with-insert-modify-remove

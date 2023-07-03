@@ -1,3 +1,5 @@
+# 📚 SECRETS
+
 import boto3
 
 
@@ -8,8 +10,7 @@ def test():
 secretsmanager = boto3.client('secretsmanager')
 class SECRETS:
 
-    @staticmethod
-    def Get(secretId):
+    def Get(self, secretId):
         return secretsmanager.get_secret_value(
             SecretId= secretId
         )['SecretString']

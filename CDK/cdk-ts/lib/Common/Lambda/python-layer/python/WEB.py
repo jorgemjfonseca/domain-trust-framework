@@ -1,3 +1,5 @@
+# 📚 WEB
+
 import json
 from urllib import request, parse
 from urllib.request import urlopen
@@ -10,8 +12,7 @@ def test():
 
 class WEB: 
 
-    @staticmethod
-    def Post(url: str, body: any) -> any:
+    def Post(self, url: str, body: any) -> any:
         ''' 👉️ https://stackoverflow.com/questions/36484184/python-make-a-post-request-using-python-3-urllib  '''
     
         print(f'{url=}')
@@ -34,8 +35,7 @@ class WEB:
         return content
 
 
-    @staticmethod
-    def Get(url: str) -> str:
+    def Get(self, url: str) -> str:
         ''' 👉️ https://stackoverflow.com/questions/37819525/lambda-function-to-make-simple-http-request/71127429#71127429 '''
         print (f'WEB.Get: {url=}')
 
@@ -44,7 +44,6 @@ class WEB:
         return body
     
     
-    @staticmethod
-    def GetJson(url: str) -> any:
+    def GetJson(self, url: str) -> any:
         body = WEB.Get(url)
         return json.loads(body)

@@ -1,34 +1,34 @@
+# 📚 LISTENER
 
 # 📚 Listener: https://quip.com/FCSiAU7Eku0X/-Listener
 
 def test():
     return 'this is SUBSCRIBER test.'
 
+
 from DTFW import DTFW
+dtfw = DTFW()
 
 class LISTENER:
 
-    @staticmethod
-    def _HandleConsume(event):
+
+    def _HandleConsume(self, event):
         # 👉 https://quip.com/FCSiAU7Eku0X#temp:C:GLfcf27fefa09924f62b4f449abb
 
         print(f'{event}')
 
 
-    @staticmethod
-    def _HandlePublisher(event):
+    def _HandlePublisher(self, event):
         # 👉 https://quip.com/FCSiAU7Eku0X/-Listener
 
         print(f'{event}')
 
         update = {}
 
-        from PUBLISHER import PUBLISHER
-        PUBLISHER.Publish(update)
+        # TODO
 
 
-    @staticmethod
-    def _HandleSubscribe(event):
+    def _HandleSubscribe(self, event):
         # 👉 https://quip.com/FCSiAU7Eku0X/-Listener#temp:C:GLf0d5cf021894d4b6babb7e0f4d
 
         '''
@@ -50,33 +50,30 @@ class LISTENER:
 
         # Copied from Publisher-Subscribe
 
-        msg = DTFW.MSG(event)
+        msg = dtfw.Msg(event)
         domain = msg.From()
         filter = msg.Body()['Filter']
         
-        DTFW.DYNAMO('SUBSCRIBERS').Merge(domain, { 
+        return dtfw.Dynamo('SUBSCRIBERS').Merge(domain, { 
             'Filter': filter,
             'Status': 'SUBSCRIBED'
         })
 
 
-    @staticmethod
-    def _HandleUpdated(event):
+    def _HandleUpdated(self, event):
         # 👉 https://quip.com/FCSiAU7Eku0X#temp:C:GLfc7d59b1cc13e4c4e89f85ba7f
         
         print(f'{event}')
-        
-        from UTILS import UTILS
-        id = UTILS.UUID() 
 
-        msg = DTFW.MSG(event)
+        msg = dtfw.Msg(event)
         
         update = {
-            'UpdateID': id,
+            'UpdateID': dtfw.Utils.UUID() ,
             'Domain': msg.From(),
             'Timestamp': msg.Timestamp()
         }
 
-        DTFW.DYNAMO('UPDATES').Merge(id, update)
+        dtfw.Dynamo('UPDATES').Merge(id, update)
         
-        DTFW.SQS('PUBLISHER').Send(update)
+        # TODO: this should be an event of dynamo, to be ACID
+        dtfw.Sqs('PUBLISHER').Send(update)

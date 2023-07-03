@@ -16,28 +16,23 @@ class InvalidRequestException(Exception):
 class UTILS: 
 
 
-    @staticmethod
-    def RaiseNotFoundException():
+    def RaiseNotFoundException(self):
         raise NotFoundException
     
 
-    @staticmethod
-    def RaiseInvalidRequestException():
+    def RaiseInvalidRequestException(self):
         raise InvalidRequestException
     
 
-    @staticmethod
-    def FromJson(text: str) -> any:
+    def FromJson(self, text: str) -> any:
         return json.loads(text)
         
     
-    @staticmethod
-    def ToJson(obj: any) -> str:
+    def ToJson(self, obj: any) -> str:
         return json.dumps(obj)
     
     
-    @staticmethod
-    def FromYaml(text: str) -> any:
+    def FromYaml(self, text: str) -> any:
         ''' 
         👉 https://yaml.readthedocs.io/en/latest/detail.html
         👉 https://stackoverflow.com/questions/50846431/converting-a-yaml-file-to-json-object-in-python
@@ -59,8 +54,7 @@ class UTILS:
         return data
         
         
-    @staticmethod
-    def ToYaml(obj: any) -> str:
+    def ToYaml(self, obj: any) -> str:
         ''' 👉 https://lyz-code.github.io/blue-book/coding/python/ruamel_yaml/ '''
         # {'products': ['item 1', 'item 2']}
         
@@ -82,49 +76,42 @@ class UTILS:
         return text
 
 
-    @staticmethod
-    def FromJsonToYaml(text: str) -> str:
-        obj = UTILS.FromJson(text)
-        return UTILS.ToYaml(obj)
+    def FromJsonToYaml(self, text: str) -> str:
+        obj = self.FromJson(text)
+        return self.ToYaml(obj)
         
         
-    @staticmethod
-    def FromYamlToJson(text: str) -> str:
-        obj = UTILS.FromYaml(text)
-        return UTILS.ToJson(obj)
+    def FromYamlToJson(self, text: str) -> str:
+        obj = self.FromYaml(text)
+        return self.ToJson(obj)
 
 
-    @staticmethod
-    def Copy(obj):        
+    def Copy(self, obj):        
         from copy import deepcopy
         return deepcopy(obj)
     
 
-    @staticmethod
-    def UUID():
+    def UUID(self):
         ''' 👉️ https://stackoverflow.com/questions/37049289/how-do-i-convert-a-python-uuid-into-a-string '''
         import uuid
         return str(uuid.uuid4());
     
     
-    @staticmethod
-    def Correlation():
+    def Correlation(self):
         ''' 👉️ https://quip.com/NiUhAQKbj7zi#temp:C:XAYf6d35adc1f4e4f0795954ef86 '''
-        correlation = UTILS.UUID();
+        correlation = self.UUID();
         print(f'{correlation=}')
         return correlation
 
 
-    @staticmethod
-    def Timestamp():
+    def Timestamp(self):
         ''' 👉️ https://stackoverflow.com/questions/53676600/string-formatting-of-utcnow '''
         import datetime
         timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
         return timestamp
 
 
-    @staticmethod
-    def Canonicalize(object: any) -> str:
+    def Canonicalize(self, object: any) -> str:
         ''' 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces '''
         import json
         canonicalized = json.dumps(object, separators=(',', ':'))
@@ -132,8 +119,7 @@ class UTILS:
         return canonicalized
     
 
-    @staticmethod
-    def HttpResponse(code=200, body='', format='json'):
+    def HttpResponse(self, code=200, body='', format='json'):
 
         ret = {
             'statusCode': code,
@@ -159,8 +145,7 @@ class UTILS:
         return ret
 
     
-    @staticmethod
-    def TryCall(obj, name):
+    def TryCall(self, obj, name):
         '''  👉️ https://bobbyhadz.com/blog/python-check-if-object-has-method#check-if-an-object-has-a-specific-method-in-python '''
         method = getattr(obj, name, None)
         if callable(method):
@@ -168,8 +153,7 @@ class UTILS:
         return obj
 
 
-    @staticmethod
-    def Merge(obj1, obj2):
+    def Merge(self, obj1, obj2):
         ''' 👉️ https://stackoverflow.com/questions/14839528/merge-two-objects-in-python '''
         obj1.update(obj2)
         return obj1

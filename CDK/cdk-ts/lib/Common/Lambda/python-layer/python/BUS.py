@@ -1,3 +1,5 @@
+# 📚 BUS
+
 import boto3
 
 
@@ -11,8 +13,7 @@ class BUS:
     # 👉 https://blog.knoldus.com/how-to-create-an-eventbridge-application-in-python/
     # 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html
     # 👉 https://boto3.amazonaws.com/v1/documentation/api/1.10.46/reference/services/events.html
-    @staticmethod
-    def Publish(eventBusName, source, detailType, detail):
+    def Publish(self, eventBusName, source, detailType, detail):
         return events.put_events(
             Entries=[
                 {

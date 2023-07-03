@@ -1,8 +1,13 @@
+# 📚 PUBLISHER
+
 import json
 
 def test():
     return 'this is PUBLISHER test.'
 
+
+from DTFW import DTFW
+dtfw = DTFW()
 
 class PUBLISHER:
     
@@ -15,22 +20,18 @@ class PUBLISHER:
     # 🧪 Subscribe
     # 🧪 Updated
 
-    @staticmethod
-    def _HandleFanOuter(event):
+    def _HandleFanOuter(self, event):
         ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher '''
 
         print(f'{event}')
 
-        from MSG import MSG
-        msg = MSG(event)
+        msg = dtfw.Msg(event)
         msg.Subject('Subcriber-Update')
 
-        from MESSENGER import MESSENGER
-        MESSENGER.Send(msg, source='Publisher-FanOuter')
+        return dtfw.Messenger().Send(msg, source='Publisher-FanOuter')
     
 
-    @staticmethod
-    def _HandlePublisher(event):
+    def _HandlePublisher(self, event):
         ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher 
         Read update stream and fan out to subscribers. '''
 
@@ -38,23 +39,15 @@ class PUBLISHER:
 
         # TODO: wrap out from DynamoDB strems
 
-        from MSG import MSG
-        body = MSG(event).Body()
+        body = dtfw.Msg(event).Body()
 
-        from SQS import SQS
-        fanout = SQS('FANOUT')
-        
-        from DYNAMO import DYNAMO
-        subscribers = DYNAMO('SUBSCRIBERS')
-
-        for sub in subscribers.GetAll():
+        for sub in dtfw.Dynamo('SUBSCRIBERS').GetAll():
             to = sub['Domain']
-            msg = MSG().Wrap(to, body)
-            fanout.Send(msg)
+            msg = dtfw.Msg().Wrap(to, body)
+            dtfw.Sqs('FANOUT').Send(msg)
 
 
-    @staticmethod
-    def _HandleRegister(register):
+    def _HandleRegister(self, register):
         ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4 '''
 
         '''
@@ -66,20 +59,16 @@ class PUBLISHER:
         '''
         print(f'{register}')
 
-        from MSG import MSG
-        domain = MSG(register).From()
+        domain = dtfw.Msg(register).From()
         
-        from DYNAMO import DYNAMO
-        subscribers = DYNAMO('SUBSCRIBERS')
-        subscribers.Merge(domain, {
+        return dtfw.Dynamo('SUBSCRIBERS').Merge(domain, {
             'Domain': domain,
             'Filter': {},
             'Status': 'REGISTERED'
         })
 
 
-    @staticmethod
-    def _HandleReplay(replay):
+    def _HandleReplay(self, replay):
         ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK1a95aeba490844ce9168b7f4d '''
 
         '''
@@ -94,22 +83,18 @@ class PUBLISHER:
         '''
         print(f'{replay}')
 
-        from MSG import MSG
-        msg = MSG(replay)
-        timestamp = msg.TryAtt('From')
+        timestamp = dtfw.Msg(replay).Att('From')
         
         if not timestamp: 
             print(f'From not found, ignoring.')
             return
         
-        return PUBLISHER._processReplay(replay, timestamp)
+        return self._replay(replay, timestamp)
         
 
-    @staticmethod
-    def _processReplay(request, timestamp, lastEvaluatedKey=None):
-        from DYNAMO import DYNAMO
-        updates = DYNAMO('UPDATES')
-        page = updates.GetPageFromTimestamp(timestamp, lastEvaluatedKey)
+    def _replay(self, request, timestamp, lastEvaluatedKey=None):
+        
+        page = dtfw.Dynamo('UPDATES').GetPageFromTimestamp(timestamp, lastEvaluatedKey)
 
         items = []
         for item in page['Items']:
@@ -123,34 +108,26 @@ class PUBLISHER:
         if 'LastEvaluatedKey' in page:
             lastEvaluatedKey = page['LastEvaluatedKey']
 
-            from UTILS import UTILS
-            token = UTILS.UUID()
-
-            tokens = DYNAMO('TOKENS')
-            tokens.Merge(
-                id=token, 
-                item={ 
+            dtfw.Dynamo('TOKENS').Merge(
+                id= dtfw.Utils().UUID(), 
+                item= { 
                     'LastEvaluatedKey': json.dumps(lastEvaluatedKey),
                     'TimeStamp': timestamp
                 })
 
-        from SUBSCRIBER import SUBSCRIBER
-        return SUBSCRIBER.Consume(request, items, token)
+        return dtfw.Subscriber().Consume(request, items, token)
 
 
-    @staticmethod
-    def Next(page, token, source):
+    def Next(self, page, token, source):
         ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK9f614503f0d44441a02dcf37f '''
         
-        from MESSENGER import MESSENGER
-        return MESSENGER.Reply(
+        return dtfw.Messenger().Reply(
             request= page,
             body= { 'Token': token },
             source= source)
 
 
-    @staticmethod
-    def _HandleNext(next):
+    def _HandleNext(self, next):
         ''' 👉 https://quip.com/sBavA8QtRpXu#temp:C:IEK9f614503f0d44441a02dcf37f '''
 
         '''
@@ -159,24 +136,19 @@ class PUBLISHER:
         }
         '''
 
-        from MSG import MSG
-        msg = MSG(next)
-        token = msg.TryAtt('Token')
+        token = dtfw.Msg(next).Att('Token')
         if not token:
             print(f'Token not found, ignoring.')
             return
 
-        from DYNAMO import DYNAMO
-        tokens = DYNAMO('TOKENS')
-        item = tokens.Get(token)
+        item = dtfw.Dynamo('TOKENS').ID(token)
         lastEvaluatedKey = json.loads(item['LastEvaluatedKey'])
         timestamp = item['TimeStamp']
 
-        return PUBLISHER._processReplay(next, timestamp, lastEvaluatedKey)
+        return self._replay(next, timestamp, lastEvaluatedKey)
 
 
-    @staticmethod
-    def _HandleSubscribe(event):
+    def _HandleSubscribe(self, event):
         ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4 '''
 
         '''
@@ -191,21 +163,17 @@ class PUBLISHER:
         '''
         print(f'{event}')
         
-        from MSG import MSG
-        msg = MSG(event)
+        msg = dtfw.Msg(event)
         domain = msg.From()
         filter = msg.Body()['Filter']
         
-        from DYNAMO import DYNAMO
-        subscribers = DYNAMO('SUBSCRIBERS')
-        subscribers.Merge(domain, { 
+        return dtfw.Dynamo('SUBSCRIBERS').Merge(domain, { 
             'Filter': filter,
             'Status': 'SUBSCRIBED'
         })
 
 
-    @staticmethod
-    def _HandleUnregister(event):
+    def _HandleUnregister(self, event):
         ''' 👉 https://quip.com/sBavA8QtRpXu#temp:C:IEK2b8247c67fae4d4487321c2e1 '''
 
         '''
@@ -217,16 +185,12 @@ class PUBLISHER:
         '''
         print(f'{event}')
 
-        from MSG import MSG
-        domain = MSG(event).From()
+        domain = dtfw.Msg(event).From()
 
-        from DYNAMO import DYNAMO
-        subscribers = DYNAMO('SUBSCRIBERS')        
-        return subscribers.Delete(domain)
+        return dtfw.Dynamo('SUBSCRIBERS').Delete(domain)
     
 
-    @staticmethod
-    def _HandleUpdated(event):
+    def _HandleUpdated(self, event):
         ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK5a453bcdb55e4d41bcc57bbc6 '''
 
         '''
@@ -238,20 +202,13 @@ class PUBLISHER:
         '''
         print(f'{event}')
 
-        from UTILS import UTILS
-        id = UTILS.UUID() 
-
-        from MSG import MSG
-        msg = MSG(event)
-        domain = msg.From()
+        msg = dtfw.Msg(event)
 
         update = {
-            'UpdateID': id,
-            'Domain': domain,
+            'UpdateID': dtfw.Utils().UUID(),
+            'Domain': msg.From(),
             'Timestamp': msg.Timestamp()
         }
 
-        from DYNAMO import DYNAMO
-        updates = DYNAMO('UPDATES')
-        updates.Merge(id, update)
+        dtfw.Dynamo('UPDATES').Merge(id, update)
 

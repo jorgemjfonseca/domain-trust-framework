@@ -1,4 +1,4 @@
-# 📚 Graph: https://quip.com/hgz4A3clvOes/-Graph
+# 📚 GRAPH: https://quip.com/hgz4A3clvOes/-Graph
 
 # TODO implement graph DB
 
@@ -8,70 +8,57 @@ def test():
 
 
 from DTFW import DTFW
+dtfw = DTFW()
 
 class GRAPH:
     
 
-    @staticmethod
-    def _getDomainItem(domainName):
-        return DTFW.DYNAMO('DOMAINS').Get(domainName)
+    def Domains(self, domainName):
+        return dtfw.Dynamo('DOMAINS').Get(domainName)
 
 
-    @staticmethod
-    def _getDomainItemManifest(domainName):
+    def Manifests(self, domainName):
 
-        item = GRAPH._getDomainItem(domainName)        
-        manifest = DTFW.MANIFEST(item['Manifest'])
+        item = self.Domains(domainName)        
+        manifest = dtfw.Manifest(item['Manifest'])
         # TODO: test if we need a UTILS.FromYaml/Json
 
         return manifest
 
 
-    @staticmethod
-    def _getCodeItem(code):
-        return DTFW.DYNAMO('CODES').Get(code)
+    def Codes(self, code):
+        return dtfw.Dynamo('CODES').Get(code)
 
 
-    @staticmethod
-    def _HandleConsumer(event):
+    def _HandleConsumer(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAeaf662df90ec442284b7aaef9 '''
 
         print(f'{event}')
 
-        from DYNAMO import DYNAMO
-        for r in DYNAMO.Records(event):
+        for r in dtfw.Dynamo().Records(event):
 
             domainName = r['Domain']
 
-            manifest = DTFW.DOMAIN(domainName).GetManifest()
-
-            from UTILS import UTILS
-            timestamp = UTILS.Timestamp()
-
-            DTFW.DYNAMO('DOMAINS').Merge(domainName, {
+            dtfw.Dynamo('DOMAINS').Merge(domainName, {
                 'Domain': domainName,
-                'Timestamp': timestamp,
-                'Manifest': manifest
+                'Timestamp': dtfw.Utils().Timestamp(),
+                'Manifest': dtfw.Domain(domainName).Manifest()
             })
             
 
-    @staticmethod
-    def _trusts(source, target, role, code):
+    def Trusts(self, source, target, role, code):
 
-        domain = GRAPH._getDomainItemManifest(source)
+        domain = self.Manifests(source)
         if not domain:
             return False
 
-        trust = domain.Trusts(
+        return domain.Trusts(
             domain=target, 
             role=role, 
             code=code)
         
-        return trust
-
     
-    @staticmethod
-    def _HandleTrusted(event):
+    def _HandleTrusted(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
         # TODO implement graph DB
 
@@ -84,23 +71,21 @@ class GRAPH:
         '''
         print(f'{event}')
 
-        msg = DTFW.MSG(event)
+        msg = dtfw.Msg(event)
 
-        source = msg.From()
-        target = msg.TryAtt('Domain')
-        role = msg.TryAtt('Role')
-        code = msg.TryAtt('Code')
-
-        trust = GRAPH._trusts(source, target, role, code)
+        trusts = self.Trusts(
+            source= msg.From(),
+            target= msg.Att('Domain'), 
+            role= msg.Att('Role'), 
+            code= msg.Att('Code'))
 
         return {
-            'Trusted': trust,
+            'Trusted': trusts,
             'Important': 'Chained trust not yet implemented.'
         }
     
     
-    @staticmethod
-    def _HandleTrusts(event):
+    def _HandleTrusts(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA71b470c7a4c446e5b43adea7e '''
         # TODO implement graph DB
 
@@ -115,14 +100,14 @@ class GRAPH:
         
         print(f'{event}')
         
-        msg = DTFW.MSG(event)
+        msg = dtfw.Msg(event)
 
-        source = msg.TryAtt('Truster')
-        target = msg.TryAtt('Domain')
-        role = msg.TryAtt('Role')
-        code = msg.TryAtt('Code')
+        source = msg.Att('Truster')
+        target = msg.Att('Domain')
+        role = msg.Att('Role')
+        code = msg.Att('Code')
 
-        trust = GRAPH._trusts(source, target, role, code)
+        trust = self.Trusts(source, target, role, code)
 
         return {
             'Trusted': trust,
@@ -130,8 +115,7 @@ class GRAPH:
         }
     
 
-    @staticmethod
-    def _HandleIdentity(event):
+    def HandleIdentity(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAacb56742c6a342a8a3494587d '''
 
         '''
@@ -141,12 +125,11 @@ class GRAPH:
         '''
         print(f'{event}')
 
-        domainName = DTFW.MSG(event).TryAtt('Domain')
-        return GRAPH._getDomainItemManifest(domainName).Identity()
+        domainName = dtfw.Msg(event).Att('Domain')
+        return self.Manifests(domainName).Identity()
     
 
-    @staticmethod
-    def _HandleQueryable(event):
+    def HandleQueryable(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA44399e7e0bfc4609a560d6c4a '''
         # TODO: implement the logic
 
@@ -161,13 +144,12 @@ class GRAPH:
         '''
         print(f'{event}')
         
-        binds = DTFW.MSG(event).TryAtt('Binds')
+        binds = dtfw.Msg(event).Att('Binds')
         binds['Alert'] = 'Logic not yet implemented, this is just an echo!'
         return binds
     
 
-    @staticmethod
-    def _HandleTranslate(event):
+    def HandleTranslate(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
 
         '''
@@ -185,27 +167,25 @@ class GRAPH:
             "Codes": []
         }
 
-        msg = DTFW.MSG(event)
+        msg = dtfw.Msg(event)
 
-        language = msg.TryAtt('Language')
-        domains = msg.TryAtt('Domains', default=[])
-        codes = msg.TryAtt('Codes', default=[])
+        language = msg.Att('Language')
+        domains = msg.Att('Domains', default=[])
+        codes = msg.Att('Codes', default=[])
 
         if not language:
             return ret
         
         for domain in domains:
-            manifest = GRAPH._getDomainItemManifest(domain)
-            translation = manifest.NameTranslation(language)
+            translation = self.Manifests(domain).Translate(language)
             ret['Domains'].append({
                 'Domain': domain,
                 'Translation': translation
             })
 
-        from MANIFEST import MANIFEST
         for code in codes:
-            item = GRAPH._getCodeItem(code)
-            translation = MANIFEST.CodeTranslation(item, language)
+            item = self.Codes(code)
+            translation = dtfw.Code(item).Translate(language)
             ret['Codes'].append({
                 'Code': code,
                 'Translation': translation
@@ -214,8 +194,7 @@ class GRAPH:
         return ret
     
 
-    @staticmethod
-    def _HandlePublicKey(event):
+    def HandlePublicKey(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAe17e4b66e30846a7b82ecce0c '''
         # TODO: implement when there's an old issuer who has rotated their keys.
 
@@ -232,8 +211,7 @@ class GRAPH:
         }
     
 
-    @staticmethod
-    def _HandleSchema(event):
+    def HandleSchema(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAe24fd83cf9c244078a0f67f7f '''
 
         '''
@@ -245,28 +223,23 @@ class GRAPH:
         '''
         print(f'{event}')
 
-        msg = DTFW.MSG(event)
+        msg = dtfw.Msg(event)
+        code = msg.Att('Code')
+        item = self.Codes(code)
 
-        code = msg.TryAtt('Code')
-        output = msg.TryAtt('Output')
-        version = msg.TryAtt('Version')
-
-        item = GRAPH._getCodeItem(code)
-
-        from MANIFEST import MANIFEST
-        schema = MANIFEST.CodeSchema(item=item, output=output, version=version)
-
-        return schema
+        return dtfw.Code(item).Schema(
+            output= msg.Att('Output'), 
+            version= msg.Att('Version'))
     
 
     @staticmethod
     def _HandlePublisher(event):
         
-        domainName = DTFW.MSG(event).From()
-        manifest = DTFW.MANIFEST().LoadFromDomain(domainName)
+        domainName = dtfw.Msg(event).From()
+        manifest = dtfw.Manifest().Fetch(domainName)
         
-        domains = DTFW.DYNAMO('DOMAINS')
-        codes = DTFW.DYNAMO('CODES')
+        domains = dtfw.Dynamo('DOMAINS')
+        codes = dtfw.Dynamo('CODES')
 
         # TODO: save the domain and code
         # TODO: Ignore older records by looking at the Timestamps (envelope+table)

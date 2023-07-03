@@ -1,7 +1,12 @@
+# 📚 DOMAIN
+
+from DTFW import DTFW
+dtfw = DTFW()
+
+
 def test():
     return 'this is a DOMAIN test.'
 
-from MANIFEST import MANIFEST
 
 class DOMAIN:
         
@@ -16,7 +21,7 @@ class DOMAIN:
         return f'https://dtfw.{self._domainName}/{path}'
 
 
-    def GetManifest(self) -> any:
+    def Manifest(self) -> any:
         '''Fetches the manifest on the domains endpoint, and returns as an object.'''
 
         if self._manifest:
@@ -24,11 +29,10 @@ class DOMAIN:
         
         if self._manifest_yaml == None:
             endpoint = self.Endpoint('manifest')
-            from WEB import WEB
-            self._manifest_yaml = WEB.Get(endpoint)
+            
+            self._manifest_yaml = dtfw.Web.Get(endpoint)
 
-        from UTILS import UTILS
-        self._manifest = UTILS.FromYaml(self._manifest_yaml)
+        self._manifest = dtfw.Utils().FromYaml(self._manifest_yaml)
 
         return self._manifest
     
@@ -46,8 +50,7 @@ class DOMAIN:
         hostname = f'dtfw._domainkey.{self._domainName}'
         url = f'https://dns.google/resolve?name={hostname}&type=TXT&do=1'
 
-        from WEB import WEB
-        self._googleDns = WEB.GetJson(url)
+        self._googleDns = dtfw.Web().GetJson(url)
         
         return self._googleDns
 

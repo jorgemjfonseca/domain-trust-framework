@@ -1,4 +1,7 @@
-from MSG import MSG
+# 📚 MESSENGER
+
+from DTFW import DTFW
+dtfw = DTFW()
 
 
 def test():
@@ -8,10 +11,9 @@ def test():
 class MESSENGER:
     
 
-    @staticmethod
-    def _publish(event:any, source:str, to:str=None):
+    def _publish(self, event:any, source:str, to:str=None):
         
-        msg = MSG(event)
+        msg = dtfw.Msg(event)
 
         # Validate if there's a destination domain.
         if (to):
@@ -23,53 +25,46 @@ class MESSENGER:
         detailType = msg.Subject()
         envelope = msg.Envelope()
         
-        from BUS import BUS
-        BUS.Publish(
+        dtfw.Bus().Publish(
             eventBusName= 'Messenger-Bus', 
             source= source,
             detailType= detailType, 
             detail= envelope)
         
 
-    @staticmethod
-    def Send(outbound:any, source:str, to:str=None):
-        MSG._publish(outbound, source, to)
+    def Send(self, outbound:any, source:str, to:str=None):
+        self._publish(outbound, source, to)
         
     
-    @staticmethod
-    def Reply(request: any, body:any, source:str):
+    def Reply(self, request: any, body:any, source:str):
         
-        req = MSG(request)
+        req = dtfw.Msg(request)
         to = req.From()
 
-        out = MSG()
+        out = dtfw.Msg()
         out.Wrap(to, body)
         out.Request(req.Envelope())
 
-        MESSENGER._publish(out, source)
+        self._publish(out, source)
 
 
-    @staticmethod
-    def _HandlePublisher(event):
+    def _HandlePublisher(self, event):
         print(f'{event=}')
 
-        MESSENGER._publish(
+        self._publish(
             event, 
             source= 'Messenger-Publisher')
 
 
     # 👉️ https://quip.com/NiUhAQKbj7zi
-    @staticmethod
-    def _HandleSender(event):
+    def _HandleSender(self, event):
         print(f'{event=}')
 
-        msg = MSG(event)
+        msg = dtfw.Msg(event)
         msg.Stamp()
         envelope = msg.Envelope()
         
-        from SYNCAPI import SYNCAPI
-        sent = SYNCAPI.Send(envelope)
-        return sent
+        return dtfw.SyncApi().Send(envelope)
 
     '''
     { 

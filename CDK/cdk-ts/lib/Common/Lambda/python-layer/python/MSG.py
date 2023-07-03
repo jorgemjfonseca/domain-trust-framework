@@ -1,3 +1,5 @@
+# 📚 MSG
+
 from UTILS import UTILS
 
 
@@ -69,7 +71,7 @@ class MSG:
         return header['Correlation']
     
     
-    def TryAtt(self, name:str, default = None) -> any:
+    def Att(self, name:str, default = None) -> any:
         ''' Returns a copy of the attribute from the body, or None of it doesnt exist. '''
         body = self.Body()
         if name in body:
@@ -79,7 +81,7 @@ class MSG:
 
     def GetAtt(self, name:str) -> any:
         ''' Returns a copy of the attribute from the body, or raises an exception. '''
-        ret = self.TryAtt(name)
+        ret = self.Att(name)
         if ret == None:
             raise Exception(f'Attribute not found: {name}')
         return ret

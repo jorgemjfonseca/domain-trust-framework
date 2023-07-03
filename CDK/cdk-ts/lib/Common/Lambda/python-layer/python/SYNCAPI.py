@@ -1,4 +1,8 @@
-import os
+# 📚 SYNCAPI
+
+from DTFW import DTFW
+dtfw = DTFW()
+
 
 def test():
     return 'this is SYNCAPI test.'
@@ -6,14 +10,11 @@ def test():
 
 class SYNCAPI:
     
-    @staticmethod
-    def Send(event: any): 
-        from MSG import MSG
-        from LAMBDA import LAMBDA
+    def Send(self, event: any): 
 
-        msg = MSG(event)
+        msg = dtfw.Msg(event)
         msg.Stamp()
         envelope = msg.Envelope()
 
-        sent = LAMBDA('SENDER').Invoke(envelope)
+        sent = dtfw.Lambda('SENDER').Invoke(envelope)
         return sent

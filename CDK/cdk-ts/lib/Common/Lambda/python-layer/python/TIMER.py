@@ -1,3 +1,5 @@
+# 📚 TIMER
+
 import datetime
 
 def test():
@@ -8,8 +10,7 @@ class TIMER:
 
     timerStart = datetime.datetime.now()
 
-    @staticmethod
-    def Elapsed():
+    def Elapsed(self):
         global timerStart
         current = datetime.datetime.now()
         elapsed = (current - timerStart)
@@ -19,17 +20,15 @@ class TIMER:
     .
     '''
 
-    @staticmethod
-    def PrintElapsed():
-        print(f"--- {TIMER.Elapsed()} milliseconds elapsed")
+    def PrintElapsed(self):
+        print(f"--- {self.Elapsed()} milliseconds elapsed")
 
        
-    @staticmethod
-    def StartWatch():
+    def StartWatch(self):
         return datetime.datetime.now()
 
-    @staticmethod
-    def StopWatch(start):
+
+    def StopWatch(self, start):
         current = datetime.datetime.now()
         elapsed = (current - start)
         output = round(elapsed.total_seconds() * 1000)
