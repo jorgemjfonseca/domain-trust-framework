@@ -8,8 +8,33 @@ def test():
     return 'this is SYNCAPI.DKIM test.'
 
 
+class VALIDATOR():
+
+    def __init__(self, obj):
+        self._obj = obj
+
+    def Hash(self) -> str:
+        return self._obj['hash']
+        
+    def IsVerified(self) -> bool:
+        return self._obj['isVerified']
+        
+
 class DKIM:
     
+
+    # REQUEST { text, publicKey, signature }
+    # RESPONSE { hash, isVerified }
+    def ValidateSignature(self, text, publicKey, signature) -> VALIDATOR:
+        print(f'{self._elapsed()} Invoking validator...')
+
+        ret = dtfw.Lambda('VALIDATOR_FN').Invoke({
+            'text': text,
+            'publicKey': publicKey,
+            'signature': signature
+        })
+        
+        return VALIDATOR(ret)
     
 
     def HandleDkimCfn(self): 
@@ -70,3 +95,4 @@ class DKIM:
             customDomain = os.environ['customDomain'], 
             apiHostedZoneId = os.environ['apiHostedZoneId'],
             apiAlias = os.environ['apiAlias'])
+    

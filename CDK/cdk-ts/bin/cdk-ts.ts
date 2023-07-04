@@ -3,7 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { Manifester } from '../lib/Behaviours/Manifester/stack/Manifester';
 import { Messenger } from '../lib/Behaviours/Messenger/stack/Messenger';
-import { HostBehaviour as Host } from '../lib/Behaviours/Host/stack/HostBehaviour';
+import { Host as Host } from '../lib/Behaviours/Host/stack/HostBehaviour';
 import { SyncApi } from '../lib/Behaviours/SyncApi/stack/SyncApi';
 import { DomainDns } from '../lib/Behaviours/DomainDns/stack/DomainDns';
 import { Publisher } from '../lib/Behaviours/Publisher/stack/Publisher';

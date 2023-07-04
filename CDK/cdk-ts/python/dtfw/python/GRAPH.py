@@ -7,27 +7,32 @@ def test():
     return 'this is SUBSCRIBER test.'
 
 
+from DYNAMO import DYNAMO
 from DTFW import DTFW
+
 dtfw = DTFW()
 
 class GRAPH:
     
 
-    def Domains(self, domainName):
-        return dtfw.Dynamo('DOMAINS').Get(domainName)
+    def domains(self) -> DYNAMO:
+        return dtfw.Dynamo('DOMAINS')
+    def domain(self, domainName):
+        return self.domains().Get(domainName)
 
 
-    def Manifests(self, domainName):
-
-        item = self.Domains(domainName)        
+    def manifest(self, domainName):
+        item = self.domain(domainName)        
         manifest = dtfw.Manifest(item['Manifest'])
         # TODO: test if we need a UTILS.FromYaml/Json
 
         return manifest
 
 
-    def Codes(self, code):
-        return dtfw.Dynamo('CODES').Get(code)
+    def codes(self) -> DYNAMO:
+        return dtfw.Dynamo('CODES')
+    def code(self, code):
+        return self.codes().Get(code)
 
 
     def HandleConsumer(self, event):
@@ -47,8 +52,7 @@ class GRAPH:
             
 
     def Trusts(self, source, target, role, code):
-
-        domain = self.Manifests(source)
+        domain = self.manifest(source)
         if not domain:
             return False
 
@@ -69,8 +73,6 @@ class GRAPH:
             "Code": "iata.org/SSR/WCHR"
         }
         '''
-        print(f'{event}')
-
         msg = dtfw.Msg(event)
 
         trusts = self.Trusts(
@@ -97,9 +99,6 @@ class GRAPH:
             "Code": "dtfw.org/PALM/FOUND"
         }
         '''
-        
-        print(f'{event}')
-        
         msg = dtfw.Msg(event)
 
         source = msg.Att('Truster')
@@ -123,10 +122,8 @@ class GRAPH:
             "Domain": "example.com"
         }
         '''
-        print(f'{event}')
-
         domainName = dtfw.Msg(event).Att('Domain')
-        return self.Manifests(domainName).Identity()
+        return self.manifest(domainName).Identity()
     
 
     def HandleQueryable(self, event):
@@ -177,14 +174,14 @@ class GRAPH:
             return ret
         
         for domain in domains:
-            translation = self.Manifests(domain).Translate(language)
+            translation = self.manifest(domain).Translate(language)
             ret['Domains'].append({
                 'Domain': domain,
                 'Translation': translation
             })
 
         for code in codes:
-            item = self.Codes(code)
+            item = self.code(code)
             translation = dtfw.Code(item).Translate(language)
             ret['Codes'].append({
                 'Code': code,
@@ -204,8 +201,7 @@ class GRAPH:
             "Date": "2022/01/09"
         }
         '''
-
-        print(f'{event}')
+        msg = dtfw.Msg(event)
         return {
             'Alert': 'Not yet implemented!'
         }
@@ -221,11 +217,9 @@ class GRAPH:
             "Version": "A"
         }
         '''
-        print(f'{event}')
-
         msg = dtfw.Msg(event)
         code = msg.Att('Code')
-        item = self.Codes(code)
+        item = self.code(code)
 
         return dtfw.Code(item).Schema(
             output= msg.Att('Output'), 
@@ -237,9 +231,6 @@ class GRAPH:
         
         domainName = dtfw.Msg(event).From()
         manifest = dtfw.Manifest().Fetch(domainName)
-        
-        domains = dtfw.Dynamo('DOMAINS')
-        codes = dtfw.Dynamo('CODES')
 
         # TODO: save the domain and code
         # TODO: Ignore older records by looking at the Timestamps (envelope+table)

@@ -1,0 +1,1 @@
+../../../../Common/LAMBDA/python-layer/python/PUBLISHER.py

@@ -8,13 +8,17 @@ class DTFW:
     
   
     def AppConfig(self):
-        from APPCONFIG import APPCONFIG as proxy
-        return proxy()
+        if not self.appConfig: 
+            from APPCONFIG import APPCONFIG as proxy
+            self.appConfig = proxy()
+        return self.appConfig
         
     
     def Bus(self):
-        from BUS import BUS as proxy
-        return proxy()
+        if not self.bus: 
+            from BUS import BUS as proxy
+            self.bus = proxy()
+        return self.bus
     
     
     def Code(self, item: any):
@@ -33,8 +37,22 @@ class DTFW:
     
 
     def Graph(self):
-        from GRAPH import GRAPH as proxy
-        return proxy()
+        if not self.graph: 
+            from GRAPH import GRAPH as proxy
+            self.graph = proxy()
+        return self.graph
+    
+
+    def Host(self):
+        if not self._host: 
+            from HOST import HOST as proxy
+            self._host = proxy()
+        return self._host
+    
+
+    def Item(self, item):
+        from ITEM import ITEM as proxy
+        return proxy(item)
     
 
     def Lambda(self, alias: str=None):

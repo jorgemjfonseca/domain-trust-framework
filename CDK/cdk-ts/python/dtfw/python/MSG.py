@@ -1,6 +1,11 @@
 # 📚 MSG
 
 from UTILS import UTILS
+from ITEM import ITEM
+from typing import Tuple
+
+from DTFW import DTFW
+dtfw = DTFW()
 
 
 def test():
@@ -14,6 +19,7 @@ class MSG:
         # check if it's a MSG object or a string.
         envelope = UTILS.TryCall(event, 'Envelope') 
         self._envelope = envelope
+        print(f'MSG.Envelope()={self._envelope}')
 
 
     def Envelope(self) -> any:
@@ -71,21 +77,49 @@ class MSG:
         return header['Correlation']
     
     
-    def Att(self, name:str, default = None) -> any:
+    def Att(self, name:str, default=None, obj=None) -> any:
         ''' Returns a copy of the attribute from the body, or None of it doesnt exist. '''
-        body = self.Body()
-        if name in body:
-            return body[name]
-        return default
+        if obj == None:
+            obj = self.Body()
+        if not obj:
+            return default
+    
+        if '.' not in name:
+            if name not in obj:
+                return default
+            return obj[name]
+        
+        if '.' in name:
+            names = name.split('.')
+            parent = self.Att(name=names[0])
+            names.pop(0)
+            child = '.'.join(names)
+            return self.Att(name=child, obj=parent, default=default)
     
 
-    def GetAtt(self, name:str) -> any:
+    def Item(self, name:str) -> ITEM:
+        att = self.Att(name)
+        return dtfw.Item(att)
+    
+
+    def Items(self, name:str) -> Tuple[ITEM, ...]:
+        list = self.Att(name)
+        if list == None:
+            return []
+        ret = []
+        for element in list:
+            item = dtfw.Item(element)
+            ret.append(item)
+        return ret
+    
+
+    def Require(self, name: str) -> any:
         ''' Returns a copy of the attribute from the body, or raises an exception. '''
         ret = self.Att(name)
-        if ret == None:
-            raise Exception(f'Attribute not found: {name}')
+        if not ret:
+            raise Exception(f'Required attribute missing: {name}')
         return ret
-
+    
 
     def Body(self, body=None) -> any:
         ''' Updates or returns a copy of the body. '''

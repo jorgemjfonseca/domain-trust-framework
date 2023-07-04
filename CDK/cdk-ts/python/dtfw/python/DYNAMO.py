@@ -15,19 +15,30 @@ def test():
 dynamo = boto3.resource('dynamodb')
 class DYNAMO:
     
+
     def __init__(self, alias=None):
         if alias:
             self._table = self._getTable(alias)
+
 
     def Merge(self, id, item):
         item['ID'] = id
         return self._update_item(table=self._table, key='ID', body=item)
     
+
     def Get(self, id):
+        if not id:
+            return None
         return self._getItem(self._table, id)
     
+
+    def Item(self, id):
+        return dtfw.Item(self.Get(id))
+    
+
     def Delete(self, id):
         return self._delete_item(self._table, 'ID', id)
+    
     
     def GetAll(self):
         return self._get_items(self)

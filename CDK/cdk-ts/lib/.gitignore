@@ -6,6 +6,8 @@ DOMAIN.py
 DTFW.py
 DYNAMO.py
 GRAPH.py
+HOST.py
+ITEM.py
 LAMBDA.py
 LISTENER.py
 MANIFEST.py

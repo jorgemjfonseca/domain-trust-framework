@@ -54,18 +54,6 @@ class RECEIVER:
         if to != me:
             raise Exception(f'Wrong domain. Expected [{me}], but received [{to}]!')
         checks.append(f'For me?: {True}')
-
-
-    # REQUEST { text, publicKey, signature }
-    # RESPONSE { hash, isVerified }
-    def _invokeValidator(self, text, publicKey, signature):
-        print(f'{self._elapsed()} Invoking validator...')
-
-        return dtfw.Lambda('VALIDATOR_FN').Invoke({
-            'text': text,
-            'publicKey': publicKey,
-            'signature': signature
-        })
     
 
     def _validateHash(self, envelope, validator, checks):
@@ -90,7 +78,6 @@ class RECEIVER:
     def _validateHashAndSignature(self, envelope: any, checks, speed):
         print(f'{self._elapsed()} Validating signature...')
         
-
         started = self._timer.StartWatch()
         msg = dtfw().Msg(envelope)
         signature = msg.Signature()
@@ -99,7 +86,7 @@ class RECEIVER:
         speed['Get DKIM over DNSSEC'] = self._timer.StopWatch(started)
 
         started = self._timer.StartWatch()
-        validator = self._invokeValidator(text, publicKey, signature)
+        validator = dtfw.SyncApi().Dkim().ValidateSignature(text, publicKey, signature)
         self._validateHash(envelope, validator, checks)
         self._validateSignature(validator, checks)
         speed['Verify signature'] = self._timer.StopWatch(started)

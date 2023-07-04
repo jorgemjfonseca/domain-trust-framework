@@ -9,6 +9,7 @@ python3 ./link-lambda.py
 
 
 import os
+import sys
 
 path = './..'
 
@@ -77,17 +78,25 @@ def MergeIgnores(ignore, dirs):
         ReplaceFile('./../lib/.gitignore', ignore)
 
 
-def Exec(cmd):
+def Exec(cmd, silent=True):
     import subprocess
-    print ('Executing ' + cmd)
-    subprocess.Popen(cmd, shell=True)
+    if not silent:
+        print ('Executing ' + cmd)
+    process = subprocess.Popen(cmd, shell=True)
+    process.wait()
 
 
 def LinkFiles(dirs, files, unlink=False):
     import subprocess
-    print ('Linking files...')
+    print ('Linking files4...')
     dirs.sort()
     files.sort()
+
+    if unlink:
+        print('Unlinking files2...')
+    else:
+        print('Linking files3...')
+
     for dir in dirs:
         for src in files:
             name = src.split('/')[-1]
@@ -96,19 +105,22 @@ def LinkFiles(dirs, files, unlink=False):
 
             cmd = ''
             if unlink:
-                print(f'unlinking {dst}')
+                #print('Unlinking files...')
+                #print(f'unlinking {dst}')
                 if True or os.path.exists(dst):
                     cmd = f'rm -f {dst}'
-                    print(cmd)
-                    subprocess.Popen(cmd, shell=True)
+                    #print(cmd)
+                    Exec(cmd)
             else:
+                #print('Linking files...')
                 if not os.path.exists(dst):
                     base = '../../../../../python/dtfw/python'
                     cmd = f'ln -s {base}/{name} {dst}'
-                    print(cmd)
-                    subprocess.Popen(cmd, shell=True)
+                    #print(cmd)
+                    Exec(cmd)
             
-            #return
+    print('Done!')
+    #return
         
 def Run():
     files = source_files()
@@ -116,7 +128,13 @@ def Run():
     
     ignore = IgnoreContent(files)
     MergeIgnores(ignore, dirs)
-    LinkFiles(dirs, files, unlink=False)
+
+    unlink = False
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'unlink':
+            unlink = True
+            
+    LinkFiles(dirs, files, unlink)
 
 
 if not os.getcwd().endswith('/CDK/cdk-ts/utils'):
