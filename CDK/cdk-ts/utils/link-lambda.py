@@ -39,7 +39,7 @@ def source_files():
         os.path.join(root, name)
         for root, dirs, files in os.walk(path)
         for name in files
-        if './lib/Common/LAMBDA/python-layer/python/' in os.path.join(root, name) 
+        if './python/dtfw/python/' in os.path.join(root, name) 
         if name.endswith(".py")
     ]
 
@@ -74,10 +74,7 @@ def MergeIgnores(ignore, dirs):
         #ReplaceFile(ignore_path, ignore)
         #print(ignore_path)
 
-        ReplaceFile('./../lib/Actors/.gitignore', ignore)
-        ReplaceFile('./../lib/Backbone/.gitignore', ignore)
-        ReplaceFile('./../lib/Behaviours/.gitignore', ignore)
-        ReplaceFile('./../lib/Brokers/.gitignore', ignore)
+        ReplaceFile('./../lib/.gitignore', ignore)
 
 
 def Exec(cmd):
@@ -99,13 +96,14 @@ def LinkFiles(dirs, files, unlink=False):
 
             cmd = ''
             if unlink:
-                if os.path.exists(dst):
-                    cmd = f'rm {dst}'
+                print(f'unlinking {dst}')
+                if True or os.path.exists(dst):
+                    cmd = f'rm -f {dst}'
                     print(cmd)
                     subprocess.Popen(cmd, shell=True)
             else:
                 if not os.path.exists(dst):
-                    base = '../../../../Common/LAMBDA/python-layer/python'
+                    base = '../../../../../python/dtfw/python'
                     cmd = f'ln -s {base}/{name} {dst}'
                     print(cmd)
                     subprocess.Popen(cmd, shell=True)
