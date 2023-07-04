@@ -67,9 +67,17 @@ def MergeIgnores(ignore, dirs):
     dirs.sort()
     for f in dirs:
         ignore_path = f + '/.gitignore'
-        Exec('rm ' + ignore_path)
+
+        if os.path.exists(ignore_path):
+            Exec('rm -f ' + ignore_path)
+
         #ReplaceFile(ignore_path, ignore)
         #print(ignore_path)
+
+        ReplaceFile('./../lib/Actors/.gitignore', ignore)
+        ReplaceFile('./../lib/Backbone/.gitignore', ignore)
+        ReplaceFile('./../lib/Behaviours/.gitignore', ignore)
+        ReplaceFile('./../lib/Brokers/.gitignore', ignore)
 
 
 def Exec(cmd):
