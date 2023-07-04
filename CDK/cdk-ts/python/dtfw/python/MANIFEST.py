@@ -30,7 +30,8 @@ class MANIFEST:
         yaml = dtfw.AppConfig().Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
 
         obj = dtfw.Utils().FromYaml(yaml)
-
+        
+        print (f'Manifest.FromAppConfig.return: {obj}')
         return obj
     
 

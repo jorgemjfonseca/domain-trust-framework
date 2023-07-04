@@ -20,6 +20,7 @@ import { CONSTRUCT } from '../CONSTRUCT/CONSTRUCT';
 import { EC2_KEY } from '../KEY/EC2_KEY';
 import { APPCONFIG } from '../APPCONFIG/APPCONFIG';
 import { TIMESTREAM } from '../TIMESTREAM/TIMESTREAM';
+import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 
 
 export interface LAMBDAparams {
@@ -75,6 +76,8 @@ export class LAMBDA extends CONSTRUCT {
           timeout: cdk.Duration.seconds(30),
           layers: [],
           
+          logRetention: RetentionDays.ONE_DAY,
+
           ...props?.super,
 
           runtime: 

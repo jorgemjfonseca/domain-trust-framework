@@ -5,7 +5,7 @@ dtfw = DTFW()
 
 
 def test():
-    return 'this is a MANIFEST test.'
+    return 'this is a CODE test.'
 
 
 class CODE:

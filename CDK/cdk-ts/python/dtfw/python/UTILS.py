@@ -29,10 +29,12 @@ class UTILS:
         
     
     def ToJson(self, obj: any) -> str:
+        print(f'Utils.ToJson: {obj=}')
         return json.dumps(obj)
     
     
     def FromYaml(self, text: str) -> any:
+        print(f'Utils.FromYaml: {text=}')
         ''' 
         👉 https://yaml.readthedocs.io/en/latest/detail.html
         👉 https://stackoverflow.com/questions/50846431/converting-a-yaml-file-to-json-object-in-python
@@ -120,16 +122,18 @@ class UTILS:
     
 
     def HttpResponse(self, code=200, body='', format='json'):
+        print(f'HttpResponse: {body=}')
+        print(f'HttpResponse: {format=}')
 
         ret = {
             'statusCode': code,
         }
 
         if format == 'json':
-            ret['body']: UTILS.ToJson(body)
+            ret['body'] = self.ToJson(body)
 
         elif format == 'yaml':
-            ret['body']: UTILS.ToYaml(body)
+            ret['body'] = self.ToYaml(body)
             # contentType: text/yaml -> shows on browser (because all text/* are text)
             # contentType: application/x-yaml -> downloads (or is it application/yaml?)
             ret["headers"] = {
@@ -137,11 +141,12 @@ class UTILS:
             }
 
         elif format == 'text':
-            ret['body']: body
+            ret['body'] = body
 
         else:
-            ret['body']: body
+            ret['body'] = body
 
+        print(f'HttpResponse: {ret=}')
         return ret
 
     

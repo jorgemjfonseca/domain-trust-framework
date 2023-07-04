@@ -40,5 +40,8 @@ class APPCONFIG:
             ConfigurationToken=token
         )
         value = config['Configuration'].read()
+        value = value.decode("utf-8") 
+        
+        print(f'returning: {value}')
         return value
 
