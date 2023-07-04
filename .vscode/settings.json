@@ -1,6 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "./CDK/cdk-ts/lib/Common/LAMBDA/python-layer/python",
-        "./CDK/cdk-ts/lib/Common/LAMBDA/python-ruamel.yaml/python"
+        "./CDK/cdk-ts/python/dtfw/python",
+        "./CDK/cdk-ts/python/ruamel.yaml/python"
     ]
 }
