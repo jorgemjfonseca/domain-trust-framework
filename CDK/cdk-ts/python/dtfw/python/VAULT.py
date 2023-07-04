@@ -3,46 +3,54 @@
 def test():
     return 'this is VAULT test.'
 
+from BIND import BIND
 from DYNAMO import DYNAMO
 from ITEM import ITEM
-from MSG import MSG
 from DTFW import DTFW
+from WALLET import WALLET
 
 dtfw = DTFW()
-
 
 
 class VAULT:
     
 
-    def wallets(self) -> DYNAMO:
+    def Wallets(self) -> DYNAMO:
         return dtfw.Dynamo('WALLETS')
-    def walletKey(self, broker, walletID):
+    def WalletKey(self, broker, walletID):
         return f'{broker}/{walletID}'
-    def Wallet(self, broker, walletID) -> ITEM:
-        key = self.walletKey(broker, walletID)
-        return self.wallets().Item(key)
+    def Wallet(self, broker, walletID) -> WALLET:
+        key = self.WalletKey(broker, walletID)
+        return WALLET(self.Wallets().Get(key))
     
 
-    def binds(self) -> DYNAMO:
+    def Binds(self) -> DYNAMO:
         return dtfw.Dynamo('BINDS')
-    def bind(self, bindID) -> ITEM:
-        return self.binds().Item(bindID)
+    def Bind(self, bindID) -> BIND:
+        return BIND(self.Binds().Get(bindID))
     
 
-    def disclosures(self) -> DYNAMO:
+    def Disclosures(self) -> DYNAMO:
         return dtfw.Dynamo('DISCLOSURES')
-    def disclosure(self, disclosureID) -> ITEM:
-        return self.disclosures().Item(disclosureID)
+    def Disclosure(self, disclosureID) -> ITEM:
+        return self.Disclosures().Item(disclosureID)
     
 
-    def grants(self) -> DYNAMO:
+    def Grants(self) -> DYNAMO:
         return dtfw.Dynamo('GRANTS')
-    def grantKey(self, broker, walletID):
+    def GrantKey(self, broker, walletID):
         return f'{broker}/{walletID}'
-    def grant(self, broker, walletID) -> ITEM:
-        key = self.grantKey(broker, walletID)
-        return self.grants().Item(key)
+    def Grant(self, broker, walletID) -> ITEM:
+        key = self.GrantKey(broker, walletID)
+        return self.Grants().Item(key)
+
+
+    def TrustsConsumer(self, domain, code) -> bool:
+        return dtfw.Graph().InvokeTrusted(
+            domain= domain,
+            context= 'CONSUMER',
+            code= code
+        )
 
 
     def HandleBind(self, event):
@@ -69,8 +77,8 @@ class VAULT:
         broker = session.Require('Wallet.Broker')
         walletID = msg.Require('WalletID')
 
-        self.wallets().Merge(
-            id= self.walletKey(
+        self.Wallets().Merge(
+            id= self.WalletKey(
                 broker= broker,
                 walletID= walletID
             ),
@@ -100,7 +108,7 @@ class VAULT:
                 "Code": code
             })
 
-            self.binds().Merge(
+            self.Binds().Merge(
                 id= bindID,
                 item= {
                     "BindID": bindID,
@@ -152,24 +160,47 @@ class VAULT:
                 "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5"
             }],
             "Session": {
-                "Consumer": "starbucks.com",
+                "Consumer": "any-coffee-shop.com",
                 "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
                 "Language": "en-us"
             }
         }
         '''
         msg = dtfw.Msg(event)
+
+        # Validate the user’s signature in the ✉️ Msg
+        # -> compare with the key in 🪣 Wallets
+
         sessionID = msg.Require('Session.SessionID')
         session = dtfw.Host().Session(sessionID)
+
         wallet = self.Wallet(
             broker= session.Broker(),
             walletID= session.WalletID()
         )
-        
-        dtfw.SyncApi().Dkim().ValidateSignature()
-        wallet.Match('PublicKey', msg.Signature())
-        msg.Signature()
-        
+        wallet.ValidateSignature(msg)
+                
+        # Verify if 🔎 Consumer is trustable:
+        # -> call 🚀 Trusted: 🕸 Graph (CONSUMER)
+
+        for item in msg.Items('Binds'):
+            bindID = item.Require('BindID')
+            bind = self.Bind(bindID)
+
+            if not self.TrustsConsumer(
+                domain= msg.Require('Session.Consumer'),
+                code= bind.Code()
+            ): 
+                raise Exception(f'Consumer not trusted for {bind.Code()}')
+            
+            # Ask any additional question to the user (e.g., OTP):
+            # -> Add to 🪣 Disclosures
+            # -> Call 🐌 Prompt: 🤵📎 Broker. Prompt
+
+            # Send details to 🔎 Consumer:
+            # -> 🐌 Consume: 🔎 Consumer
+
+
 
     def HandleSuppress(self, event):
         ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZeda25d5a05a3470a994e6689d '''

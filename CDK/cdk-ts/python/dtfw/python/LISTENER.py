@@ -28,7 +28,7 @@ class LISTENER:
         # TODO
 
 
-    def _HandleSubscribe(self, event):
+    def HandleSubscribe(self, event):
         # 👉 https://quip.com/FCSiAU7Eku0X/-Listener#temp:C:GLf0d5cf021894d4b6babb7e0f4d
 
         '''
@@ -51,24 +51,24 @@ class LISTENER:
         # Copied from Publisher-Subscribe
 
         msg = dtfw.Msg(event)
-        domain = msg.From()
-        filter = msg.Body()['Filter']
         
-        return dtfw.Dynamo('SUBSCRIBERS').Merge(domain, { 
-            'Filter': filter,
-            'Status': 'SUBSCRIBED'
-        })
+        return dtfw.Dynamo('SUBSCRIBERS').Merge(
+            id= msg.From(), 
+            item= { 
+                'Filter': msg.Att('Filter'),
+                'Status': 'SUBSCRIBED'
+            })
 
 
-    def _HandleUpdated(self, event):
+    def HandleUpdated(self, event):
         # 👉 https://quip.com/FCSiAU7Eku0X#temp:C:GLfc7d59b1cc13e4c4e89f85ba7f
         
         print(f'{event}')
 
         msg = dtfw.Msg(event)
-        
+        id = dtfw.Utils.UUID()
         update = {
-            'UpdateID': dtfw.Utils.UUID() ,
+            'UpdateID': id,
             'Domain': msg.From(),
             'Timestamp': msg.Timestamp()
         }

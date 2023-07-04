@@ -45,7 +45,7 @@ class ITEM:
         return ITEM(self.Att(name))
     
 
-    def Require(self, name: str=None):
+    def Require(self, name: str=None) -> any: 
         if not name:
             if not self._item:
                 raise RequiredItemMissing()    

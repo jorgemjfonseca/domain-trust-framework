@@ -8,17 +8,17 @@ class DTFW:
     
   
     def AppConfig(self):
-        if not self.appConfig: 
+        if not self._appConfig: 
             from APPCONFIG import APPCONFIG as proxy
-            self.appConfig = proxy()
-        return self.appConfig
+            self._appConfig = proxy()
+        return self._appConfig
         
     
     def Bus(self):
-        if not self.bus: 
+        if not self._bus: 
             from BUS import BUS as proxy
-            self.bus = proxy()
-        return self.bus
+            self._bus = proxy()
+        return self._bus
     
     
     def Code(self, item: any):
@@ -37,10 +37,10 @@ class DTFW:
     
 
     def Graph(self):
-        if not self.graph: 
+        if not self._graph: 
             from GRAPH import GRAPH as proxy
-            self.graph = proxy()
-        return self.graph
+            self._graph = proxy()
+        return self._graph
     
 
     def Host(self):
@@ -132,6 +132,11 @@ class DTFW:
 
     def Utils(self):
         from UTILS import UTILS as proxy
+        return proxy()
+    
+
+    def Vault(self):
+        from VAULT import VAULT as proxy
         return proxy()
     
 

@@ -1,5 +1,6 @@
 # 📚 SYNCAPI
 
+from MSG import MSG
 from DTFW import DTFW
 dtfw = DTFW()
 
@@ -26,9 +27,8 @@ class SYNCAPI:
         return proxy()
     
     
-    def Send(self, event: any): 
+    def Send(self, msg: MSG): 
 
-        msg = dtfw.Msg(event)
         msg.Stamp()
         envelope = msg.Envelope()
 

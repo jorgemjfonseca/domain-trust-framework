@@ -62,9 +62,8 @@ class MESSENGER:
 
         msg = dtfw.Msg(event)
         msg.Stamp()
-        envelope = msg.Envelope()
         
-        return dtfw.SyncApi().Send(envelope)
+        return dtfw.SyncApi().Send(msg)
 
     '''
     { 

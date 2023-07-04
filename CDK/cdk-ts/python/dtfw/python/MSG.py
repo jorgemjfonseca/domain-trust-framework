@@ -206,3 +206,24 @@ class MSG:
         msg.From()
         msg.Timestamp()
         msg.Correlation()
+
+
+    def ValidateSignature(self, publicKey: str):
+        signature = self.Signature()
+        text = self.Canonicalize()
+        validator = dtfw.SyncApi().Dkim().ValidateSignature(text, publicKey, signature)
+
+        expected = validator.Hash()
+        received = self.Hash()
+        
+        isHashValid = (expected == received)
+        print(f'Valid hash?: {isHashValid}')
+
+        if not isHashValid:
+            raise Exception(f'Wrong hash: expected [{expected}] but received [{received}]!')
+        
+        isVerified = validator['isVerified']
+        print(f'Valid signature?: {isVerified}')
+
+        if not isVerified:
+            raise Exception(f'Invalid signature!')

@@ -51,7 +51,7 @@ class GRAPH:
             })
             
 
-    def Trusts(self, source, target, role, code):
+    def _trusts(self, source, target, role, code):
         domain = self.manifest(source)
         if not domain:
             return False
@@ -61,6 +61,32 @@ class GRAPH:
             role=role, 
             code=code)
         
+
+    def InvokeTrusted(self, domain, context, code) -> bool: 
+        ''' 👉 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
+        '''
+        "Body": {
+            "Domain": "ec.europa.eu",
+            "Context": "VAULT",
+            "Code": "iata.org/SSR/WCHR"
+        }
+        '''
+        
+        msg = dtfw.Msg()
+
+        # TODO implement discovery on the client side
+        msg.To('<TBD GRAPH>')
+
+        msg.Body({
+            "Domain": domain,
+            "Context": context,
+            "Code": code
+        })
+
+        resp = dtfw.SyncApi().Send(msg)
+
+        return dtfw.Item(resp).Require('Trusted')
+
     
     def HandleTrusted(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
@@ -75,7 +101,7 @@ class GRAPH:
         '''
         msg = dtfw.Msg(event)
 
-        trusts = self.Trusts(
+        trusts = self._trusts(
             source= msg.From(),
             target= msg.Att('Domain'), 
             role= msg.Att('Role'), 
@@ -106,7 +132,7 @@ class GRAPH:
         role = msg.Att('Role')
         code = msg.Att('Code')
 
-        trust = self.Trusts(source, target, role, code)
+        trust = self._trusts(source, target, role, code)
 
         return {
             'Trusted': trust,
@@ -226,8 +252,7 @@ class GRAPH:
             version= msg.Att('Version'))
     
 
-    @staticmethod
-    def _HandlePublisher(event):
+    def HandlePublisher(self, event):
         
         domainName = dtfw.Msg(event).From()
         manifest = dtfw.Manifest().Fetch(domainName)

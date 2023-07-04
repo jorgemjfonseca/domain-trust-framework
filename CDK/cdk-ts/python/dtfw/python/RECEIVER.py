@@ -3,6 +3,8 @@
 import os
 import json
 
+from MSG import MSG
+
 from DTFW import DTFW
 dtfw = DTFW()
 
@@ -47,8 +49,8 @@ class RECEIVER:
         return d.PublicKey()
         
 
-    def _validateTo(self, envelope: any, checks):
-        to = dtfw.Msg(envelope).To().lower()
+    def _validateTo(self, msg: MSG, checks):
+        to = msg.To().lower()
         me = os.environ['DOMAIN_NAME'].lower()
 
         if to != me:
@@ -56,52 +58,29 @@ class RECEIVER:
         checks.append(f'For me?: {True}')
     
 
-    def _validateHash(self, envelope, validator, checks):
-        expected = validator['hash']
-        received = dtfw.Msg(envelope).Hash()
-        
-        isHashValid = (expected == received)
-        checks.append(f'Valid hash?: {isHashValid}')
-
-        if not isHashValid:
-            raise Exception(f'Wrong hash: expected [{expected}] but received [{received}]!')
-
-
-    def _validateSignature(self, validator, checks):
-        isVerified = validator['isVerified']
-        checks.append(f'Valid signature?: {isVerified}')
-
-        if not isVerified:
-            raise Exception(f'Invalid signature!')
-
-
-    def _validateHashAndSignature(self, envelope: any, checks, speed):
+    def _validateHashAndSignature(self, msg: MSG, checks, speed):
         print(f'{self._elapsed()} Validating signature...')
         
         started = self._timer.StartWatch()
-        msg = dtfw().Msg(envelope)
-        signature = msg.Signature()
-        text = msg.Canonicalize()
-        publicKey = self._invokeDkimReader(envelope, checks)
+        publicKey = self._invokeDkimReader(msg.Envelope(), checks)
         speed['Get DKIM over DNSSEC'] = self._timer.StopWatch(started)
 
         started = self._timer.StartWatch()
-        validator = dtfw.SyncApi().Dkim().ValidateSignature(text, publicKey, signature)
-        self._validateHash(envelope, validator, checks)
-        self._validateSignature(validator, checks)
+        msg.ValidateSignature(publicKey)
+        checks.append(f'Hash and Signature match?: {True}')
         speed['Verify signature'] = self._timer.StopWatch(started)
 
 
-    def _validate(self, envelope, speed):
+    def _validate(self, msg, speed):
         print(f'{self._elapsed()} Validating...')
         
         error = None
         checks = []
         
         try:
-            dtfw.Msg(envelope).ValidateHeader()
-            self._validateTo(envelope, checks)
-            self._validateHashAndSignature(envelope, checks, speed) 
+            msg.ValidateHeader()
+            self._validateTo(msg, checks)
+            self._validateHashAndSignature(msg, checks, speed) 
 
         except Exception as e:
             if hasattr(e, 'message'):
@@ -207,7 +186,8 @@ class RECEIVER:
 
         speed = {}
         started = self._timer.StartWatch()
-        validation = self._validate(envelope, speed)
+        msg = dtfw.Msg(envelope)
+        validation = self._validate(msg, speed)
         execution = self._execute(validation, envelope, speed)
         speed['Total handling'] = self._timer.StopWatch(started)
 
