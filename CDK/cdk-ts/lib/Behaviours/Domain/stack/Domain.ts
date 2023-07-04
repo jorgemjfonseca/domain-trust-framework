@@ -22,7 +22,10 @@ export class Domain extends STACK {
   }
 
   private constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, Domain.name, props);
+    super(scope, Domain.name, { 
+      description: 'Full independent domain.',
+      ...props
+    });
     
   }
 

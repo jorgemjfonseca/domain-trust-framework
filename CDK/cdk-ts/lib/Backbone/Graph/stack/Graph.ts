@@ -31,7 +31,10 @@ export class Graph extends STACK {
   }
 
   private constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, Graph.name, props);
+    super(scope, Graph.name, { 
+      description: 'Graph backbone actor.',
+      ...props
+    });
 
     const domainsTable = DYNAMO
       .New(this, 'Domains', { stream: true });

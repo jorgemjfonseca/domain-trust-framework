@@ -65,17 +65,17 @@ Identity:
 
     // VIEWER LAMBDA
     LAMBDA
-      .New(this, "DefaultViewer")
+      .New(this, "DefaultViewer", { yaml: true })
       .ReadsAppConfig(appConfig)
       .Export(ManifesterConfig.VIEWER_FN);
 
     LAMBDA
-      .New(this, "JsonViewer")
+      .New(this, "JsonViewer", { yaml: true })
       .ReadsAppConfig(appConfig)
       .Export(ManifesterConfig.JSON_VIEWER);
 
     LAMBDA
-      .New(this, "YamlViewer")
+      .New(this, "YamlViewer", { yaml: true })
       .ReadsAppConfig(appConfig)
       .Export(ManifesterConfig.YAML_VIEWER);
 

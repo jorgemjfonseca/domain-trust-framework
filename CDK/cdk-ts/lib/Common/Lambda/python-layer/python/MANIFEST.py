@@ -27,8 +27,7 @@ class MANIFEST:
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'
     ) -> any:
         
-        from APPCONFIG import APPCONFIG
-        yaml = APPCONFIG.Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
+        yaml = dtfw.AppConfig().Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
 
         obj = dtfw.Utils().FromYaml(yaml)
 

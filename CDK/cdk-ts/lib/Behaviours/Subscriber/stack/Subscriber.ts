@@ -27,7 +27,10 @@ export class Subscriber extends STACK {
   }
 
   private constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, Subscriber.name, props);
+    super(scope, Subscriber.name, { 
+      description: 'Subscriber behaviour.',
+      ...props
+    });
 
     const dedups = DYNAMO
       .New(this, Subscriber.DEDUPS, {

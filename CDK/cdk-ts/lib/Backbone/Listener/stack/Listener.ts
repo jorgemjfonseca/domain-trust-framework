@@ -27,7 +27,10 @@ export class Listener extends STACK {
 
 
   private constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, Listener.name, props);
+    super(scope, Listener.name, { 
+      description: 'Listener backbone actor.',
+      ...props
+    });
 
     this.SetUpPublisher();
     this.SetUpSubscriber();

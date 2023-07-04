@@ -105,7 +105,10 @@ export class LAMBDA extends CONSTRUCT {
           // https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
           // https://yaml.readthedocs.io/en/latest/
           // https://lyz-code.github.io/blue-book/coding/python/ruamel_yaml/
-          settings.layers?.push(this.newLayer(scope, 'python-ruamel.yaml'))
+          settings.layers?.push(
+            this.newLayer(
+              scope, 
+              'python-ruamel.yaml'))
         }
 
         const fn = new LAMBDA(scope, 
@@ -117,7 +120,7 @@ export class LAMBDA extends CONSTRUCT {
     }
 
     private static newLayer(scope: STACK, folder: string) {
-      const layer = new lambda.LayerVersion(scope, folder, {
+      const layer = new lambda.LayerVersion(scope, scope.RandomName(folder), {
         removalPolicy: cdk.RemovalPolicy.DESTROY,
         code: lambda.Code.fromAsset(path.join(__dirname, folder)),
         compatibleArchitectures: [

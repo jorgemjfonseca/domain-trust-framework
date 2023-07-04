@@ -19,10 +19,19 @@ class APPCONFIG:
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'
     ) -> str:
     
+        app = os.environ[CONFIG_APP]
+        print(f'{app=}')
+        
+        env = os.environ[CONFIG_ENV]
+        print(f'{env=}')
+        
+        profile = os.environ[CONFIG_PROFILE]
+        print(f'{profile=}')
+        
         session = appconfig.start_configuration_session(
-            ApplicationIdentifier=os.environ[CONFIG_APP],
-            EnvironmentIdentifier=os.environ[CONFIG_ENV],
-            ConfigurationProfileIdentifier=os.environ[CONFIG_PROFILE],
+            ApplicationIdentifier=app,
+            EnvironmentIdentifier=env,
+            ConfigurationProfileIdentifier=profile,
             RequiredMinimumPollIntervalInSeconds=60
         )
         token = session['InitialConfigurationToken']

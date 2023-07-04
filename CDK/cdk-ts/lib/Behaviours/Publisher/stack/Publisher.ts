@@ -23,7 +23,10 @@ export class Publisher extends STACK {
 
 
   private constructor(scope: Construct, props?: cdk.StackProps) {
-    super(scope, Publisher.name, props);
+    super(scope, Publisher.name, { 
+      description: 'Publisher behaviour.',
+      ...props
+    });
 
     const subscribers = this.SetUpRegistration();
     const filter = this.SetUpFilter();
