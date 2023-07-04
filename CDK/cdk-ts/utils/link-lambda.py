@@ -67,8 +67,15 @@ def MergeIgnores(ignore, dirs):
     dirs.sort()
     for f in dirs:
         ignore_path = f + '/.gitignore'
-        ReplaceFile(ignore_path, ignore)
+        Exec('rm ' + ignore_path)
+        #ReplaceFile(ignore_path, ignore)
         #print(ignore_path)
+
+
+def Exec(cmd):
+    import subprocess
+    print ('Executing ' + cmd)
+    subprocess.Popen(cmd, shell=True)
 
 
 def LinkFiles(dirs, files, unlink=False):
