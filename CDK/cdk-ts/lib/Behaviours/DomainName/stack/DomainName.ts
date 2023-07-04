@@ -16,7 +16,7 @@ export class DomainName extends STACK {
 
   private SetDomainName() {
     const domainName = randomUUID() + '.dev.dtfw.org';
-    
+
     const namerFn = LAMBDA
       .New(this, 'NamerFn', {
         runtime: LAMBDA.PYTHON_3_10,
@@ -30,7 +30,8 @@ export class DomainName extends STACK {
     // If it already exists, then ignore.
     CUSTOM.New('NamerFnRun', namerFn);
 
-    this.ExportCfn('DomainName', domainName);
+    const ssmName = DomainName.GetDomainName(this)
+    this.ExportCfn('DomainName', ssmName);
   }
 
   public static New(scope: Construct): DomainName {

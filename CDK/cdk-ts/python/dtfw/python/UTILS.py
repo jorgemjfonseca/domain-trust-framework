@@ -137,7 +137,7 @@ class UTILS:
             # contentType: text/yaml -> shows on browser (because all text/* are text)
             # contentType: application/x-yaml -> downloads (or is it application/yaml?)
             ret["headers"] = {
-                "content-type": 'text/yaml'
+                "content-type": 'application/x-yaml'
             }
 
         elif format == 'text':

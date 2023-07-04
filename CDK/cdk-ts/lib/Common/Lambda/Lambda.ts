@@ -100,7 +100,7 @@ export class LAMBDA extends CONSTRUCT {
         ];
 
         if (false && python.includes(settings.runtime)) {
-          settings.layers?.push(this.newLayer(scope, 'python-layer'))
+          settings.layers?.push(this.newLayer(scope, '../../../python/dtfw'))
         }
         
         if (props?.yaml) {
@@ -111,7 +111,7 @@ export class LAMBDA extends CONSTRUCT {
           settings.layers?.push(
             this.newLayer(
               scope, 
-              'python-ruamel.yaml'))
+              '../../../python/ruamel.yaml'))
         }
 
         const fn = new LAMBDA(scope, 

@@ -72,7 +72,7 @@ export class STACK extends cdk.Stack {
 
     private GetSsm(alias: string): ssm.IStringParameter {
         return ssm.StringParameter
-            .fromStringParameterName(this, alias, '/dtfw/' + alias);
+            .fromStringParameterName(this, this.RandomName(alias), '/dtfw/' + alias);
     };
 
     public ImportSsm(alias: string): string {
