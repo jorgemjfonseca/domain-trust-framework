@@ -11,7 +11,7 @@ export interface SubscriberDependencies {
   messenger: Messenger
 }
 
-// 👉 https://quip.com/9ab7AO56kkxY/-Subscriber
+/** 👉 https://quip.com/9ab7AO56kkxY/-Subscriber */ 
 export class Subscriber extends STACK {
 
   public static New(scope: Construct, deps: SubscriberDependencies, props?: cdk.StackProps) {

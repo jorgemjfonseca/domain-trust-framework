@@ -1,2 +1,3 @@
 cfn/packaged.template
 .aws-sam/build.toml
+.DS_Store

@@ -57,13 +57,13 @@ export class LAMBDA extends CONSTRUCT {
 
         //const dlq = DLQ.New(scope, id + "-Dlq");
       
-        const role = new iam.Role(scope, id+'Role', {
+        const role = new iam.Role(scope, `${LAMBDA.name}-${scope.Name}-${id}-Role`, {
           assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
         });
 
         role.addManagedPolicy(
           iam.ManagedPolicy.fromManagedPolicyArn(scope, 
-            scope.Name + id + "BasicExecutionRole", 
+            `${LAMBDA.name}-${scope.Name}-${id}-BasicExecutionRole`,
             'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'));
 
         const settings: lambda.FunctionProps = {
@@ -115,7 +115,9 @@ export class LAMBDA extends CONSTRUCT {
         }
 
         const fn = new LAMBDA(scope, 
-          new lambda.Function(scope, id, settings));
+          new lambda.Function(scope, 
+            `${LAMBDA.name}-${scope.Name}-${id}`,
+            settings));
 
         //dlq.Super.grantSendMessages(fn.Super);
 
@@ -123,14 +125,16 @@ export class LAMBDA extends CONSTRUCT {
     }
 
     private static newLayer(scope: STACK, folder: string) {
-      const layer = new lambda.LayerVersion(scope, scope.RandomName(folder), {
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
-        code: lambda.Code.fromAsset(path.join(__dirname, folder)),
-        compatibleArchitectures: [
-          lambda.Architecture.X86_64, 
-          lambda.Architecture.ARM_64
-        ],
-      });
+      const layer = new lambda.LayerVersion(scope, 
+        scope.RandomName(`${LAMBDA.name}-${scope.Name}-Layer-${folder}`),
+        {
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+          code: lambda.Code.fromAsset(path.join(__dirname, folder)),
+          compatibleArchitectures: [
+            lambda.Architecture.X86_64, 
+            lambda.Architecture.ARM_64
+          ],
+        });
       return layer
     }
 
@@ -161,7 +165,9 @@ export class LAMBDA extends CONSTRUCT {
      */
     private static FromFunctionName(scope: STACK, name: string) {
       return lambda.Function
-        .fromFunctionName(scope, name, name);
+        .fromFunctionName(scope,
+          `${LAMBDA.name}-${scope.Name}-Layer-${name}`,
+          name);
     }
     
 
@@ -192,7 +198,8 @@ export class LAMBDA extends CONSTRUCT {
     private static NewFromAttributes(scope: STACK, functionArn: string, roleArn: string): LAMBDA {
       const sup = lambda.Function.fromFunctionAttributes(
         scope, 
-        scope.RandomName('fn'), {
+        scope.RandomName(`${LAMBDA.name}-${scope.Name}-fn`), 
+        {
           functionArn: functionArn,
           role: iam.Role.fromRoleArn(
             scope, 

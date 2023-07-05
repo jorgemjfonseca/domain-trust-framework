@@ -15,24 +15,24 @@ dtfw = DTFW()
 class GRAPH:
     
 
-    def domains(self) -> DYNAMO:
+    def Domains(self) -> DYNAMO:
         return dtfw.Dynamo('DOMAINS')
-    def domain(self, domainName):
-        return self.domains().Get(domainName)
+    def Domain(self, domainName):
+        return self.Domains().Get(domainName)
 
 
-    def manifest(self, domainName):
-        item = self.domain(domainName)        
+    def Manifest(self, domainName):
+        item = self.Domain(domainName)        
         manifest = dtfw.Manifest(item['Manifest'])
         # TODO: test if we need a UTILS.FromYaml/Json
 
         return manifest
 
 
-    def codes(self) -> DYNAMO:
+    def Codes(self) -> DYNAMO:
         return dtfw.Dynamo('CODES')
-    def code(self, code):
-        return self.codes().Get(code)
+    def Code(self, code):
+        return self.Codes().Get(code)
 
 
     def HandleConsumer(self, event):
@@ -52,7 +52,7 @@ class GRAPH:
             
 
     def _trusts(self, source, target, role, code):
-        domain = self.manifest(source)
+        domain = self.Manifest(source)
         if not domain:
             return False
 
@@ -149,7 +149,7 @@ class GRAPH:
         }
         '''
         domainName = dtfw.Msg(event).Att('Domain')
-        return self.manifest(domainName).Identity()
+        return self.Manifest(domainName).Identity()
     
 
     def HandleQueryable(self, event):
@@ -200,14 +200,14 @@ class GRAPH:
             return ret
         
         for domain in domains:
-            translation = self.manifest(domain).Translate(language)
+            translation = self.Manifest(domain).Translate(language)
             ret['Domains'].append({
                 'Domain': domain,
                 'Translation': translation
             })
 
         for code in codes:
-            item = self.code(code)
+            item = self.Code(code)
             translation = dtfw.Code(item).Translate(language)
             ret['Codes'].append({
                 'Code': code,
@@ -245,7 +245,7 @@ class GRAPH:
         '''
         msg = dtfw.Msg(event)
         code = msg.Att('Code')
-        item = self.code(code)
+        item = self.Code(code)
 
         return dtfw.Code(item).Schema(
             output= msg.Att('Output'), 

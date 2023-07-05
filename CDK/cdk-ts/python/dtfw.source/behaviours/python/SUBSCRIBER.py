@@ -9,7 +9,8 @@ def test():
 
 
 class SUBSCRIBER:
-
+    ''' 👉 https://quip.com/9ab7AO56kkxY/-Subscriber '''
+    
 
     def HandlerConfirm(self, event):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISd5cf963122f7a4faeb4e862c70 '''

@@ -11,6 +11,7 @@ export interface DomainDependencies {
   messenger: Messenger
 };
 
+/** 👉 https://quip.com/lcSaAX7AiEXL/-Domain */
 export class Domain extends STACK {
   
   public static New(scope: Construct, deps: DomainDependencies): Domain {

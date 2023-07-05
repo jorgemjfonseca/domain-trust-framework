@@ -87,7 +87,7 @@ class VAULT:
                 "Broker": broker,
                 "WalletID": walletID,
                 "PublicKey": msg.Require('PublicKey'),
-                "Confirmed": True
+                "Confirmed": False
             }
         )
 

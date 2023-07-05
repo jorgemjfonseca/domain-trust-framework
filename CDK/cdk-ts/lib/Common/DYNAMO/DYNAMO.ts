@@ -52,7 +52,7 @@ export class DYNAMO {
           }
           : undefined;
 
-        const sup = new cdk.aws_dynamodb.Table(scope, id,{ 
+        const sup = new cdk.aws_dynamodb.Table(scope, `${DYNAMO.name}-${id}`,{ 
           tableName: `${scope.Name}-${id}`,
           partitionKey: partitionKey,
           sortKey: sortKey,
@@ -106,7 +106,7 @@ export class DYNAMO {
       
       const sup = dynamodb.Table.fromTableAttributes(
         scope, 
-        scope.RandomName(alias), {
+        scope.RandomName(`${DYNAMO.name}-Imported-${alias}`), {
           // tableArn, // only Arn or Name can be provided, not both.
           tableName,
           tableStreamArn

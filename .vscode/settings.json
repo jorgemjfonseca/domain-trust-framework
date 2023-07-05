@@ -1,6 +1,26 @@
 {
     "python.analysis.extraPaths": [
         "./CDK/cdk-ts/python/dtfw/python",
-        "./CDK/cdk-ts/python/ruamel.yaml/python"
-    ]
+        "./CDK/cdk-ts/python/ruamel.yaml/python",
+        "./CDK/cdk-ts/python/dtfw/utils/python",
+        "./CDK/cdk-ts/python/dtfw/actors/python",
+        "./CDK/cdk-ts/python/dtfw/dtfw.behaviours/python",
+        "./CDK/cdk-ts/python/dtfw/interfaces/python",
+        "./CDK/cdk-ts/python/dtfw/behaviours/python",
+        "./CDK/cdk-ts/python/cloud/python",
+        "./CDK/cdk-ts/python/dtfw/cloud/python",
+        "./CDK/cdk-ts/python/dtfw/actors.broker/python",
+        "./CDK/cdk-ts/python/dtfw/behaviours.api/python",
+        "./CDK/cdk-ts/python/dtfw.source/utils/python",
+        "./CDK/cdk-ts/python/dtfw.source/actors/python",
+        "./CDK/cdk-ts/python/dtfw.source/interfaces/python",
+        "./CDK/cdk-ts/python/dtfw.source/cloud/python",
+        "./CDK/cdk-ts/python/dtfw.source/actors.broker/python",
+        "./CDK/cdk-ts/python/dtfw.source/behaviours/python",
+        "./CDK/cdk-ts/python/dtfw.source/behaviours.api/python"
+    ],
+    "files.exclude": {
+        "**/*.d.ts": true,
+        "**/*.js": {"when": "$(basename).ts"}
+    }
 }

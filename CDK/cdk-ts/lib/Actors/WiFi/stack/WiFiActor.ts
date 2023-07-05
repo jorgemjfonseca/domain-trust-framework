@@ -10,6 +10,6 @@ export class WiFiActor extends STACK {
       
     LAMBDA
       .New(this, 'ConsumeHandlerFn')
-      .HandlesSyncApi('WiFi-Consume');
+      .HandlesSyncApi('Consume@WiFi');
   }
 }

@@ -5,6 +5,7 @@ def test():
 
 
 class DTFW:
+    ''' 👉 https://quip.com/z095AywlrA82/-Domain-Trust-Framework '''
     
   
     def AppConfig(self):
@@ -13,7 +14,15 @@ class DTFW:
             self._appConfig = proxy()
         return self._appConfig
         
-    
+
+    def Broker(self):
+        ''' 👉 https://quip.com/SJadAQ8syGP0/-Broker '''
+        if not self._broker: 
+            from BROKER import BROKER as proxy
+            self._broker = proxy()
+        return self._broker
+
+
     def Bus(self):
         if not self._bus: 
             from BUS import BUS as proxy
@@ -61,8 +70,10 @@ class DTFW:
 
 
     def Listener(self):
-        from LISTENER import LISTENER as proxy
-        return proxy()
+        if not self._listener:
+            from LISTENER import LISTENER as proxy
+            self._listener = proxy()
+        return self._listener
     
 
     def Manifest(self, manifest:any = None):
@@ -71,13 +82,17 @@ class DTFW:
     
 
     def Manifester(self):
-        from MANIFESTER import MANIFESTER as proxy
-        return proxy()
+        if not self._manifester:
+            from MANIFESTER import MANIFESTER as proxy
+            self._manifester = proxy()
+        return self._manifester
     
 
     def Messenger(self):
-        from MESSENGER import MESSENGER as proxy
-        return proxy()
+        if not self._messenger:
+            from MESSENGER import MESSENGER as proxy
+            self._messenger = proxy()
+        return self._messenger
 
 
     def Msg(self, event:any = {}):
@@ -85,9 +100,18 @@ class DTFW:
         return proxy(event)
     
 
+    def Notifier(self):
+        if not self._notifier:
+            from NOTIFIER import NOTIFIER as proxy
+            self._notifier = proxy()
+        return self._notifier
+    
+
     def Publisher(self):
-        from PUBLISHER import PUBLISHER as proxy
-        return proxy()
+        if not self._publisher:
+            from PUBLISHER import PUBLISHER as proxy
+            self._publisher = proxy()
+        return self._publisher
     
 
     def Route53(self, hosted_zone_id: str):

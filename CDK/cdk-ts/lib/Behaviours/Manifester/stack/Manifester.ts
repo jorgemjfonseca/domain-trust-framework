@@ -12,7 +12,7 @@ export interface ManifesterDependencies {
   syncApi: SyncApi
 }
 
-//https://quip.com/BfbEAAFo5aOV/-Manifester
+/** 👉 https://quip.com/BfbEAAFo5aOV/-Manifester */
 export class Manifester extends STACK {
 
 

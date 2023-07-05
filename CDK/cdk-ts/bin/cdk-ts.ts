@@ -3,7 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { Manifester } from '../lib/Behaviours/Manifester/stack/Manifester';
 import { Messenger } from '../lib/Behaviours/Messenger/stack/Messenger';
-import { Host as Host } from '../lib/Behaviours/Host/stack/HostBehaviour';
+import { Host as Host } from '../lib/Behaviours/Host/stack/Host';
 import { SyncApi } from '../lib/Behaviours/SyncApi/stack/SyncApi';
 import { DomainDns } from '../lib/Behaviours/DomainDns/stack/DomainDns';
 import { Publisher } from '../lib/Behaviours/Publisher/stack/Publisher';
@@ -36,6 +36,15 @@ import { Domain } from '../lib/Behaviours/Domain/stack/Domain';
 import { DomainDnsKey } from '../lib/Behaviours/DomainDnsKey/stack/DomainDnsKey';
 import { ManifesterConfig } from '../lib/Behaviours/ManifesterConfig/stack/ManifesterConfig';
 import { ManifesterAlerter } from '../lib/Behaviours/ManifesterAlerter/stack/ManifesterAlerter';
+import { Broker } from '../lib/Brokers/Broker/stack/Broker';
+import { BrokerBinds } from '../lib/Brokers/BrokerBinds/stack/BrokerBinds';
+import { BrokerCredentials } from '../lib/Brokers/BrokerCredentials/stack/BrokerCredentials';
+import { BrokerPay } from '../lib/Brokers/BrokerPay/stack/BrokerPay';
+import { BrokerPrompt } from '../lib/Brokers/BrokerPrompt/stack/BrokerPrompt';
+import { BrokerSessions } from '../lib/Brokers/BrokerSessions/stack/BrokerSessions';
+import { BrokerSetup } from '../lib/Brokers/BrokerSetup/stack/BrokerSetup';
+import { BrokerShare } from '../lib/Brokers/BrokerShare/stack/BrokerShare';
+import { Notifier } from '../lib/Brokers/Notifier/stack/Notifier';
 
 
 const app = new cdk.App();
@@ -131,8 +140,9 @@ const subscriber = Subscriber.New(app, {
     messenger
 });
 
-const host = new Host(app);
-host.addDependency(domain);
+const host = Host.New(app, {
+    domain
+});
 
 // ===========================
 // Actors/Backbone
@@ -150,6 +160,32 @@ Graph.New(app, {
     subscriber, 
     publisher,
     graphDB
+});
+
+// ==========================
+// Brokers
+
+const brokerBinds = BrokerBinds.New(app);
+const brokerCredentials = BrokerCredentials.New(app);
+const brokerPay = BrokerPay.New(app);
+const brokerPrompt = BrokerPrompt.New(app);
+const brokerSessions = BrokerSessions.New(app);
+const brokerSetup = BrokerSetup.New(app);
+const brokerShare = BrokerShare.New(app);
+
+Broker.New(app, {
+    domain,
+    brokerBinds,
+    brokerCredentials,
+    brokerPay,
+    brokerPrompt,
+    brokerSessions,
+    brokerSetup,
+    brokerShare
+});
+
+Notifier.New(app, {
+    domain
 });
 
 // ==========================

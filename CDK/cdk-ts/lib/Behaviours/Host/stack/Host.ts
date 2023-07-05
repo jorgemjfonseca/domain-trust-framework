@@ -11,7 +11,7 @@ export interface HostDependencies {
 }
 
 
-// https://quip.com/s9oCAO3UR38A/-Host
+/** 👉 https://quip.com/s9oCAO3UR38A/-Host */
 export class Host extends STACK {
 
   public static readonly SESSIONS = 'Host-SessionsTable';
@@ -24,7 +24,7 @@ export class Host extends STACK {
   }
 
 
-  constructor(scope: Construct, props?: cdk.StackProps) {
+  private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, Host.name, props);
 
     const sessions = DYNAMO

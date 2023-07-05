@@ -11,7 +11,7 @@ export interface PublisherDependencies {
   domain: Domain
 }
 
-//https://quip.com/sBavA8QtRpXu/-Publisher
+/** 👉 https://quip.com/sBavA8QtRpXu/-Publisher */
 export class Publisher extends STACK {
 
   public static New(scope: Construct, deps: PublisherDependencies, props?: cdk.StackProps)
