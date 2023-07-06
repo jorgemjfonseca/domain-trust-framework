@@ -4,14 +4,14 @@ def test():
     return 'this is WALLET test.'
 
 
-from ITEM import ITEM
+from STRUCT import STRUCT
 from MSG import MSG
 from DTFW import DTFW
 
 dtfw = DTFW()
 
 
-class WALLET(ITEM):
+class WALLET(STRUCT):
 
 
     def ValidateSignature(self, msg: MSG):

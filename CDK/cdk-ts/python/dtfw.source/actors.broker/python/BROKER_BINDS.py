@@ -4,14 +4,11 @@
 def test():
     return 'this is BROKER_BINDS test.'
 
-from DYNAMO import DYNAMO
-from ITEM import ITEM
-from MSG import MSG
 from DTFW import DTFW
 
 dtfw = DTFW()
 
-
+. . .
 class BROKER_BINDS:
     ''' 👉 https://quip.com/oSzpA7HRICjq/-Broker-Binds '''
 
@@ -26,7 +23,9 @@ class BROKER_BINDS:
             }]
         }
         '''
-        dtfw.Msg(event)
+        msg = dtfw.Msg(event)
+        
+        dtfw.Graph().Invoke()
 
     
     def HandleBinds(self, event):

@@ -1,5 +1,8 @@
 # 📚 DTFW
 
+# 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
+from typing import List, Set, Tuple, Dict
+
 def test():
     return 'this is a DTFW test.'
 
@@ -35,9 +38,9 @@ class DTFW:
         return proxy(item)
     
 
-    def Dynamo(self, alias:str=None):
+    def Dynamo(self, alias:str=None, keys:List[str]=None):
         from DYNAMO import DYNAMO as proxy
-        return proxy(alias)
+        return proxy(alias=alias, keys=keys)
     
     
     def Domain(self, name:str=None):
@@ -59,9 +62,14 @@ class DTFW:
         return self._host
     
 
-    def Item(self, item):
-        from ITEM import ITEM as proxy
+    def Struct(self, item):
+        from STRUCT import STRUCT as proxy
         return proxy(item)
+    
+
+    def Unstruct(self, obj: any):
+        from UTILS import UTILS as proxy
+        return proxy.Unstruct(obj)
     
 
     def Lambda(self, alias: str=None):
@@ -99,6 +107,12 @@ class DTFW:
         from MSG import MSG as proxy
         return proxy(event)
     
+
+    def Wrap(self, to:str=None, body:any=None):
+        ''' 👉 Returns a stamped message, with header and body. '''
+        from MSG import MSG as proxy
+        return proxy.Wrap(to= to, body= body)
+
 
     def Notifier(self):
         if not self._notifier:

@@ -8,14 +8,21 @@ def test():
 
 
 from DYNAMO import DYNAMO
+from MSG import MSG
+from STRUCT import ITEM, STRUCT
 from DTFW import DTFW
 
 dtfw = DTFW()
 
 class GRAPH:
     
+    
+    def _graphDomain(self) -> str: 
+        # TODO implement discovery on the client side
+        return '<TBD GRAPH>'
+    
 
-    def Domains(self) -> DYNAMO:
+    def Domains(self):
         return dtfw.Dynamo('DOMAINS')
     def Domain(self, domainName):
         return self.Domains().Get(domainName)
@@ -33,6 +40,16 @@ class GRAPH:
         return dtfw.Dynamo('CODES')
     def Code(self, code):
         return self.Codes().Get(code)
+
+
+    def Invoke(self, subject, body: any) -> STRUCT: 
+        ''' 👉 Sends a message to the registered Graph endpoint. '''
+        msg = dtfw.Msg()
+        msg.To(self._graphDomain())
+        msg.Subject(subject)
+        msg.Body(body)
+        resp = dtfw.SyncApi().Send(msg)
+        return dtfw.Struct(resp)
 
 
     def HandleConsumer(self, event):
@@ -71,21 +88,15 @@ class GRAPH:
             "Code": "iata.org/SSR/WCHR"
         }
         '''
-        
-        msg = dtfw.Msg()
+        resp = self.Invoke(
+            subject= 'Trusted@Graph', 
+            body={
+                "Domain": domain,
+                "Context": context,
+                "Code": code
+            })
 
-        # TODO implement discovery on the client side
-        msg.To('<TBD GRAPH>')
-
-        msg.Body({
-            "Domain": domain,
-            "Context": context,
-            "Code": code
-        })
-
-        resp = dtfw.SyncApi().Send(msg)
-
-        return dtfw.Item(resp).Require('Trusted')
+        return resp.RequireBool('Trusted')
 
     
     def HandleTrusted(self, event):
@@ -172,6 +183,13 @@ class GRAPH:
         return binds
     
 
+    def InvokeTranslate(self, body: any) -> STRUCT: 
+        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
+        return self.Invoke(
+            subject='Translate@Graph', 
+            body=body)
+    
+
     def HandleTranslate(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
 
@@ -214,6 +232,20 @@ class GRAPH:
                 'Translation': translation
             })
         
+        '''
+        {
+            "Language": "pt-br",
+            "Domains": [{
+                "Domain": "example.com",
+                "Translation": "Example Airlines"
+            }],
+            "Codes": [{
+                "Code": "iata.org/SSR/WCHR",
+                "Translation": "Wheelchair assistance required"
+            }]
+        }
+        '''
+
         return ret
     
 

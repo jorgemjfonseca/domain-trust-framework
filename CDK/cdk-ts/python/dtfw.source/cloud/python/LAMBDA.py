@@ -17,8 +17,8 @@ class LAMBDA:
             self.name = os.environ[alias]
 
 
-    # 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html
     def Invoke(self, params:any={}):
+        ''' 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/invoke.html '''
         print(f'invoking [{self.name}]({params})...')
         
         response = lambdaClient.invoke(
@@ -35,4 +35,6 @@ class LAMBDA:
         
         returned = json.loads(response['Payload'].read())
         print(f'{returned=}')
-        return returned
+
+        from STRUCT import STRUCT
+        return STRUCT(returned)

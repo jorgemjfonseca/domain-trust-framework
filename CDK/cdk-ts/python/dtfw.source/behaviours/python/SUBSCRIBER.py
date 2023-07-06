@@ -61,6 +61,12 @@ class SUBSCRIBER:
                 source='Subscriber-Consume')
 
 
+    def InvokeUpdate(self, data: any):
+        ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a '''
+        dtfw.Msg(data).Subject('Subcriber-Update')
+        return dtfw.Messenger().Send(data, source='Publisher-Filter')
+    
+
     def HandleUpdate(self, event):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a '''
 

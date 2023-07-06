@@ -4,14 +4,21 @@ def test():
     return 'this is HOST test.'
 
 from DYNAMO import DYNAMO
-from ITEM import ITEM
+from STRUCT import ITEM
 from MSG import MSG
 from DTFW import DTFW
 
 dtfw = DTFW()
 
 
+
+class SESSIONS(DYNAMO): 
+    def __init__(self):
+        self.Table = DYNAMO('SESSIONS')
+    
+
 class SESSION(ITEM):
+    ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD20456e042b3f43d49a73e0f92 '''
 
     def Broker(self) -> str:
         return self.Require('Wallet.Broker')
@@ -31,20 +38,26 @@ class SESSION(ITEM):
 class HOST:
 
 
+    def __init__(self):
+        self.Sessions = SESSIONS()
+
+
     def Sessions(self) -> DYNAMO:
+        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD20456e042b3f43d49a73e0f92 '''
         return dtfw.Dynamo('SESSIONS')
     def Session(self, sessionID) -> SESSION:
         session = self.Sessions().Get(sessionID)
         return SESSION(session)
 
 
-    def fileKey(self, sessionID, fileID):
-        return f'{sessionID}.{fileID}'
-    def files(self) -> DYNAMO:
+    def Files(self) -> DYNAMO:
+        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD026a3fce1988455796a1a4621 '''
         return dtfw.Dynamo('FILES')
-    def file(self, sessionID=None, fileID=None) -> ITEM:
-        key = self.fileKey(sessionID, fileID)
-        return dtfw.Item(self.files().Get(key))
+    def FileKey(self, sessionID, fileID):
+        return f'{sessionID}/{fileID}'
+    def File(self, sessionID=None, fileID=None) -> ITEM:
+        key = self.FileKey(sessionID, fileID)
+        return dtfw.Struct(self.Files().Get(key))
 
 
     def ValidateSession(self, msg: MSG) -> ITEM:
@@ -127,7 +140,7 @@ class HOST:
         msg = dtfw.Msg(event)
         self.ValidateSession(msg)
         
-        file = self.file(
+        file = self.File(
             sessionID= msg.Require('SessionID'),
             fileID= msg.Require('FileID'))
         file.Require()
@@ -178,7 +191,7 @@ class HOST:
         utils = dtfw.Utils()
         fileID = utils.UUID()
 
-        self.files().Merge(
+        self.Files().Merge(
             id= fileID, 
             item= utils.Merge(msg.Body(), {
                 "FileID": fileID

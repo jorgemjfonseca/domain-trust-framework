@@ -5,7 +5,7 @@ def test():
 
 from BIND import BIND
 from DYNAMO import DYNAMO
-from ITEM import ITEM
+from STRUCT import ITEM
 from DTFW import DTFW
 from WALLET import WALLET
 
@@ -99,7 +99,7 @@ class VAULT:
         # Add to 🪣 Binds
         binds = []
 
-        for code in msg.Items('Codes'):
+        for code in msg.Structs('Codes'):
 
             bindID = dtfw.Utils().UUID()
 
@@ -183,7 +183,7 @@ class VAULT:
         # Verify if 🔎 Consumer is trustable:
         # -> call 🚀 Trusted: 🕸 Graph (CONSUMER)
 
-        for item in msg.Items('Binds'):
+        for item in msg.Structs('Binds'):
             bindID = item.Require('BindID')
             bind = self.Bind(bindID)
 

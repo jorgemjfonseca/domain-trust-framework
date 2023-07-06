@@ -4,7 +4,12 @@ import boto3
 import os
 from time import time
 
+# 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
+from typing import List, Set, Tuple, Dict
+
 from DTFW import DTFW
+from ITEM import ITEM
+from STRUCT import STRUCT
 dtfw = DTFW()
 
 
@@ -16,27 +21,51 @@ dynamo = boto3.resource('dynamodb')
 class DYNAMO:
     
 
-    def __init__(self, alias=None):
+    def __init__(self, alias=None, keys:List[str]=None):
         if alias:
             self._table = self._getTable(alias)
+        self._keys = keys
 
 
-    def Merge(self, id, item):
-        item['ID'] = id
-        return self._update_item(table=self._table, key='ID', body=item)
+    def _calculateID(self, struct:STRUCT) -> str:
+        ''' 
+        👉 Returns the ID from a set of table keys
+        - e.g, for {A:x, B:y, C:z} where keys==[C,A], returns "z/x" 
+        '''
+        if not self._keys:
+            return struct.Require('ID')
+        
+        vals = []
+        for key in self._keys:
+            vals.append(struct.Require(key))
+        return '/'.join(vals)
+
+
+    def Get(self, struct:STRUCT) -> ITEM:
+        if not struct:
+            return None
+        id = self._calculateID(struct)
+        return ITEM(self._getItem(self._table, id), table=self)
     
 
-    def Get(self, id):
+    def GetByID(self, id:str) -> ITEM:
         if not id:
             return None
-        return self._getItem(self._table, id)
+        return ITEM(self._getItem(self._table, id), table=self)
     
 
-    def Item(self, id):
-        return dtfw.Item(self.Get(id))
+    def Item(self, struct:STRUCT) -> ITEM:
+        return self.Get(struct)
     
 
-    def Delete(self, id):
+    def Merge(self, any: any):
+        struct = dtfw.Struct(any)
+        struct.Default('ID', self._calculateID())
+        return self._update_item(table=self._table, key='ID', body=struct.Obj())
+    
+
+    def Delete(self, struct: STRUCT):
+        id = struct.Require['ID']
         return self._delete_item(self._table, 'ID', id)
     
     

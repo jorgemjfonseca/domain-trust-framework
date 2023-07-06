@@ -1,7 +1,9 @@
 # 📚 MSG
 
-from UTILS import UTILS
-from ITEM import ITEM
+# 👉 https://stackoverflow.com/questions/33533148/how-do-i-type-hint-a-method-with-the-type-of-the-enclosing-class
+from __future__ import annotations
+
+from STRUCT import STRUCT
 from typing import Tuple
 
 from DTFW import DTFW
@@ -12,195 +14,120 @@ def test():
     return 'this is a MSG test.'
 
 
-class MSG:
-    
+class MSG(STRUCT):
+    ''' 👉 Structure of a message: { Header, Body, Hash, Signature }. '''
     
     def __init__(self, event={}):
-        # check if it's a MSG object or a string.
-        envelope = UTILS.TryCall(event, 'Envelope') 
-        self._envelope = envelope
-        print(f'MSG.Envelope()={self._envelope}')
+        
+        # instanciate the parent class: STRUCT
+        super().__init__(event)
+        
+        # print in the beggining of all handlers.
+        envelope = self.Envelope()
+        print(f'MSG.Envelope()={envelope}')
 
+        # set the Body as the root for the Att() method.
+        super().SetAttRoot(self.Body())
+    
 
     def Envelope(self) -> any:
-        return self._envelope
-
-    
-    def Copy(self) -> any:
-        """ Returns a deep copy of the envelope. """
-        return UTILS.Copy(self._envelope)
+        ''' 👉 Returns the internal envelope object. '''
+        return super().Obj()
     
 
-    def Header(self, header=None) -> any:
-        if header:
-            self._envelope['Header'] = header
-        if 'Header' not in self._envelope:
-            raise Exception(f'Header missing!')
-        return self._envelope['Header']
+    def Header(self, header=None) -> STRUCT:
+        ''' 👉 Gets or sets the Header. '''
+        return super().Struct().RequireStruct('Header', set=header)
 
 
     def Subject(self, subject=None) -> str:
-        header = self.Header()
-        if subject:
-            header['Subject'] = subject        
-        if 'Subject' not in header or header['Subject'].strip() == '':
-            raise Exception(f'Header.Subject missing!')
-        return header['Subject']
+        ''' 👉 Gets or sets the Subject. '''
+        return self.Header().RequireStr('Subject', set=subject)
         
 
-    def From(self) -> str:
-        print(f'getHeaderFrom: {self._envelope=}')
-        header = self.Header()
-        if 'From' not in header or header['From'] == '':
-            raise Exception(f'Header.From missing!')
-        return header['From']
+    def From(self, set:str=None) -> str:
+        ''' 👉 Gets or sets the From. '''
+        return self.Header().RequireStr('From', set=set)
     
 
-    def To(self) -> str:
-        header = self.Header()
-        if 'To' not in header or header['To'].strip() == '':
-            raise Exception(f'Header.To missing!')
-        return header['To']
+    def To(self, set:str=None) -> str:
+        ''' 👉 Gets or sets the To. '''
+        return self.Header().RequireStr('To', set=set)
     
     
     def Timestamp(self) -> str:
-        header = self.Header()
-        if 'Timestamp' not in header or header['Timestamp'].strip() == '':
-            raise Exception(f'Header.Timestamp missing!')
-        return header['Timestamp']
+        ''' 👉 Gets the Timestamp. '''
+        return self.Header().RequireStr('To')
     
 
     def Correlation(self) -> str:
-        header = self.Header()
-        if 'Correlation' not in header or header['Correlation'].strip() == '':
-            raise Exception(f'Header.Correlation missing!')
-        return header['Correlation']
-    
-    
-    def Att(self, name:str, default=None, obj=None) -> any:
-        ''' Returns a copy of the attribute from the body, or None of it doesnt exist. '''
-        if obj == None:
-            obj = self.Body()
-        if not obj:
-            return default
-    
-        if '.' not in name:
-            if name not in obj:
-                return default
-            return obj[name]
+        ''' 👉 Gets the Correlation. '''
+        return self.Header().RequireStr('Correlation')
         
-        if '.' in name:
-            names = name.split('.')
-            parent = self.Att(name=names[0])
-            names.pop(0)
-            child = '.'.join(names)
-            return self.Att(name=child, obj=parent, default=default)
-    
 
-    def Item(self, name:str) -> ITEM:
-        att = self.Att(name)
-        return dtfw.Item(att)
-    
-
-    def Items(self, name:str) -> Tuple[ITEM, ...]:
-        list = self.Att(name)
-        if list == None:
-            return []
-        ret = []
-        for element in list:
-            item = dtfw.Item(element)
-            ret.append(item)
-        return ret
-    
-
-    def Require(self, name: str) -> any:
-        ''' Returns a copy of the attribute from the body, or raises an exception. '''
-        ret = self.Att(name)
-        if not ret:
-            raise Exception(f'Required attribute missing: {name}')
-        return ret
-    
-
-    def Body(self, body=None) -> any:
-        ''' Updates or returns a copy of the body. '''
+    def Body(self, body=None) -> STRUCT:
+        ''' 👉 Updates or returns a copy of the body. '''
+        envelope = self.Envelope()
+        
+        # setter
         if body:
-            self._envelope['Body'] = body
-        if 'Body' not in self._envelope or self._envelope['Body'] == '':
-            #raise Exception(f'Body missing!')
-            return {}
-        if 'Body' in self._envelope:
-            return self.Copy()['Body']
-        return {}
-    
+            envelope['Body'] = body
 
+        # existing getter, returns a copy
+        if 'Body' in envelope and envelope['Body'] != '':
+            return self.Copy().Struct('Body')
+        
+        # empty getter
+        return STRUCT({})
+    
 
     def Signature(self) -> str:
-        #print(f'getSignature: {envelope=}')
-        if 'Signature' not in self._envelope or self._envelope['Signature'].strip() == '':
-            raise Exception(f'Signature missing!')
-        return self._envelope['Signature']
+        ''' 👉 Gets the Signature. '''
+        return self.RequireStr('Signature')
         
 
     def Hash(self) -> str:
-        #print(f'getHash: {envelope=}')
-        if 'Hash' not in self._envelope:
-            raise Exception(f'Hash missing!')
-        return self._envelope['Hash']
+        ''' 👉 Gets the Hash. '''
+        return self.RequireStr('Hash')
 
 
-    def Request(self, request) -> str:
-        header = self.Request()
-        if request:
-            header['Request'] = request
-        if 'Request' not in header:
-            raise Exception(f'Request missing!')
-        return header['Request']
+    def Request(self, request:STRUCT) -> STRUCT:
+        ''' 👉 Gets or sets the Header.Request. '''
+        return self.Header().RequireStruct('Request', set=request)
 
 
     @staticmethod
-    def Wrap(to: str, body) -> any:
-        envelope =  {
+    def Wrap(to: str, body: any) -> MSG: 
+        ''' 👉 Returns a stamped message, with header and body. '''
+
+        ret = MSG({
             'Header': {
                 'To': to
             },
             'Body': body
-        }
-        msg = MSG(envelope)
-        msg.Stamp()
-        return msg._envelope
+        })
+        ret.Stamp()
+        return ret
 
 
-    def Stamp(self) -> any:
-        defaults = {
-            'Header': {
-                'Correlation': UTILS.Correlation(),
-                'Timestamp': UTILS.Timestamp()
-            },
-            'Body': {}
-        }
-        print(f'{defaults=}')
+    def Stamp(self):
+        ''' 👉 Adds correlation and timestamp. '''
+        self.Header().DefaultGuid('Correlation')
+        self.Header().DefaultTimestamp('Timestamp')
+            
 
-        original = self.Envelope()
-        stamped = defaults
-        UTILS.Merge(stamped['Header'], original['Header']) 
-        if 'Body' in original:
-            UTILS.Merge(stamped['Body'], original['Body']) 
-
-        self._envelope = stamped
-        return stamped
-
-
-    # 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
+    
     def Canonicalize(self) -> str:
-        copy = UTILS.Copy(self._envelope)
-        del copy['Signature']
-        del copy['Hash']
-
-        return UTILS.Canonicalize(copy)
+        # 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
+        copy = self.Copy()
+        copy.RemoveAtt('Signature')
+        copy.RemoveAtt('Hash')
+        return copy.Canonicalize()
     
 
     def ValidateHeader(self):
-        msg = self.Envelope()
+        ''' 👉 Throws an exception if any of the header attributes are missing. '''
+        msg = self
         msg.To()
         msg.Subject()
         msg.From()
@@ -209,9 +136,12 @@ class MSG:
 
 
     def ValidateSignature(self, publicKey: str):
-        signature = self.Signature()
-        text = self.Canonicalize()
-        validator = dtfw.SyncApi().Dkim().ValidateSignature(text, publicKey, signature)
+        ''' 👉 Throws an exception if the Hash or Signature dont match the public key. '''
+        
+        validator = dtfw.SyncApi().Dkim().ValidateSignature(
+            text = self.Canonicalize(), 
+            publicKey = publicKey, 
+            signature = self.Signature())
 
         expected = validator.Hash()
         received = self.Hash()

@@ -1,6 +1,7 @@
 # 📚 MESSENGER
 
 from DTFW import DTFW
+from MSG import MSG
 dtfw = DTFW()
 
 
@@ -11,10 +12,9 @@ def test():
 class MESSENGER:
     
 
-    def _publish(self, event:any, source:str, to:str=None):
+    def _publish(self, data:any, source:str, to:str=None):
         
-        msg = dtfw.Msg(event)
-
+        msg = dtfw.Msg(data)
         # Validate if there's a destination domain.
         if (to):
             msg.To(to)
@@ -32,18 +32,16 @@ class MESSENGER:
             detail= envelope)
         
 
-    def Send(self, outbound:any, source:str, to:str=None):
-        self._publish(outbound, source, to)
+    def Send(self, msg:MSG, source:str, to:str=None):
+        self._publish(msg, source, to)
         
     
-    def Reply(self, request: any, body:any, source:str):
+    def Reply(self, req: MSG, body:any, source:str):
         
-        req = dtfw.Msg(request)
         to = req.From()
 
-        out = dtfw.Msg()
-        out.Wrap(to, body)
-        out.Request(req.Envelope())
+        out = dtfw.Wrap(to, body)
+        out.Request(req)
 
         self._publish(out, source)
 

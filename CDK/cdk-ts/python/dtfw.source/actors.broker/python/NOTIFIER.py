@@ -1,6 +1,8 @@
 # 📚 NOTIFIER
 
 from DTFW import DTFW
+from MSG import MSG
+from STRUCT import STRUCT
 dtfw = DTFW()
 
 
@@ -12,6 +14,10 @@ class NOTIFIER:
     ''' 📣 https://quip.com/PCunAKUqSObO/-Notifier '''
     
 
+    def Invoke(self, msg: MSG, source:str):
+        dtfw.Messenger().Send(msg=msg, source=source)
+
+
     def HandleOnboard(self, event):
         ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKEb7e4672f7c6a4fcdb1fbbd882 '''
         '''
@@ -21,7 +27,7 @@ class NOTIFIER:
         }
         '''    
         msg = dtfw.Msg(event)
-        
+
 
     def HandleTranslated(self, event):
         ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKE27bcb1e6dd3e493f88b36b695 '''

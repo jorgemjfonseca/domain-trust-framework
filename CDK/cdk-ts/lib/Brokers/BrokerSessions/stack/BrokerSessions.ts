@@ -16,8 +16,8 @@ export class BrokerSessions extends STACK {
   private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, BrokerSessions.name, props);
 
-    const hosts = DYNAMO.New(this, 'Hosts');
-    const sessions = DYNAMO.New(this, 'Sessions');
+    const hosts = DYNAMO.New(this, 'Hosts', { filtered: true });
+    const sessions = DYNAMO.New(this, 'Sessions', { filtered: true });
 
     LAMBDA
       .New(this, 'Sessions')

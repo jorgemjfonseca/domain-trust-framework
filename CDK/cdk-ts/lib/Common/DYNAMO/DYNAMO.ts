@@ -12,7 +12,8 @@ import { STACK } from '../STACK/STACK';
 export interface DYNAMOOptions {
   stream?: boolean;
   ttl?: boolean;
-  dated?: boolean
+  dated?: boolean,
+  filtered?: boolean
 }
 
 export class DYNAMO {
@@ -45,9 +46,12 @@ export class DYNAMO {
           ? 'TTL'
           : undefined;
 
-        const sortKey = options.dated
-          ? {
+        const sortKey: cdk.aws_dynamodb.Attribute | undefined = options.dated ? {
             name: 'Timestamp',
+            type: dynamodb.AttributeType.STRING 
+          }
+          : options.filtered ? {
+            name: 'Filter',
             type: dynamodb.AttributeType.STRING 
           }
           : undefined;
@@ -67,6 +71,22 @@ export class DYNAMO {
         return ret;
     }
     
+
+    
+    public AddIndex(): DYNAMO {
+      // 👉 https://bobbyhadz.com/blog/aws-cdk-add-global-secondary-index-dynamodb
+      this.Super.addGlobalSecondaryIndex({
+        indexName: 'userIdIndex',
+        partitionKey: {name: 'userId', type: dynamodb.AttributeType.STRING},
+        sortKey: {name: 'status', type: dynamodb.AttributeType.STRING},
+        readCapacity: 1,
+        writeCapacity: 1,
+        projectionType: dynamodb.ProjectionType.ALL,
+      });
+      return this;
+    }
+    
+
 
     public Export(alias: string): DYNAMO {
       new cdk.CfnOutput(this.Super, alias, {

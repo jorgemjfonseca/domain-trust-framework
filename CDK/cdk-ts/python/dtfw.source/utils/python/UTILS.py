@@ -16,6 +16,18 @@ class InvalidRequestException(Exception):
 class UTILS: 
 
 
+    def Struct(self, obj):
+        ''' 👉 Wraps an object with a STRUCT. '''
+        from STRUCT import STRUCT
+        return STRUCT(obj=obj)
+    
+
+    def Unstruct(self, obj):
+        ''' 👉 If the object is a STRUCT, returns the inner object. '''
+        from STRUCT import STRUCT
+        return STRUCT.Unstruct(obj=obj)
+
+
     def RaiseNotFoundException(self):
         raise NotFoundException
     
@@ -24,11 +36,12 @@ class UTILS:
         raise InvalidRequestException
     
 
-    def FromJson(self, text: str) -> any:
-        return json.loads(text)
+    def FromJson(self, text: str):
+        return self.Struct(json.loads(text))
         
     
-    def ToJson(self, obj: any) -> str:
+    def ToJson(self, obj: any):
+        ''' 👉 Converts the object into a json string.'''
         print(f'Utils.ToJson: {obj=}')
         return json.dumps(obj)
     
@@ -60,6 +73,11 @@ class UTILS:
         ''' 👉 https://lyz-code.github.io/blue-book/coding/python/ruamel_yaml/ '''
         # {'products': ['item 1', 'item 2']}
         
+        from STRUCT import STRUCT
+        data = obj
+        if isinstance(obj, STRUCT):
+            data = obj.Obj()
+
         from ruamel.yaml import YAML
         from io import StringIO 
         
@@ -71,7 +89,7 @@ class UTILS:
         
         # Return the output to a string
         stream = StringIO()
-        yaml.dump(obj, stream)
+        yaml.dump(data, stream)
         text = stream.getvalue()
         stream.close()
     

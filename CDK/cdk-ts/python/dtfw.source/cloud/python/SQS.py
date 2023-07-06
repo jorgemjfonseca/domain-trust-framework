@@ -4,6 +4,8 @@ import boto3
 import os
 import json
 
+from STRUCT import STRUCT
+
 
 def test():
     return 'this is a SQS test.'
@@ -19,10 +21,15 @@ class SQS:
         
 
     def Send(self, msg):
+        body= msg
+        if isinstance(msg, STRUCT):
+            body= msg.Obj()
+            
         resp = sqs.send_message(
             QueueName= self.url,
-            MessageBody= json.dumps(msg)
+            MessageBody= json.dumps(body)
         )
+        
         code = resp['ResponseMetadata']['HTTPStatusCode']
         if code != 200:
             raise Exception('Error sending to the queue.')
