@@ -7,6 +7,7 @@ import { DomainName } from '../../../Behaviours/DomainName/stack/DomainName';
 import { BrokerTables } from '../../BrokerTables/stack/BrokerTables';
 
 export interface BrokerSetupDependencies {
+  domainName: DomainName,
   brokerTables: BrokerTables
 }
 
@@ -21,10 +22,6 @@ export class BrokerSetup extends STACK {
 
   constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, BrokerSetup.name, props);
-
-    const rootDomain = 
-      //'105b4478-eaa5-4b73-b2a5-4da2c3c2dac0.dev.dtfw.org';
-      DomainName.GetDomainName(this);
       
     const wallets = BrokerTables.ImportWallets(this);
     const locators = BrokerTables.ImportLocators(this);
@@ -40,11 +37,13 @@ export class BrokerSetup extends STACK {
 
     const queries = BrokerTables.ImportQueries(this);
 
+    //doesn't compile
+    //const rootDomain = DomainName.GetDomainName(this);
     LAMBDA
       .New(this, 'Onboard')
       .WritesToDynamoDB(wallets, 'WALLETS')
       .WritesToDynamoDB(locators, 'LOCATORS')
-      .AddEnvironment(rootDomain, 'DOMAIN')
+      //.AddEnvironment(rootDomain, 'DOMAIN')
       .HandlesSyncApi('Onboard@Broker')
 
     LAMBDA

@@ -45,6 +45,7 @@ import { BrokerSessions } from '../lib/Brokers/BrokerSessions/stack/BrokerSessio
 import { BrokerSetup } from '../lib/Brokers/BrokerSetup/stack/BrokerSetup';
 import { BrokerShare } from '../lib/Brokers/BrokerShare/stack/BrokerShare';
 import { Notifier } from '../lib/Brokers/Notifier/stack/Notifier';
+import { BrokerTables } from '../lib/Brokers/BrokerTables/stack/BrokerTables';
 
 
 const app = new cdk.App();
@@ -165,13 +166,14 @@ Graph.New(app, {
 // ==========================
 // Brokers
 
-const brokerBinds = BrokerBinds.New(app);
-const brokerCredentials = BrokerCredentials.New(app);
-const brokerPay = BrokerPay.New(app);
-const brokerPrompt = BrokerPrompt.New(app);
-const brokerSessions = BrokerSessions.New(app);
-const brokerSetup = BrokerSetup.New(app);
-const brokerShare = BrokerShare.New(app);
+const brokerTables = BrokerTables.New(app, {});
+const brokerBinds = BrokerBinds.New(app, { brokerTables });
+const brokerCredentials = BrokerCredentials.New(app, { brokerTables });
+const brokerPay = BrokerPay.New(app, { brokerTables });
+const brokerPrompt = BrokerPrompt.New(app, { brokerTables });
+const brokerSessions = BrokerSessions.New(app, { brokerTables });
+const brokerSetup = BrokerSetup.New(app, { domainName, brokerTables });
+const brokerShare = BrokerShare.New(app, { brokerTables });
 
 Broker.New(app, {
     domain,

@@ -11,7 +11,8 @@ export class DomainName extends STACK {
   private static readonly DOMAIN_NAME = 'DomainName';
 
   public static GetDomainName(scope: STACK): string {
-    return scope.ImportSsm(DomainName.DOMAIN_NAME);
+    //return scope.ImportSsmUnknown(DomainName.DOMAIN_NAME).Ret as string;
+    return scope.ImportSsm(DomainName.DOMAIN_NAME)
   }
 
   private SetDomainName() {

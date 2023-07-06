@@ -76,10 +76,20 @@ export class STACK extends cdk.Stack {
     };
 
     public ImportSsm(alias: string): string {
-        return this.GetSsm(alias).stringValue;
+        const ssm = this.GetSsm(alias);
+        return ssm.stringValue
     }
 
    
+    public ImportSsmUnknown(alias: string): any {
+        const ssm = this.GetSsm(alias);
+        const ret = new cdk.CfnJson(this, this.RandomName(alias), {
+            value: { 
+                Ret: ssm.stringValue
+            }
+        });
+        return ret.resolve;
+    }
 
     public Import(alias: string): string {
         return this.ImportCfn(alias);
