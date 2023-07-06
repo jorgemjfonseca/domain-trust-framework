@@ -94,7 +94,7 @@ class SUBSCRIBER:
             required
         ) 
 
-        dtfw.Dynamo('DEDUPS').Merge(
+        dtfw.Dynamo('DEDUPS').Upsert(
             id= msg.Att('UpdateID'), 
             item= item)
         

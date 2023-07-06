@@ -180,3 +180,9 @@ class UTILS:
         ''' 👉️ https://stackoverflow.com/questions/14839528/merge-two-objects-in-python '''
         obj1.update(obj2)
         return obj1
+    
+
+    def Enrironment(name: str):
+        ''' 👉️ Returns a configuration from os.environ, i.e. same as 'os.environ[name]'.'''
+        import os
+        return os.environ[name]

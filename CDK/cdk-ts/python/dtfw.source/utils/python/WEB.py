@@ -3,7 +3,7 @@
 import json
 from urllib import request, parse
 from urllib.request import urlopen
-
+import base64
 
 
 def test():
@@ -47,3 +47,10 @@ class WEB:
     def GetJson(self, url: str) -> any:
         body = WEB.Get(url)
         return json.loads(body)
+    
+
+    def GetImage(self, url: str) -> str:
+        ''' 👉️ https://stackoverflow.com/questions/38408253/way-to-convert-image-straight-from-url-to-base64-without-saving-as-a-file-in-pyt '''
+        print (f'WEB.GetImage: {url=}')
+        
+        return base64.b64encode(urlopen(url).read())

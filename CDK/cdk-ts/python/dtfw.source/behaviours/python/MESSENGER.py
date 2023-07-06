@@ -10,6 +10,7 @@ def test():
 
 
 class MESSENGER:
+    ''' 👉 Messagenger behaviour of a domain. '''
     
 
     def _publish(self, data:any, source:str, to:str=None):

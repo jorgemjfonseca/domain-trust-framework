@@ -109,7 +109,7 @@ class PUBLISHER:
         '''
         domain = dtfw.Msg(register).From()
         
-        return self.Subscribers().Merge({
+        return self.Subscribers().Upsert({
             'Domain': domain,
             'Filter': {},
             'Status': 'REGISTERED'
@@ -153,7 +153,7 @@ class PUBLISHER:
         '''
         msg = dtfw.Msg(event)
         
-        return self.Subscribers().Merge({
+        return self.Subscribers().Upsert({
             'Domain': msg.From(), 
             'Filter': msg.Att('Filter'),
             'Status': 'SUBSCRIBED'
@@ -190,7 +190,7 @@ class PUBLISHER:
         msg = dtfw.Msg(event)
 
         # save to Updates table.
-        self.Updates().Merge({
+        self.Updates().Upsert({
             'UpdateID': dtfw.Utils().UUID(),
             'Domain': msg.From(),
             'Timestamp': msg.Timestamp()
@@ -223,7 +223,7 @@ class PUBLISHER:
             lastEvaluatedKey = page['LastEvaluatedKey']
 
             token = dtfw.Utils().UUID()
-            self.Tokens().Merge({
+            self.Tokens().Upsert({
                 'Token': token,
                 'LastEvaluatedKey': json.dumps(lastEvaluatedKey),
                 'TimeStamp': timestamp,

@@ -16,7 +16,7 @@ class MANIFESTER:
 
         '''
         {
-        "Type":"OnDeploymentComplete"
+            "Type":"OnDeploymentComplete"
         }
         '''
         print(f'{event=}')

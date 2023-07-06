@@ -1,17 +1,19 @@
 # 📚 DYNAMO
 
 import boto3
+import botocore
+from boto3.dynamodb.conditions import Attr
+from botocore.exceptions import ClientError
 import os
 from time import time
 
 # 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
 from typing import List, Set, Tuple, Dict
 
-from DTFW import DTFW
 from ITEM import ITEM
 from STRUCT import STRUCT
-dtfw = DTFW()
-
+from UTILS import UTILS
+utils = UTILS()
 
 def test():
     return 'this is a DYNAMO test.'
@@ -41,11 +43,22 @@ class DYNAMO:
         return '/'.join(vals)
 
 
-    def Get(self, struct:STRUCT) -> ITEM:
-        if not struct:
+    def Get(self, key:any) -> ITEM:
+        if not key:
             return None
-        id = self._calculateID(struct)
-        return ITEM(self._getItem(self._table, id), table=self)
+        
+        id = None
+        if isinstance(key, str) or isinstance(key, int):
+            id = key
+        elif isinstance(key, str):
+            id = self._calculateID(key)
+        else:
+            struct = STRUCT(key)
+            id = self._calculateID(struct)
+
+        return ITEM(
+            item= self._getItem(self._table, id), 
+            table= self)
     
 
     def GetByID(self, id:str) -> ITEM:
@@ -58,11 +71,29 @@ class DYNAMO:
         return self.Get(struct)
     
 
-    def Merge(self, any: any):
-        struct = dtfw.Struct(any)
+    def _save(self, any: any, method):  
+        struct = STRUCT(any)
+
         struct.Default('ID', self._calculateID())
-        return self._update_item(table=self._table, key='ID', body=struct.Obj())
+
+        return self._update_item(
+            table=self._table, 
+            key='ID', 
+            body=struct.Obj(),
+            method= method)
+
+
+    def Insert(self, any: any):
+        self._save(any=any, method='INSERT')
     
+
+    def Update(self, any: any):
+        self._save(any=any, method='UPDATE')        
+    
+
+    def Upsert(self, any: any):
+        self._save(any=any, method='INSERT,UPDATE')
+
 
     def Delete(self, struct: STRUCT):
         id = struct.Require['ID']
@@ -119,14 +150,39 @@ class DYNAMO:
         return "".join(update_expression)[:-1], update_values, update_names
             
                   
-    def _update_item(self, table, key, body):
+    def _update_item(self, table, key, body, method):
+        
+        ''' 👉 https://www.tecracer.com/blog/2021/07/implementing-optimistic-locking-in-dynamodb-with-python.html '''
+        ''' 👉 https://boto3.amazonaws.com/v1/documentation/api/latest/_modules/boto3/dynamodb/conditions.html '''
+        condition = None
+        if 'INSERT' == method:
+            condition = Attr('ID').not_exists()
+        elif 'UPDATE' == method and 'ItemVersion' in body:
+            condition = Attr('RecVersion').eq(body['ItemVersion']) 
+
+        # optimistic concurrency
+        body['ItemVersion'] = utils.UUID()
+
+        # get paragmeters
         a, v, n = self._get_update_params(key, body)
-        response = table.update_item(
-            Key= {key: body[key]},
-            UpdateExpression=a,
-            ExpressionAttributeValues=dict(v),
-            ExpressionAttributeNames=dict(n)
+
+        try:
+            response = table.update_item(
+                Key= {key: body[key]},
+                UpdateExpression=a,
+                ExpressionAttributeValues=dict(v),
+                ExpressionAttributeNames=dict(n),
+                # 👉 https://www.tecracer.com/blog/2021/07/implementing-optimistic-locking-in-dynamodb-with-python.html
+                ConditionExpression= condition
             )
+
+        except ClientError as err:
+            if err.response["Error"]["Code"] == 'ConditionalCheckFailedException':
+                # Somebody changed the item in the db while we were changing it!
+                raise ValueError("Record changed concurrently, retry!") from err
+            else:
+                raise err
+
         return response
 
 
@@ -192,7 +248,7 @@ class DYNAMO:
             },
             'ExpressionAttributeValues': {
                 ":s_time": timestamp,
-                ":e_time": dtfw.Utils().Timestamp()
+                ":e_time": utils.Timestamp()
             },
             'FilterExpression': "#f_up between :s_time and :e_time",
             'ScanIndexForward': "true"

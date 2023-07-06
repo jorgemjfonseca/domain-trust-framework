@@ -77,7 +77,7 @@ class VAULT:
         broker = session.Require('Wallet.Broker')
         walletID = msg.Require('WalletID')
 
-        self.Wallets().Merge(
+        self.Wallets().Upsert(
             id= self.WalletKey(
                 broker= broker,
                 walletID= walletID
@@ -91,7 +91,7 @@ class VAULT:
             }
         )
 
-        dtfw.Host().Sessions().Merge(
+        dtfw.Host().Sessions().Upsert(
             id= session.Require['SessionID'], 
             item= { "VaultID": vaultID }
         )
@@ -108,7 +108,7 @@ class VAULT:
                 "Code": code
             })
 
-            self.Binds().Merge(
+            self.Binds().Upsert(
                 id= bindID,
                 item= {
                     "BindID": bindID,

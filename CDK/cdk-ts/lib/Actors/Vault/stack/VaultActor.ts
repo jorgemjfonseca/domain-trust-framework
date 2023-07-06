@@ -42,6 +42,7 @@ export class VaultActor extends STACK {
       .New(this, 'Disclose')
       .WritesToDynamoDB(disclosures, 'DISCLOSURES')
       .HandlesMessenger('Disclose@Vault')
+      .SendsSyncMessages()
       .Export(VaultActor.DISCLOSE_FN);
 
     LAMBDA

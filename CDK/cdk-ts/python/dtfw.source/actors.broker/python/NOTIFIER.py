@@ -6,20 +6,19 @@ from STRUCT import STRUCT
 dtfw = DTFW()
 
 
-def test():
-    return 'this is a NOTIFIER test.'
-
-
 class NOTIFIER:
     ''' 📣 https://quip.com/PCunAKUqSObO/-Notifier '''
     
 
-    def Invoke(self, msg: MSG, source:str):
+    # ✅ DONE
+    def Invoke(self, notifier:str, data: any, source:str):
+        ''' 👉 ends a message to the notifier of the wallet. '''
+        msg = dtfw.Wrap(to=notifier, body=data)
         dtfw.Messenger().Send(msg=msg, source=source)
 
 
     def HandleOnboard(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKEb7e4672f7c6a4fcdb1fbbd882 '''
+        ''' 🚀 https://quip.com/PCunAKUqSObO#temp:C:UKEb7e4672f7c6a4fcdb1fbbd882 '''
         '''
         "Body": {
             "Language": "en-us",
@@ -30,7 +29,7 @@ class NOTIFIER:
 
 
     def HandleTranslated(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKE27bcb1e6dd3e493f88b36b695 '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE27bcb1e6dd3e493f88b36b695 '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -41,7 +40,7 @@ class NOTIFIER:
         
 
     def HandleUpdated(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -52,7 +51,7 @@ class NOTIFIER:
         
 
     def HandlePrompt(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKEc385117d31e042358eaa48ea1 '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKEc385117d31e042358eaa48ea1 '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -64,7 +63,7 @@ class NOTIFIER:
         
 
     def HandleBindable(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKEe59fd4b4d73345348afd67d5f '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKEe59fd4b4d73345348afd67d5f '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -81,7 +80,7 @@ class NOTIFIER:
         
 
     def HandleBound(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKE1c11313f9113455b9857c5bc2 '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE1c11313f9113455b9857c5bc2 '''
         '''
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
@@ -96,7 +95,7 @@ class NOTIFIER:
         
 
     def HandleIssued(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKE43477024fb334f3c9bb85c34e '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE43477024fb334f3c9bb85c34e '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -110,7 +109,7 @@ class NOTIFIER:
         
 
     def HandleRevoked(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKE140ed710db89444c956ea2eac '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE140ed710db89444c956ea2eac '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -122,7 +121,7 @@ class NOTIFIER:
         
 
     def HandleQuery(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKE78fd4570e5dc440f979d5dd07 '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE78fd4570e5dc440f979d5dd07 '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -150,7 +149,7 @@ class NOTIFIER:
         
 
     def HandleCharge(self, event):
-        ''' 👉 https://quip.com/PCunAKUqSObO#temp:C:UKE3093906b2c254c68b94bfc7ad '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE3093906b2c254c68b94bfc7ad '''
         '''
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",

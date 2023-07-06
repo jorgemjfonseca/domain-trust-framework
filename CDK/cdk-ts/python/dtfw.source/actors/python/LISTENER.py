@@ -52,7 +52,7 @@ class LISTENER:
 
         msg = dtfw.Msg(event)
         
-        return dtfw.Dynamo('SUBSCRIBERS').Merge(
+        return dtfw.Dynamo('SUBSCRIBERS').Upsert(
             id= msg.From(), 
             item= { 
                 'Filter': msg.Att('Filter'),
@@ -73,7 +73,7 @@ class LISTENER:
             'Timestamp': msg.Timestamp()
         }
 
-        dtfw.Dynamo('UPDATES').Merge(id, update)
+        dtfw.Dynamo('UPDATES').Upsert(id, update)
         
         # TODO: this should be an event of dynamo, to be ACID
         dtfw.Sqs('PUBLISHER').Send(update)

@@ -186,8 +186,17 @@ class STRUCT:
         obj1.update(obj2)
 
 
-    def IsMissingOrEmpty(self, name:str):
-        """ 👉 Indicates if an attribute is missing or empty. """
+    def IsMissingOrEmpty(self, name:str=None):
+        """ 
+        👉 Indicates if an attribute is missing or empty. 
+        If no name is given, it looks at the inner object.
+        """
+        
+        # the root
+        if name == None:
+            return self._obj == None or self._obj == {}
+        
+        # the attribute
         val = self.Att(name)
         if val == None or str(val).strip() == '':
             return True

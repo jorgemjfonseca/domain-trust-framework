@@ -11,7 +11,7 @@ export interface MessengerDependencies {
 }
 
 
-//https://quip.com/Fxj4AdnE6Eu5/-Messenger
+/** 👉 https://quip.com/Fxj4AdnE6Eu5/-Messenger */
 export class Messenger extends STACK {
 
   private static readonly BUS_NAME = 'DtfwBus';
@@ -99,7 +99,16 @@ export class Messenger extends STACK {
 
 declare module '../../../Common/LAMBDA/LAMBDA' {
   interface LAMBDA {
+
+    /** 👉 Registers the lambda to receive messages from other domains in the BUS, 
+     * and authorizes it to publish to the BUS in order to continue the workflow. 
+     * Details: https://quip.com/Fxj4AdnE6Eu5/-Messenger*/
     HandlesMessenger(action: string): LAMBDA;
+
+    /** 👉 Authorizes the lambda to publish to the BUS messages, 
+     * starting workflows by sending commands to other domains. 
+     * Details: https://quip.com/Fxj4AdnE6Eu5/-Messenger*/
     PublishesToMessenger(): LAMBDA;
+
   }
 }

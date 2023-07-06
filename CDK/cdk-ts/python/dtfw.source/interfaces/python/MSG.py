@@ -118,7 +118,7 @@ class MSG(STRUCT):
 
     
     def Canonicalize(self) -> str:
-        # 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces
+        ''' 👉️ https://bobbyhadz.com/blog/python-json-dumps-no-spaces '''
         copy = self.Copy()
         copy.RemoveAtt('Signature')
         copy.RemoveAtt('Hash')

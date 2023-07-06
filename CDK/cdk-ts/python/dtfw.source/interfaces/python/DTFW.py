@@ -97,6 +97,7 @@ class DTFW:
     
 
     def Messenger(self):
+        ''' 👉 Messagenger behaviour of a domain. '''
         if not self._messenger:
             from MESSENGER import MESSENGER as proxy
             self._messenger = proxy()
@@ -104,6 +105,7 @@ class DTFW:
 
 
     def Msg(self, event:any = {}):
+        ''' 👉 Structure of a message: { Header, Body, Hash, Signature }. '''
         from MSG import MSG as proxy
         return proxy(event)
     

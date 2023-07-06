@@ -35,4 +35,4 @@ class ITEM(STRUCT):
 
     def Update(self):
         ''' 👉 Updates the item on its original table. '''       
-        self.Table().Merge(self)
+        self.Table().Update(self)

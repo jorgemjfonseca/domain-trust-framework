@@ -61,7 +61,7 @@ class GRAPH:
 
             domainName = r['Domain']
 
-            dtfw.Dynamo('DOMAINS').Merge(domainName, {
+            dtfw.Dynamo('DOMAINS').Upsert(domainName, {
                 'Domain': domainName,
                 'Timestamp': dtfw.Utils().Timestamp(),
                 'Manifest': dtfw.Domain(domainName).Manifest()

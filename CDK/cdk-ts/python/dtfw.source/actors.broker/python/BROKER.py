@@ -52,6 +52,7 @@ class BROKER:
         return self._sessions
 
 
+    # ✅ DONE
     def Setup(self):
         ''' 👉 https://quip.com/zaYoA4kibXAP/-Broker-Setup '''
         if not self._setup:

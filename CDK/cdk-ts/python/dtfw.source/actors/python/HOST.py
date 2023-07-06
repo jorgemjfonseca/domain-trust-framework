@@ -11,59 +11,23 @@ from DTFW import DTFW
 dtfw = DTFW()
 
 
-
-class SESSIONS(DYNAMO): 
-    def __init__(self):
-        self.Table = DYNAMO('SESSIONS')
-    
-
-class SESSION(ITEM):
-    ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD20456e042b3f43d49a73e0f92 '''
-
-    def Broker(self) -> str:
-        return self.Require('Wallet.Broker')
-    
-    def WalletID(self) -> str:
-        return self.Require('Wallet.WalletID')
-
-    def MatchBroker(self, msg: MSG):
-        self.Match('Wallet.Broker', msg.From())
-
-    def Validate(self, msg: MSG):
-        self.Require()
-        self.MatchBroker(msg)
-
-
-
 class HOST:
-
-
-    def __init__(self):
-        self.Sessions = SESSIONS()
 
 
     def Sessions(self) -> DYNAMO:
         ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD20456e042b3f43d49a73e0f92 '''
-        return dtfw.Dynamo('SESSIONS')
-    def Session(self, sessionID) -> SESSION:
-        session = self.Sessions().Get(sessionID)
-        return SESSION(session)
+        return dtfw.Dynamo('SESSIONS', keys=['SessionID'])
 
 
     def Files(self) -> DYNAMO:
         ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD026a3fce1988455796a1a4621 '''
-        return dtfw.Dynamo('FILES')
-    def FileKey(self, sessionID, fileID):
-        return f'{sessionID}/{fileID}'
-    def File(self, sessionID=None, fileID=None) -> ITEM:
-        key = self.FileKey(sessionID, fileID)
-        return dtfw.Struct(self.Files().Get(key))
+        return dtfw.Dynamo('FILES', keys=['SessionID', 'FileID'])
 
 
     def ValidateSession(self, msg: MSG) -> ITEM:
-        sessionID = msg.Require('SessionID')
-        session = self.Session(sessionID)
-        session.Validate(msg)
+        session = self.Sessions().Get(msg)
+        session.Require()
+        session.Match('Wallet.Broker', msg.From())
         
 
 
@@ -101,18 +65,16 @@ class HOST:
         utils = dtfw.Utils()
         sessionID = utils.UUID()
 
-        self.Sessions().Merge(
-            id=sessionID, 
-            item={
-                'SessionID': sessionID,
-                'Status': "CHECKING-IN",
-                'CheckIn': utils.Merge(resource, {
-                    'SessionTime': utils.Timestamp()
-                }),
-                'Wallet': utils.Merge(wallet, {
-                    'Broker': msg.From()
-                })
+        self.Sessions().Upsert({
+            'SessionID': sessionID,
+            'Status': "CHECKING-IN",
+            'CheckIn': utils.Merge(resource, {
+                'SessionTime': utils.Timestamp()
+            }),
+            'Wallet': utils.Merge(wallet, {
+                'Broker': msg.From()
             })
+        })
 
         return { 'SessionID': sessionID }
 
@@ -140,10 +102,7 @@ class HOST:
         msg = dtfw.Msg(event)
         self.ValidateSession(msg)
         
-        file = self.File(
-            sessionID= msg.Require('SessionID'),
-            fileID= msg.Require('FileID'))
-        file.Require()
+        file = self.Files().Get(msg)
 
         return {
             "Name": file.Require('Name'),
@@ -188,11 +147,9 @@ class HOST:
         msg = dtfw.Msg(event)
         self.ValidateSession(msg)
 
-        utils = dtfw.Utils()
-        fileID = utils.UUID()
+        merge = msg.Body().Copy()
+        merge.Merge({
+            "FileID": dtfw.Utils().UUID()
+        })
 
-        self.Files().Merge(
-            id= fileID, 
-            item= utils.Merge(msg.Body(), {
-                "FileID": fileID
-            }))
+        self.Files().Upsert(merge)

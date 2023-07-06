@@ -5,12 +5,13 @@ import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
 import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
 import { DomainName } from '../../DomainName/stack/DomainName';
+import { Scope } from 'aws-cdk-lib/aws-ecs';
 
 export interface SyncApiHandlersDependencies {
   syncApiDkim: SyncApiDkim
 }
 
-// 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API
+/** 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API */
 export class SyncApiHandlers extends STACK {
 
   private static readonly MAP = 'SyncApiMap';
@@ -86,11 +87,17 @@ export class SyncApiHandlers extends STACK {
       .AddEnvironment('DOMAIN_NAME', domainName)
       .Export(SyncApiHandlers.RECEIVER);
 
-    // REGISTER EXTENSION
-    LAMBDA
-      .prototype
-      .HandlesSyncApi = function(action: string, props?: HandlesSyncApiParameters) {
+    // REGISTER EXTENSIONS
+
+    LAMBDA.prototype.HandlesSyncApi = 
+      function(action: string, props?: HandlesSyncApiParameters) {
         SyncApiHandlers.HandlesSyncApi(this.Scope, action, this, props);
+        return this;
+      };
+
+    LAMBDA.prototype.SendsSyncMessages = 
+      function() {
+        SyncApiHandlers.SendsSyncMessages(this.Scope, this);
         return this;
       };
 
@@ -116,11 +123,18 @@ export class SyncApiHandlers extends STACK {
       'IgnoreValidation': {'S':ignoreValidation}
     });
 
-    // Add invoke permission.
+    // Authorize the receiver to invoke the function.
     SyncApiHandlers
       .GetReceiverFn(scope)
       .InvokesLambda(fn);
   }
+
+
+  public static SendsSyncMessages(scope: STACK,fn: LAMBDA) {
+    const sender = SyncApiHandlers.GetSenderFn(scope);
+    fn.InvokesLambda(sender);
+  }
+
 
 }
 
@@ -132,6 +146,16 @@ interface HandlesSyncApiParameters {
 
 declare module '../../../Common/LAMBDA/LAMBDA' {
   interface LAMBDA {
+    
+    /** 👉 Registers the LAMBDA to be executed 
+     * in response to synchronous requests from other domains. 
+     * Details: https://quip.com/RnO6Ad0BuBSx/-Sync-API */
     HandlesSyncApi(action: string, props?: HandlesSyncApiParameters): LAMBDA;
+
+    /** 👉 Authorizes the LAMBDA to send synchronous messages. 
+     * Details: https://quip.com/RnO6Ad0BuBSx/-Sync-API */
+    SendsSyncMessages(): LAMBDA;
+
   }
+
 }
