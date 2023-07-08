@@ -105,7 +105,7 @@ class VAULT(HOST):
             }
         )
 
-        dtfw.Host().Sessions().Upsert(
+        self.Sessions().Upsert(
             id= session.Require['SessionID'], 
             item= { "VaultID": vaultID }
         )

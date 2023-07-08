@@ -62,6 +62,7 @@ class BROKER_SESSIONS(DTFW, BROKER_SETUP):
         }
         '''
         self.Msg(event)
+        
     
 
     def HandleCheckout(self, event):
