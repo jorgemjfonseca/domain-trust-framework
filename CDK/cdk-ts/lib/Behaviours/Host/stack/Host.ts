@@ -4,6 +4,7 @@ import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
 import { STACK } from '../../../Common/STACK/STACK';
 import { Domain } from '../../Domain/stack/Domain';
+import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
 
 
 export interface HostDependencies {
@@ -34,6 +35,7 @@ export class Host extends STACK {
     const files = DYNAMO
       .New(this, 'Files');
 
+
     LAMBDA
       .New(this, "CheckIn")
       .WritesToDynamoDB(sessions, 'SESSIONS')
@@ -41,8 +43,9 @@ export class Host extends STACK {
 
     LAMBDA
       .New(this, "Talker")
-      .WritesToDynamoDB(sessions, 'SESSIONS')
+      .ReadsFromDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Talker@Host')
+      .VerifiesSignatures()
       .InvokesHandler('HandleTalker@Host');
 
     LAMBDA
@@ -60,17 +63,19 @@ export class Host extends STACK {
       .New(this, "Download")
       .ReadsFromDynamoDB(sessions, "SESSIONS")
       .ReadsFromDynamoDB(files, "FILES")
+      .VerifiesSignatures()
       .HandlesSyncApi('Download@Host');
 
     LAMBDA
       .New(this, "Upload")
       .ReadsFromDynamoDB(sessions, 'SESSIONS')
       .WritesToDynamoDB(files, 'FILES')
-      .HandlesSyncApi('Upload@Host');
+      .VerifiesSignatures()
+      .HandlesSyncApi('Upload@Host')
 
     LAMBDA
       .New(this, "Found")
-      .WritesToDynamoDB(sessions, 'SESSIONS')
+      .ReadsFromDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Found@Host')
       .InvokesHandler('HandleFound@Host');;
 

@@ -17,6 +17,7 @@ class VAULT(HOST):
         self.On('VerifyUpload@Host', self._verifyWalletSignature)
         
 
+    # ✅ DONE
     def _verifyWalletSignature(self, msg:MSG, session:ITEM):
         # 🏃 If the user is bound, check the signature with the public in the vault.
         if not session.IsMissingOrEmpty('Wallet.WalletID'):
@@ -66,6 +67,7 @@ class VAULT(HOST):
         )
 
 
+    # ✅ DONE
     def HandleBind(self, event):
         ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZf81764583b31439f999550159 '''
         '''
@@ -78,82 +80,59 @@ class VAULT(HOST):
             }]
         }
         '''
-        msg = self.Msg(event)
-
-        # Validate if the session is still active in 🪣 Sessions: 🤗 Host
-        session = self.Host().ValidateSession(msg)
+        msg, session = self.VerifyWalletMsg(event)
         
         # Optionally, confirm the binding with an 😶 Identity
-        self.Trigger('VALIDATE@BIND', msg)
+        outcomes = { 
+            'Confirmed': True,
+            'VaultID': None
+        }
+        self.Trigger('HandleBind@Vault', event, outcomes)
 
-        # Add to 🪣 Wallets 
-        vaultID = "<TBC>"
         broker = session.Require('Wallet.Broker')
         walletID = msg.Require('WalletID')
+        vaultID = outcomes['VaultID']
 
-        self.Wallets().Upsert(
-            id= self.WalletKey(
-                broker= broker,
-                walletID= walletID
-            ),
-            item= {
-                "VaultID": vaultID,
-                "Broker": broker,
-                "WalletID": walletID,
-                "PublicKey": msg.Require('PublicKey'),
-                "Confirmed": False
-            }
-        )
-
-        self.Sessions().Upsert(
-            id= session.Require['SessionID'], 
-            item= { "VaultID": vaultID }
-        )
+        # Update 🪣 Session
+        session.Att('VaultID', vaultID)
+        session.Update()
 
         # Add to 🪣 Binds
         binds = []
-
         for code in msg.Structs('Codes'):
 
-            bindID = dtfw.Utils().UUID()
-
+            bindID = self.UUID()
             binds.append({
                 "BindID": bindID,
                 "Code": code
             })
 
-            self.Binds().Upsert(
-                id= bindID,
-                item= {
-                    "BindID": bindID,
-                    "Broker": broker,
-                    "WalletID": walletID,
-                    "Code": code.Require('Code')
-                }
-            )
+            # TODO: consider removing this table.
+            self.Binds().Upsert({
+                "BindID": bindID,
+                "Broker": broker,
+                "WalletID": walletID,
+                "Code": code.Require('Code')
+            })
 
-        # Call 🐌 Bound: 🤵📎 Broker. Binds
-        bound = dtfw.Msg()
-        bound.To(msg.From())
-        bound.Body({
-            "WalletID": msg.Require('WalletID'),
-            "Request": event,
-            "Binds": binds
+        # Add to 🪣 Wallets 
+        wallet = self.Wallets().Upsert({
+            'Broker': broker,
+            'WalletID': walletID,
+            'VaultID': vaultID,
+            'Confirmed': outcomes['Confirmed'],
+            'PublicKey': msg.Require('PublicKey'),
         })
 
-        dtfw.Messenger().Send(bound, source='Vault-Bind')
-        
-        ''' Broker.Bound: 🐌 https://quip.com/oSzpA7HRICjq/-Broker-Binds#temp:C:DSD3f7309f961e24f0ebb5897e2f '''
-        '''
-        "Body": {
-            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
-            "Request": {...}
-            "Binds": [{
-                "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
-                "Code": "iata.org/SSR/WCHR"
-            }]
-        }
-        '''        
+        old = wallet.Att('Binds', default=[])
+        wallet.Att('Binds', old + binds)
+        wallet.Update()
+
+        # Call 🐌 Bound: 🤵📎 Broker. Binds
+        self.Broker().InvokeBound(
+            source='Vault-Bind',
+            binds= binds,
+            request= event)
 
 
     def HandleContinue(self, event):
@@ -163,30 +142,27 @@ class VAULT(HOST):
             "Continue": "6704488d-fb53-446d-a52c-a567dac20d20"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.Msg(event)
 
 
     def HandleDisclose(self, event):
         ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZa3f3ba7f94154a2fbd520e931 '''
         '''
         "Body": {
+            "Consumer": "any-coffee-shop.com",
+            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
+            "Language": "en-us",
             "Binds": [{
                 "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5"
             }],
-            "Session": {
-                "Consumer": "any-coffee-shop.com",
-                "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
-                "Language": "en-us"
-            }
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.Msg(event)
 
         # Validate the user’s signature in the ✉️ Msg
         # -> compare with the key in 🪣 Wallets
 
-        sessionID = msg.Require('Session.SessionID')
-        session = dtfw.Host().Session(sessionID)
+        session = self.Sessions(event)
 
         wallet = self.Wallet(
             broker= session.Broker(),
@@ -224,7 +200,7 @@ class VAULT(HOST):
                 "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa4"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.Msg(event)
 
 
     def HandleUnbind(self, event):
@@ -234,4 +210,4 @@ class VAULT(HOST):
             "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.Msg(event)

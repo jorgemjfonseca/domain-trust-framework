@@ -17,8 +17,16 @@ export interface SyncApiDkimDependencies {
 export class SyncApiDkim extends STACK {
 
   private static readonly SIGNER_FN = 'SyncApiDkim-Signer';
-  public static readonly VALIDATOR_FN = 'SyncApiDkim-Validator';
-  public static readonly DKIM_READER_FN = 'SyncApiDkim-DkimReader';
+  private static readonly VALIDATOR_FN = 'SyncApiDkim-Validator';
+  private static readonly DKIM_READER_FN = 'SyncApiDkim-DkimReader';
+
+  public static GetValidator(scope: STACK) {
+    return LAMBDA.Import(scope, SyncApiDkim.VALIDATOR_FN);
+  }
+
+  public static GetReader(scope: STACK) {
+    return LAMBDA.Import(scope, SyncApiDkim.DKIM_READER_FN);
+  }
 
   public static New(scope: Construct, deps: SyncApiDkimDependencies): SyncApiDkim {
     const ret = new SyncApiDkim(scope);
@@ -96,13 +104,27 @@ export class SyncApiDkim extends STACK {
       .New(this, 'DkimReaderFn')
       .Export(SyncApiDkim.DKIM_READER_FN);
 
-    NODEJS
+    const validator = NODEJS
       .New(this, 'ValidatorFn')
       .Export(SyncApiDkim.VALIDATOR_FN)
       .AddEnvironment('DOMAIN_NAME', domainName);
 
+    // REGISTER EXTENSION
+    LAMBDA
+      .prototype
+      .VerifiesSignatures = function() {
+        this.InvokesLambda(validator);
+        return this;
+      };
   }
 
+}
 
 
+declare module '../../../Common/LAMBDA/LAMBDA' {
+  interface LAMBDA {
+
+    VerifiesSignatures(): LAMBDA;
+
+  }
 }

@@ -6,7 +6,7 @@ from BROKER_SETUP import BROKER_SETUP
 from DTFW import DTFW
 
 
-class BROKER_SESSIONS(DTFW, BROKER_SETUP):
+class BROKER_SESSIONS(BROKER_SETUP, DTFW):
     ''' 👉 https://quip.com/HrgkAuQCqBez#bXDABAe5brB '''
 
 
@@ -30,10 +30,7 @@ class BROKER_SESSIONS(DTFW, BROKER_SETUP):
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        msg = self.Msg(event)
-
-        wallet = self.Wallets().Get(msg)
-        wallet.Require()         
+        msg, wallet = self.VerifySignature(event)
 
         '''
         {
@@ -61,8 +58,8 @@ class BROKER_SESSIONS(DTFW, BROKER_SETUP):
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }
         '''
-        self.Msg(event)
-        
+        msg, wallet = self.VerifySignature(event)
+
     
 
     def HandleCheckout(self, event):
@@ -74,7 +71,7 @@ class BROKER_SESSIONS(DTFW, BROKER_SETUP):
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }
         '''
-        dtfw.Msg(event)
+        msg, wallet = self.VerifySignature(event)
     
 
     def HandleAbandon(self, event):

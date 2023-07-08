@@ -5,7 +5,6 @@ import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
 import { SyncApiDkim } from '../../SyncApiDkim/stack/SyncApiDkim';
 import { DomainName } from '../../DomainName/stack/DomainName';
-import { Scope } from 'aws-cdk-lib/aws-ecs';
 
 export interface SyncApiHandlersDependencies {
   syncApiDkim: SyncApiDkim
@@ -72,11 +71,8 @@ export class SyncApiHandlers extends STACK {
       .New(this, 'Map')
       .Export(SyncApiHandlers.MAP);
 
-    const dkimReaderFn = LAMBDA
-      .Import(this, SyncApiDkim.DKIM_READER_FN);
-
-    const validatorFn = LAMBDA
-      .Import(this, SyncApiDkim.VALIDATOR_FN);
+    const dkimReaderFn = SyncApiDkim.GetReader(this);
+    const validatorFn = SyncApiDkim.GetValidator(this);
 
     // RECEIVER FUNCTION
     LAMBDA

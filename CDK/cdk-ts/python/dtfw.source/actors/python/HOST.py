@@ -54,6 +54,7 @@ class HOST(DTFW, HANDLER, UTILS):
     def VerifyBrokerMsg(self, event):
         msg = self.Msg(event)
         session = self.Sessions().Get(msg.Body())
+        session.Require('Wallet.Broker')
         session.Match('Wallet.Broker', msg.From())
         return msg, session
     
@@ -62,7 +63,8 @@ class HOST(DTFW, HANDLER, UTILS):
     def VerifyWalletMsg(self, event):
         msg = self.Msg(event)
         session = self.Sessions().Get(msg.Body())
-        session.Match('Wallet.Locator', msg.Att('Locator'))
+        session.Require('Wallet.Locator')
+        session.Match('Wallet.Locator', msg.Require('Locator'))
         return msg, session
 
 
@@ -125,7 +127,7 @@ class HOST(DTFW, HANDLER, UTILS):
         msg, session = self.VerifyBrokerMsg(event)
 
         goodbye = { 'Goodbye': True }
-        self.Trigger('HandleCheckOut@Host', msg, session, goodbye)
+        self.Trigger('HandleCheckOut@Host', event, goodbye)
         if goodbye['Goodbye']: 
             self.Broker().InvokeGoodbye(event)
         

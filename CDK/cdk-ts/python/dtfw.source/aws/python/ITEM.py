@@ -36,3 +36,8 @@ class ITEM(STRUCT):
     def Update(self):
         ''' 👉 Updates the item on its original table. '''       
         self.Table().Update(self)
+
+
+    def Save(self):
+        ''' 👉 Updates the item on its original table. '''       
+        self.Table().Update(self)

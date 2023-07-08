@@ -98,15 +98,16 @@ class DYNAMO:
 
 
     def Insert(self, any: any):
-        self._save(any=any, method='INSERT')
+        return self._save(any=any, method='INSERT')
     
 
     def Update(self, any: any):
-        self._save(any=any, method='UPDATE')        
+        return self._save(any=any, method='UPDATE')        
     
 
     def Upsert(self, any: any):
         self._save(any=any, method='INSERT,UPDATE')
+        return self.Get(any)
 
 
     def Delete(self, struct: STRUCT):
