@@ -49,9 +49,9 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
         }
 
 
+    # ✅ DONE
     def HandleTalker(self, event):
-        ''' 🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXDff3472e2ec4d4733bd1b38141 '''
-        '''
+        ''' 🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXDff3472e2ec4d4733bd1b38141 
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
             "Host": "iata.org",
@@ -60,8 +60,13 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
         '''
         msg, wallet = self.VerifySignature(event)
 
+        self.Host().InvokeTalker(
+            source= 'Broker-Talker',
+            to= msg.Require('Host'),
+            sessionID= msg.Require('SessionID'))
+            
     
-
+    # ✅ DONE
     def HandleCheckout(self, event):
         ''' 🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXDca9dada42bf6431daed5f1c07 '''
         '''
@@ -72,6 +77,11 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
         }
         '''
         msg, wallet = self.VerifySignature(event)
+
+        self.Host().InvokeChekOut(
+            source='Broker-Checkout', 
+            to= msg.Require('Host'),
+            sessionID= msg.Require('SessionID'))
     
 
     def HandleAbandon(self, event):
@@ -83,7 +93,15 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }
         '''
-        self.Msg(event)
+        msg, wallet = self.VerifySignature(event)
+
+        # For every vault in 🪣 Queries: 🤵📎 Broker. Share():
+            # where session’s match
+            # call 🐌 Suppress: 🗄️ Vault
+        # Call 🐌 Abandoned: 🤗 Host on the host
+        # Remove from 🪣 Sessions
+
+
     
 
     def HandleAssess(self, event):

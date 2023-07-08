@@ -9,18 +9,20 @@ def test():
     return 'this is MESSENGER test.'
 
 
-class MESSENGER:
-    ''' 👉 Messagenger behaviour of a domain. '''
+class MESSENGER(DTFW):
+    ''' 
+    🐌 Messagenger behaviour of a domain. \n
+    👉 https://quip.com/Fxj4AdnE6Eu5/-Messenger
+    '''
     
 
-    def _publish(self, data:any, source:str, to:str=None):
+    def _publish(self, data:any, source:str):
+        ''' 👉 Publishes a message to the BUS. '''
         
         msg = dtfw.Msg(data)
+
         # Validate if there's a destination domain.
-        if (to):
-            msg.To(to)
-        else:
-            to = msg.To()
+        msg.To()
 
         # Send
         detailType = msg.Subject()
@@ -33,8 +35,15 @@ class MESSENGER:
             detail= envelope)
         
 
-    def Send(self, msg:MSG, source:str, to:str=None):
-        self._publish(msg, source, to)
+    def Send(self, msg:MSG, source:str):
+        ''' 👉 Publishes a message to the BUS. '''
+        self._publish(msg, source)
+
+
+    def Push(self, source:str, to:str, body:any):
+        ''' 👉 Publishes a message to the BUS. '''
+        msg = self.Wrap(to=to, body=body)
+        self._publish(msg, source=source)
         
     
     def Reply(self, req: MSG, body:any, source:str):
@@ -50,9 +59,7 @@ class MESSENGER:
     def HandlePublisher(self, event):
         print(f'{event=}')
 
-        self._publish(
-            event, 
-            source= 'Messenger-Publisher')
+        self._publish(event, source= 'Messenger-Publisher')
 
 
     # 👉️ https://quip.com/NiUhAQKbj7zi

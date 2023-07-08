@@ -117,8 +117,16 @@ class HOST(DTFW, HANDLER, UTILS):
 
 
     # ✅ DONE
+    def InvokeChekOut(self, source:str, to:str, sessionID:str):
+        self.Messenger().Push(
+            source=source, 
+            to=to,
+            body= { "SessionID": sessionID })
+        
+
+    # ✅ DONE
     def HandleCheckOut(self, event):
-        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD7b2a9a988f404282af7a63ff9 '''
+        ''' 🐌 https://quip.com/s9oCAO3UR38A#temp:C:TDD7b2a9a988f404282af7a63ff9 '''
         '''
         "Body": {
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
@@ -168,9 +176,16 @@ class HOST(DTFW, HANDLER, UTILS):
 
 
     # ✅ DONE
+    def InvokeTalker(self, source:str, to:str, sessionID:str):
+        self.Messenger().Push(
+            source=source, 
+            to=to,
+            body= { "SessionID": sessionID })
+        
+
+    # ✅ DONE
     def HandleTalker(self, event):
-        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD7f08c68ca48949f19d0efc9bf '''
-        '''
+        ''' 🐌 https://quip.com/s9oCAO3UR38A#temp:C:TDD7f08c68ca48949f19d0efc9bf 
         "Body": {
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }

@@ -69,28 +69,18 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
         }   
 
 
-    def InvokeBound(self, source:str, binds:List[object], request:MSG):
-        ''' Broker.Bound: 🐌 https://quip.com/oSzpA7HRICjq/-Broker-Binds#temp:C:DSD3f7309f961e24f0ebb5897e2f 
-        "Body": {
-            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
-            "Request": {...}
-            "Binds": [{
-                "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
-                "Code": "iata.org/SSR/WCHR"
-            }]
-        }
-        '''        
+    # ✅ DONE
+    def InvokeBound(self, source:str, to:str, walletID:str, binds:List[object], request:MSG):
+        ''' 🏃 Broker.Bound: 🐌 https://quip.com/oSzpA7HRICjq/-Broker-Binds#temp:C:DSD3f7309f961e24f0ebb5897e2f '''        
 
-        # Call 🐌 Bound: 🤵📎 Broker. Binds
-        bound = self.Msg()
-        bound.To(request.From())
-        bound.Body({
-            "WalletID": request.Require('WalletID'),
-            "Request": request,
-            "Binds": binds
-        })
-
-        self.Messenger().Send(bound, source=source)
+        self.Messenger().Push(
+            source= source,
+            to= to,
+            body= {
+                "WalletID": walletID,
+                "Request": request.Body(),
+                "Binds": binds
+            })
 
 
     def HandleBound(self, event):
@@ -105,7 +95,7 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
             }]
         }
         '''
-        dtfw.Msg(event)
+        self.Msg(event)
 
 
     def HandleUnbind(self, event):

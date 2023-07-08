@@ -131,6 +131,8 @@ class VAULT(HOST):
         # Call 🐌 Bound: 🤵📎 Broker. Binds
         self.Broker().InvokeBound(
             source='Vault-Bind',
+            to= broker,
+            walletID= walletID,
             binds= binds,
             request= event)
 

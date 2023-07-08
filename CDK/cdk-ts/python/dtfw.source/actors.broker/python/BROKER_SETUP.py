@@ -3,12 +3,13 @@
 
 import string
 import random
+from BROKER import BROKER
 
 from DTFW import DTFW
 
 
 # ✅ DONE
-class BROKER_SETUP(DTFW):
+class BROKER_SETUP():
     ''' 👉 https://quip.com/zaYoA4kibXAP/-Broker-Setup '''
 
 
