@@ -42,12 +42,14 @@ export class Host extends STACK {
     LAMBDA
       .New(this, "Talker")
       .WritesToDynamoDB(sessions, 'SESSIONS')
-      .HandlesMessenger('Talker@Host');
+      .HandlesMessenger('Talker@Host')
+      .InvokesHandler('HandleTalker@Host');
 
     LAMBDA
       .New(this, "CheckOut")
       .WritesToDynamoDB(sessions, 'SESSIONS')
-      .HandlesMessenger('CheckOut@Host');
+      .HandlesMessenger('CheckOut@Host')
+      .InvokesHandler('HandleCheckOut@Host');
 
     LAMBDA
       .New(this, "Abandoned")
@@ -69,7 +71,8 @@ export class Host extends STACK {
     LAMBDA
       .New(this, "Found")
       .WritesToDynamoDB(sessions, 'SESSIONS')
-      .HandlesMessenger('Found@Host');
+      .HandlesMessenger('Found@Host')
+      .InvokesHandler('HandleFound@Host');;
 
   }
 }

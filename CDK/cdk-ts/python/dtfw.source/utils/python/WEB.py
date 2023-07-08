@@ -57,6 +57,20 @@ class WEB:
         return base64.b64encode(urlopen(url).read())
     
 
+    def GetImageQR(self, data: str) -> str:
+        # 👉 https://goqr.me/api/doc/create-qr-code/
+        # Example: http://api.qrserver.com/v1/create-qr-code/?size=200x200&data=🤝dtfw.org/WALLET,1,broker.com,ASD123
+        base64 = self.GetImage(f'http://api.qrserver.com/v1/create-qr-code/?size=200x200&data={data}')
+
+        # 👉 https://stackoverflow.com/questions/8499633/how-to-display-base64-images-in-html
+        '''Display as 
+        <img src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAAUA
+                AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
+                9TXL0Y4OHwAAAABJRU5ErkJggg==" alt="Red dot" />
+        '''
+        return base64
+    
+
     def HttpResponse(self, code=200, body='', format='json'):
         print(f'HttpResponse: {body=}')
         print(f'HttpResponse: {format=}')

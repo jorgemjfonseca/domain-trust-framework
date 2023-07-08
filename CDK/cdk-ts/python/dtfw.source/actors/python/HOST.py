@@ -162,7 +162,7 @@ class HOST(DTFW, HANDLER, UTILS):
         }
         '''
         msg, session = self.VerifyBrokerMsg(event)
-        self.Trigger('HandleFound@Host', msg, session)
+        self.Trigger('HandleFound@Host', event)
 
 
     # ✅ DONE
@@ -175,7 +175,7 @@ class HOST(DTFW, HANDLER, UTILS):
         '''
         msg, session = self.VerifyBrokerMsg(event)
         self.Trigger('VerifyTalker@Host', msg, session)
-        self.Trigger('HandleTalker@Host', msg, session)
+        self.Trigger('HandleTalker@Host', event)
 
 
     # ✅ DONE

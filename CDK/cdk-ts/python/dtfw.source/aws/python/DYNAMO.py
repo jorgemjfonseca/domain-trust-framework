@@ -47,10 +47,16 @@ class DYNAMO:
 
     def Get(self, key:any) -> ITEM:
         ''' 
-        👉 Gets the item where the compositive key can be derived from the atributes of the given object.\n
-        GIVEN a table with key columns=[A,C]
+        👉 Gets the item with ID=key, or where the compositive key can be derived from the atributes of the given object.\n
+        GIVEN a table with keys=[ID,A,C]
         WHEN received key={A:x, B:y, C:z}       
          THEN return item where ID={x/z}" 
+
+        WHEN received key=123
+         THEN return item where ID=123
+
+        WHEN received key='abc'
+         THEN return item where ID='abc'
         '''
         if not key:
             return None

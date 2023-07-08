@@ -452,6 +452,18 @@ export class LAMBDA extends CONSTRUCT {
     }
 
     
+    /** 👉 Invokes all lambdas. 
+     * Consider instead InvokesLabda(fn:LAMBDA, envName:str) to grant invocation to a single lambda. */
+    public InvokesLambdas(): LAMBDA {
+      // https://stackoverflow.com/questions/62201988/aws-cdk-how-to-grant-invoke-permissions-on-a-lambda-to-api-gateway-before-depl
+      this.Super.role?.addToPrincipalPolicy(new iam.PolicyStatement({
+        resources: ['*'],
+        actions: ['lambda:InvokeFunction'] 
+      }));
+      return this;
+    }
+
+
     public InvokesLambda(fn: LAMBDA, envName?: string): LAMBDA {
       // Error: "Cannot get policy fragment of PublisherBehaviour/${Token[TOKEN.1378]}, resource imported without a role"
       // But it's already authorized for any Lambda invocation, so we're good.

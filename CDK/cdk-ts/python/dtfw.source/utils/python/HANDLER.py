@@ -5,16 +5,17 @@ from AWS import AWS
 from UTILS import UTILS
 
 
+# ✅ DONE
 class HANDLER(AWS, UTILS): 
     ''' 🏃 Registers and triggers code events. '''
 
 
     def __init__(self):
         self.Memory = []
-        if self.Enrironment('TRIGGERS'):
-            self.Table = self.Dynamo('TRIGGERS', keys=['Event'])
+        self.Table = self.Dynamo('HANDLERS')
 
 
+    # ✅ DONE
     def On(self, event:str, trigger:object):
         ''' 
         🏃 Registers a trigger for the event \n
@@ -25,25 +26,24 @@ class HANDLER(AWS, UTILS):
         self.Memory[event].append(trigger)
 
 
+    # ✅ DONE
     def Trigger(self, event, *args):
         ''' 
         🏃 Runs all triggers registered for the event. \n
         👉 https://stackoverflow.com/questions/13783211/how-to-pass-an-argument-to-a-function-pointer-parameter 
         '''
 
-        # Read from memory
+        # Read from memory and execute the python functin.
         if event in self.Memory:
             event = self.Memory[event]
             for trigger in event:
                 trigger(*args)
 
-        # Read from Dynamo
+        # Read from Dynamo and invoke the lambda function.
         if self.Table:
             ret = None
-            event = self.Table.Get({ 'Event': event })
-            for trigger in event.Structs('Triggers'):
-                name = trigger.Att('Lambda')
-                if name: 
-                    ret = self.Lambda(name).Invoke(*args)
+            event = self.Table.Get(event)
+            for trigger in event.List('Lambdas'):
+                ret = self.Lambda(trigger).Invoke(*args)
             # return the value of the last invocation.
             return ret

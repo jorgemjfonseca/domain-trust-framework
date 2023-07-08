@@ -5,16 +5,15 @@ import string
 import random
 
 from DTFW import DTFW
-dtfw = DTFW()
 
 
 # ✅ DONE
-class BROKER_SETUP:
+class BROKER_SETUP(DTFW):
     ''' 👉 https://quip.com/zaYoA4kibXAP/-Broker-Setup '''
 
 
     # ✅ DONE
-    def Wallets(): 
+    def Wallets(self): 
         ''' 👉 https://quip.com/zaYoA4kibXAP#temp:C:DQN5a1b1a16ec7f4a29907cd1215'''
         '''
         {    
@@ -55,11 +54,11 @@ class BROKER_SETUP:
             }
         }
         '''
-        return dtfw.Dynamo('WALLETS', keys=['WalletID'])
+        return self.Dynamo('WALLETS', keys=['WalletID'])
 
 
     # ✅ DONE
-    def Locators():
+    def Locators(self):
         ''' 👉 https://quip.com/zaYoA4kibXAP#temp:C:DQN0b6b0f28ad7b4ec8b5cac187e '''
         '''
         {    
@@ -67,7 +66,7 @@ class BROKER_SETUP:
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        return dtfw.Dynamo('LOCATORS', keys=['Locator'])
+        return self.Dynamo('LOCATORS', keys=['Locator'])
     
 
     # ✅ DONE
@@ -91,7 +90,16 @@ class BROKER_SETUP:
 
     # ✅ DONE
     def Domain(self) -> str:
-        return dtfw.Utils().Enrironment('DOMAIN')
+        return self.Utils().Enrironment('DOMAIN')
+
+
+    # ✅ DONE
+    def VerifySignature(self, event):
+        msg = self.Msg(event)
+        wallet = self.Wallets().Get(msg.Body())
+        publicKey = wallet.Require('PublicKey')
+        msg.VerifySignature(publicKey)
+        return msg, wallet
 
 
     # ✅ DONE
@@ -103,9 +111,9 @@ class BROKER_SETUP:
             "PublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDH+wPrKYG1KVlzQUVtBghR8n9dzcShSZo0+3KgyVdOea7Ei7vQ1U4wRn1zlI5rSqHDzFitblmqnB2anzVvdQxLQ3UqEBKBfMihnLgCSW8Xf7MCH+DSGHNvBg2xSNhcfEmnbLPLnbuz4ySn1UB0lH2eqxy50zstxhTY0binD9Y+rwIDAQAB"
         }
         '''
-        msg = dtfw.Msg(event) 
+        msg = self.Msg(event) 
 
-        walletID = dtfw.Utils().UUID()
+        walletID = self.UUID()
         brokerDomain = self.Domain()
         brokerLocator = self.UnusedLocator()
         
@@ -147,9 +155,7 @@ class BROKER_SETUP:
             "Language": "en-us"
         }
         '''
-        msg = dtfw.Msg(event)
-        wallet = self.Wallets().Get(msg)
-        wallet.Require()
+        msg, wallet = self.VerifySignature(event)
 
         # Call 🚀 Translate: 🕸 Graph for:
         domains = []
@@ -160,7 +166,7 @@ class BROKER_SETUP:
         for issuer in wallet.Structs('Issuers'):
             domains.append(issuer.Require('Issuer'))
 
-        ret = dtfw.Graph().InvokeTranslate({
+        ret = self.Graph().InvokeTranslate({
             "Language": msg.Require('Language'),
             "Domains": domains
         })
@@ -193,7 +199,7 @@ class BROKER_SETUP:
         wallet.Update()
 
         # Call 🐌 Translated: 📣 Notifier
-        dtfw.Notifier().Invoke(
+        self.Notifier().Invoke(
             notifier= wallet.Require('Notifier'),
             data= {
                 "WalletID": msg.Require('WalletID'),
@@ -211,7 +217,7 @@ class BROKER_SETUP:
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.Msg(event)
 
         wallet = self.Wallets().Get(msg)
         wallet.Require()
@@ -248,7 +254,7 @@ class BROKER_SETUP:
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.Msg(event)
         wallet = self.Wallets().Get(msg)
         wallet.Require()
 
@@ -256,18 +262,8 @@ class BROKER_SETUP:
         locator = wallet.Require('Locator')
         data = f'🤝dtfw.org/WALLET,1,{brokerDomain},{locator}'
 
-        # 👉 https://goqr.me/api/doc/create-qr-code/
-        # Example: http://api.qrserver.com/v1/create-qr-code/?size=200x200&data=🤝dtfw.org/WALLET,1,broker.com,ASD123
-        base64 = dtfw.Web().GetImage('http://api.qrserver.com/v1/create-qr-code/?size=200x200&data={data}')
-
-        # 👉 https://stackoverflow.com/questions/8499633/how-to-display-base64-images-in-html
-        '''Display as 
-        <img src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAAUA
-                AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
-                9TXL0Y4OHwAAAABJRU5ErkJggg==" alt="Red dot" />
-        '''
         return {
-            "Base64": base64
+            "Base64": self.GetImageQR(data)
         }
 
         

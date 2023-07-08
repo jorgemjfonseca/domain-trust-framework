@@ -66,8 +66,14 @@ class STRUCT:
     def Att(self, name:str, default=None, root=None, set:any=None) -> any:
         """ 
         👉 Sets or gets the value from the referenced attribute. 
-        To get chained atributes, use '.' for the hierarchy 
-        - e.g., name='Parent.Child' will fetch self._obj['Parent']['Child'].
+
+        To get chained atributes, use '.' for the hierarchy.
+
+        GIVEN name='Parent' 
+         THEN returns self._obj['Parent']
+
+        GIVEN name='Parent.Child' 
+         THEN returns self._obj['Parent']['Child']
         """
 
         # hierarchy navigation
