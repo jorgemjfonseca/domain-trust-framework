@@ -83,7 +83,7 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }
         '''
-        dtfw.Msg(event)
+        self.Msg(event)
     
 
     def HandleAssess(self, event):
@@ -93,7 +93,7 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
             "QR": "🤝dtfw.org/QR,1,any-printer.com,7V8KD3G"
         }
         '''
-        dtfw.Msg(event)
+        self.Msg(event)
     
 
     def InvokeGoodbye(self, event):
@@ -107,7 +107,7 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
             "Message": "Parking ended for vehicle AB-12-34.".
         }
         '''
-        dtfw.Msg(event)
+        self.Msg(event)
     
 
     
