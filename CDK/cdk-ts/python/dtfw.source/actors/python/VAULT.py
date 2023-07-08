@@ -60,7 +60,7 @@ class VAULT(HOST):
 
     # ✅ DONE
     def TrustsConsumer(self, domain, code) -> bool:
-        return self.Graph().InvokeTrusted(
+        return self.GRAPH().InvokeTrusted(
             domain= domain,
             context= 'CONSUMER',
             code= code
@@ -129,7 +129,7 @@ class VAULT(HOST):
         wallet.Update()
 
         # Call 🐌 Bound: 🤵📎 Broker. Binds
-        self.Broker().InvokeBound(
+        self.BROKER().InvokeBound(
             source='Vault-Bind',
             to= broker,
             walletID= walletID,

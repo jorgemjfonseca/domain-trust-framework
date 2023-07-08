@@ -2,4 +2,4 @@
 
 def handler(event, context):
     from DTFW import DTFW
-    return DTFW().Graph().HandleSchema(event)
+    return DTFW().GRAPH().HandleSchema(event)

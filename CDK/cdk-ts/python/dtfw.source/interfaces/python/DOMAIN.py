@@ -1,6 +1,8 @@
 # 📚 DOMAIN
 
 from DTFW import DTFW
+from MANIFEST import MANIFEST
+from UTILS import UTILS
 dtfw = DTFW()
 
 
@@ -8,7 +10,8 @@ def test():
     return 'this is a DOMAIN test.'
 
 
-class DOMAIN:
+class DOMAIN(UTILS):
+    ''' 👉 Wrapper of a domain. '''
         
     def __init__(self, domain:str=None):
         self._domain = domain
@@ -21,8 +24,8 @@ class DOMAIN:
         return f'https://dtfw.{self._domain}/{path}'
 
 
-    def Manifest(self) -> any:
-        '''Fetches the manifest on the domains endpoint, and returns as an object.'''
+    def FetchManifest(self) -> MANIFEST:
+        ''' 👉 Fetches the manifest on the domains endpoint, and returns as an object.'''
 
         if self._manifest:
             return self._manifest
@@ -32,8 +35,12 @@ class DOMAIN:
             
             self._yaml = dtfw.Web().Get(endpoint)
 
-        self._manifest = dtfw.Utils().FromYaml(self._yaml)
+        yaml = self.FromYaml(self._yaml)
+        self._manifest = MANIFEST(yaml)
 
+        # Check if the manifest is valid.
+        self._manifest.VerifyIdentity(expectedDomain=self._domain)
+    
         return self._manifest
     
 

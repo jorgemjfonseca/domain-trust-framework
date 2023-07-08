@@ -29,9 +29,8 @@ export class Publisher extends STACK {
     });
 
     const subscribers = this.SetUpRegistration();
-    const filter = this.SetUpFilter();
-    const updates = this.SetUpUpdates(subscribers, filter);
-    this.SetUpReplays(updates, filter);
+    const updates = this.SetUpUpdates(subscribers);
+    this.SetUpReplays(updates, subscribers);
   }
 
 
@@ -59,60 +58,12 @@ export class Publisher extends STACK {
     return subscribers;
   }
 
-
-  private static readonly FILTERS = 'Filters';
-  private static GetFilterFn(scope: STACK): LAMBDA {
-    return LAMBDA.Import(scope, 'FilterFn');
+  public static GetUpdates(stack: STACK): DYNAMO {
+    return DYNAMO.Import(stack, Publisher.UPDATES);
   }
-  private SetUpFilter(): SQS {
-
-    const sqs = SQS 
-      .New(this, 'FilterSqs');
-
-    const filters = DYNAMO
-      .New(this, 'Filters')
-      .Export(Publisher.FILTERS);
-
-    LAMBDA
-      .New(this, 'Filter')
-      .TriggeredBySQS(sqs)
-      .ReadsFromDynamoDB(filters, 'FILTERS')
-      .PublishesToMessenger()
-      .Export('FilterFn');
-
-    // REGISTER EXTENSION
-    LAMBDA
-      .prototype
-      .FiltersPublisher = function() {
-        Publisher.FiltersPublisher(this.Scope, this);
-        return this;
-      };
-
-    return sqs;
-  }
-
-
-  public static FiltersPublisher(
-    scope: STACK, 
-    fn: LAMBDA) 
-  {
-    const filters = DYNAMO
-      .Import(scope, Publisher.FILTERS);
-      
-    // Register the function name.
-    filters.PutItem({
-      'ID': {'S':fn.FunctionName()}
-    });
-
-    // Add invoke permission.
-    Publisher
-      .GetFilterFn(scope)
-      .InvokesLambda(fn);
-  }
-
 
   private static readonly UPDATES = 'Updates';
-  private SetUpUpdates(subscribers: DYNAMO, filter: SQS): DYNAMO {  
+  private SetUpUpdates(subscribers: DYNAMO): DYNAMO {  
     
     const updates = DYNAMO
       .New(this, Publisher.UPDATES, {
@@ -121,11 +72,10 @@ export class Publisher extends STACK {
       });
 
     LAMBDA
-      .New(this, 'Updated')
-      .HandlesMessenger('Updated@Publisher')
+      .New(this, 'Publish')
+      .HandlesMessenger('Publish@Publisher')
       .WritesToDynamoDB(updates, 'UPDATES')
-      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
-      .PublishesToQueue(filter, 'FILTER');
+      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS');
 
     return updates;
   }
@@ -136,7 +86,7 @@ export class Publisher extends STACK {
     return DYNAMO.Import(stack, Publisher.TOKENS);
   }
 
-  private SetUpReplays(updates: DYNAMO, filter: SQS) {
+  private SetUpReplays(updates: DYNAMO, subscribers: DYNAMO) {
 
     const tokens = DYNAMO
       .New(this, 'Tokens', { ttl: true })
@@ -146,15 +96,17 @@ export class Publisher extends STACK {
       .New(this, 'Replay')
       .ReadsFromDynamoDB(updates, 'UPDATES')
       .WritesToDynamoDB(tokens, 'TOKENS')
+      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Replay@Publisher')
-      .PublishesToQueue(filter, 'FILTER');
+      .PublishesToMessenger();
 
     LAMBDA
       .New(this, 'Next')
       .HandlesMessenger('Next@Publisher')
       .ReadsFromDynamoDB(updates, 'UPDATES')
+      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
       .WritesToDynamoDB(tokens, 'TOKENS')
-      .PublishesToQueue(filter, 'FILTER');
+      .PublishesToMessenger();
 
   }
 
@@ -162,9 +114,3 @@ export class Publisher extends STACK {
 }
 
 
-
-declare module '../../../Common/LAMBDA/LAMBDA' {
-  interface LAMBDA {
-    FiltersPublisher(): LAMBDA;
-  }
-}

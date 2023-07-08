@@ -33,17 +33,24 @@ class HANDLER(AWS, UTILS):
         👉 https://stackoverflow.com/questions/13783211/how-to-pass-an-argument-to-a-function-pointer-parameter 
         '''
 
+        ret = None
+
         # Read from memory and execute the python functin.
         if event in self.Memory:
             event = self.Memory[event]
             for trigger in event:
                 trigger(*args)
 
+        return self.TriggerLambdas(event, *args)
+    
+
+    def TriggerLambdas(self, event, payload) -> any:
         # Read from Dynamo and invoke the lambda function.
+        changes = payload
         if self.Table:
-            ret = None
             event = self.Table.Get(event)
             for trigger in event.List('Lambdas'):
-                ret = self.LAMBDA(trigger).Invoke(*args)
-            # return the value of the last invocation.
-            return ret
+                changes = self.LAMBDA(trigger).Invoke(payload)
+        
+        # return the value of the last invocation.
+        return changes

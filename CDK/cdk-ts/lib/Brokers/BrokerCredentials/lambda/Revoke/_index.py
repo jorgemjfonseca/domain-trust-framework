@@ -2,4 +2,4 @@
 
 def handler(event, context):
     from DTFW import DTFW
-    return DTFW().Broker().Credentials().HandleRevoke(event)
+    return DTFW().BROKER().Credentials().HandleRevoke(event)

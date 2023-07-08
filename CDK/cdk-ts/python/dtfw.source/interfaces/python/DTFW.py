@@ -15,7 +15,7 @@ class DTFW(AWS, UTILS):
     ''' 👉 https://quip.com/z095AywlrA82/-Domain-Trust-Framework '''
     
 
-    def Broker(self):
+    def BROKER(self):
         ''' 👉 https://quip.com/SJadAQ8syGP0/-Broker '''
         if not self._broker: 
             from BROKER import BROKER as proxy
@@ -29,25 +29,26 @@ class DTFW(AWS, UTILS):
     
 
     def DOMAIN(self, name:str=None):
+        ''' 👉 Wrapper of a domain. '''
         from DOMAIN import DOMAIN as proxy
         return proxy(name)
     
 
-    def Graph(self):
+    def GRAPH(self):
         if not self._graph: 
             from GRAPH import GRAPH as proxy
             self._graph = proxy()
         return self._graph
     
 
-    def Host(self):
+    def HOST(self):
         if not self._host: 
             from HOST import HOST as proxy
             self._host = proxy()
         return self._host
 
 
-    def Listener(self):
+    def LISTENER(self):
         if not self._listener:
             from LISTENER import LISTENER as proxy
             self._listener = proxy()
@@ -60,7 +61,7 @@ class DTFW(AWS, UTILS):
         return proxy(manifest)
     
 
-    def Manifester(self):
+    def MANIFESTER(self):
         if not self._manifester:
             from MANIFESTER import MANIFESTER as proxy
             self._manifester = proxy()
@@ -87,14 +88,14 @@ class DTFW(AWS, UTILS):
         return proxy.Wrap(to= to, body= body, subject=subject, header= header)
 
 
-    def Notifier(self):
+    def NOTIFIER(self):
         if not self._notifier:
             from NOTIFIER import NOTIFIER as proxy
             self._notifier = proxy()
         return self._notifier
     
 
-    def Publisher(self):
+    def PUBLISHER(self):
         if not self._publisher:
             from PUBLISHER import PUBLISHER as proxy
             self._publisher = proxy()
@@ -106,17 +107,17 @@ class DTFW(AWS, UTILS):
         return proxy()
     
 
-    def SyncApi(self):
+    def SYNCAPI(self):
         from SYNCAPI import SYNCAPI as proxy
         return proxy()
     
 
-    def Utils(self):
+    def UTILS(self):
         from UTILS import UTILS as proxy
         return proxy()
     
 
-    def Vault(self):
+    def VAULT(self):
         from VAULT import VAULT as proxy
         return proxy()
     

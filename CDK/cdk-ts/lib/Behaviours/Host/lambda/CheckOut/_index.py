@@ -3,4 +3,4 @@
 
 def handler(event, context):
     from DTFW import DTFW
-    return DTFW().Host().HandleCheckOut(event)
+    return DTFW().HOST().HandleCheckOut(event)

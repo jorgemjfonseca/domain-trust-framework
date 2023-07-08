@@ -60,7 +60,7 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
         '''
         msg, wallet = self.VerifySignature(event)
 
-        self.Host().InvokeTalker(
+        self.HOST().InvokeTalker(
             source= 'Broker-Talker',
             to= msg.Require('Host'),
             sessionID= msg.Require('SessionID'))
@@ -78,7 +78,7 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
         '''
         msg, wallet = self.VerifySignature(event)
 
-        self.Host().InvokeChekOut(
+        self.HOST().InvokeChekOut(
             source='Broker-Checkout', 
             to= msg.Require('Host'),
             sessionID= msg.Require('SessionID'))

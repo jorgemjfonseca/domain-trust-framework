@@ -3,10 +3,6 @@
 # TODO implement graph DB
 
 
-def test():
-    return 'this is SUBSCRIBER test.'
-
-
 from DYNAMO import DYNAMO
 from MSG import MSG
 from STRUCT import ITEM, STRUCT
@@ -21,22 +17,82 @@ class GRAPH(DTFW):
         return '<TBD GRAPH>'
     
 
+    def _trusts(self, source, target, role, code):
+        ''' 🏃 Internal method to search a trust path in the database. '''
+        # TODO implement graph DB
+
+        domain = self.MANIFEST(source)
+        if not domain:
+            return False
+
+        return domain.Trusts(
+            domain=target, 
+            role=role, 
+            code=code)
+    
+
+
+    def HandleQueryable(self, event):
+        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA44399e7e0bfc4609a560d6c4a '''
+        # TODO: implement the logic
+
+        '''
+        "Body": {
+            "Host": "any-host.com",
+            "Binds": [{
+                "Vault": "ec.europa.eu",
+                    "Code": "iata.org/SSR/WCHR"
+            }]
+        }
+        '''
+        print(f'{event}')
+        
+        binds = self.MSG(event).Att('Binds')
+        binds['Alert'] = 'Logic not yet implemented, this is just an echo!'
+        return binds
+    
+
+    def HandlePublicKey(self, event):
+        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDAe17e4b66e30846a7b82ecce0c '''
+        # TODO: implement when there's an old issuer who has rotated their keys.
+
+        '''
+        "Body": {
+            "Issuer": "nhs.uk",
+            "Date": "2022/01/09"
+        }
+        '''
+        msg = self.MSG(event)
+        return {
+            'Alert': 'Not yet implemented!'
+        }
+    
+
+
+    # ✅ DONE
     def Domains(self):
         return self.DYNAMO('DOMAINS')
     
-
+    
     # ✅ DONE
-    def StoredManifest(self, domainName):
-        item = self.Domains().Get(domainName)        
-        manifest = self.MANIFEST(item['Manifest'])
-        # TODO: test if we need a UTILS.FromYaml/Json
-
+    def LoadManifest(self, domain):
+        item = self.Domains().Get(domain)
+        yaml = item.Require('Manifest')
+        obj = self.FromYaml(yaml)
+        manifest = self.MANIFEST(obj)
         return manifest
 
 
     # ✅ DONE
     def Codes(self) -> DYNAMO:
         return self.DYNAMO('CODES')
+    
+
+    # ✅ DONE
+    def LoadCode(self, code):
+        item = self.Codes().Get(code)
+        struct = self.CODE(item)
+        return struct
 
 
     # ✅ DONE
@@ -49,8 +105,9 @@ class GRAPH(DTFW):
         return self.STRUCT(resp)
 
 
-    def HandleConsume(self, event):
-        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAeaf662df90ec442284b7aaef9 '''
+    # ✅ DONE
+    def HandleSubscriber(self, event):
+        ''' 🐌 https://quip.com/hgz4A3clvOes#temp:C:bDAeaf662df90ec442284b7aaef9 '''
 
         print(f'{event}')
 
@@ -58,23 +115,11 @@ class GRAPH(DTFW):
 
             domainName = r['Domain']
 
-            self.DYNAMO('DOMAINS').Upsert(domainName, {
+            self.Domains().Upsert(domainName, {
                 'Domain': domainName,
                 'Timestamp': self.Timestamp(),
-                'Manifest': self.DOMAIN(domainName).Manifest()
+                'Manifest': self.DOMAIN(domainName).FetchManifest()
             })
-            
-
-    def _trusts(self, source, target, role, code):
-        ''' 🏃 Internal method to search a trust path in the database. '''
-        domain = self.MANIFEST(source)
-        if not domain:
-            return False
-
-        return domain.Trusts(
-            domain=target, 
-            role=role, 
-            code=code)
         
 
     # ✅ DONE
@@ -98,9 +143,10 @@ class GRAPH(DTFW):
         return resp.RequireBool('Trusted')
 
     
+    # ✅ DONE
     def HandleTrusted(self, event):
-        ''' 👉 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
-        # TODO implement graph DB
+        ''' 🚀 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
+        
 
         '''
         "Body": {
@@ -123,10 +169,10 @@ class GRAPH(DTFW):
         }
     
     
+    # ✅ DONE
     def HandleTrusts(self, event):
-        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA71b470c7a4c446e5b43adea7e '''
-        # TODO implement graph DB
-
+        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA71b470c7a4c446e5b43adea7e '''
+        
         '''
         "Body": {
             "Truster": "heathrow.com",
@@ -145,14 +191,13 @@ class GRAPH(DTFW):
         trust = self._trusts(source, target, role, code)
 
         return {
-            'Trusted': trust,
-            'Important': 'Chained trust not yet implemented.'
+            'Trusted': trust
         }
     
 
     # ✅ DONE
     def HandleIdentity(self, event):
-        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAacb56742c6a342a8a3494587d '''
+        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDAacb56742c6a342a8a3494587d '''
 
         '''
         "Body": {
@@ -161,26 +206,6 @@ class GRAPH(DTFW):
         '''
         domainName = self.MSG(event).Att('Domain')
         return self.MANIFEST(domainName).Identity()
-    
-
-    def HandleQueryable(self, event):
-        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA44399e7e0bfc4609a560d6c4a '''
-        # TODO: implement the logic
-
-        '''
-        "Body": {
-            "Host": "any-host.com",
-            "Binds": [{
-                "Vault": "ec.europa.eu",
-                    "Code": "iata.org/SSR/WCHR"
-            }]
-        }
-        '''
-        print(f'{event}')
-        
-        binds = self.MSG(event).Att('Binds')
-        binds['Alert'] = 'Logic not yet implemented, this is just an echo!'
-        return binds
     
 
     # ✅ DONE
@@ -210,7 +235,7 @@ class GRAPH(DTFW):
             "Codes": []
         }
 
-        msg = dtfw.Msg(event)
+        msg = self.MSG(event)
 
         language = msg.Att('Language')
         domains = msg.Att('Domains', default=[])
@@ -220,15 +245,14 @@ class GRAPH(DTFW):
             return ret
         
         for domain in domains:
-            translation = self.MANIFEST(domain).Translate(language)
+            translation = self.LoadManifest(domain).Translate(language)
             ret['Domains'].append({
                 'Domain': domain,
                 'Translation': translation
             })
 
         for code in codes:
-            item = self.CODE(code)
-            translation = dtfw.Code(item).Translate(language)
+            translation = self.LoadCode(code).Translate(language)
             ret['Codes'].append({
                 'Code': code,
                 'Translation': translation
@@ -251,25 +275,9 @@ class GRAPH(DTFW):
         return ret
     
 
-    def HandlePublicKey(self, event):
-        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAe17e4b66e30846a7b82ecce0c '''
-        # TODO: implement when there's an old issuer who has rotated their keys.
-
-        '''
-        "Body": {
-            "Issuer": "nhs.uk",
-            "Date": "2022/01/09"
-        }
-        '''
-        msg = self.MSG(event)
-        return {
-            'Alert': 'Not yet implemented!'
-        }
-    
-
     # ✅ DONE
     def HandleSchema(self, event):
-        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAe24fd83cf9c244078a0f67f7f '''
+        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDAe24fd83cf9c244078a0f67f7f '''
 
         '''
         "Body": {
@@ -278,24 +286,9 @@ class GRAPH(DTFW):
             "Version": "A"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.MSG(event)
         code = msg.Att('Code')
-        item = self.CODE(code)
 
-        return dtfw.Code(item).Schema(
+        return self.LoadCode(code).Schema(
             output= msg.Att('Output'), 
             version= msg.Att('Version'))
-    
-
-    def HandlePublisher(self, event):
-        
-        domainName = self.MSG(event).From()
-        manifest = self.MANIFEST().Fetch(domainName)
-
-        # TODO: save the domain and code
-        # TODO: Ignore older records by looking at the Timestamps (envelope+table)
-        # TODO: Ignore codes that don't match the domain
-        # TODO: Handle codes that are delegate to other domains
-
-        print(f'{event}')
-        return {}

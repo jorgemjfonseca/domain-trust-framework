@@ -32,8 +32,8 @@ class SENDER:
         
         defaults = {
             'Header': {
-                'Correlation': dtfw.Utils().Correlation(),
-                'Timestamp': dtfw.Utils().Timestamp()
+                'Correlation': dtfw.UTILS().Correlation(),
+                'Timestamp': dtfw.UTILS().Timestamp()
             },
             'Body': {}
         }
@@ -62,7 +62,7 @@ class SENDER:
         
         keys = self._get_keys()
         
-        canonicalized = dtfw.Utils().Canonicalize(envelope)
+        canonicalized = dtfw.UTILS().Canonicalize(envelope)
 
         signed = self._sign(
             privateKey=keys['privateKey'], 

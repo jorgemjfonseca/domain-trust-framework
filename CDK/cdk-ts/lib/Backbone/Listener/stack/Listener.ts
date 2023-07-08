@@ -40,12 +40,16 @@ export class Listener extends STACK {
   private SetUpPublisher() {
 
     const subscribers = Publisher.GetSubscribers(this);
+    const updates = Publisher.GetUpdates(this);
 
     LAMBDA
-      .New(this, 'Publisher')
-      .FiltersPublisher()
-      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
-      .PublishesToMessenger();
+      .New(this, 'Enricher')
+      .HandlesEvent('HandleEnrich@Publisher');
+
+    LAMBDA
+      .New(this, 'Filterer')
+      .HandlesEvent('HandleFilter@Publisher');
+
   }
 
 

@@ -44,47 +44,55 @@ export class Graph extends STACK {
 
     const dedups = Subscriber.GetDedups(this);
 
+    // 🐌 https://quip.com/hgz4A3clvOes#temp:C:bDAeaf662df90ec442284b7aaef9
     LAMBDA
-      .New(this, 'Consumer')
+      .New(this, 'Subscriber')
       .TriggeredByDynamoDB(dedups)
       .WritesToDynamoDB(domainsTable, 'DOMAINS')
-      .WritesToDynamoDB(codesTable, 'CODES')
+      .WritesToDynamoDB(codesTable, 'CODES');
       //.WritesToNeptune(neptune);
 
+    // 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA0807933d618043e6b1873dc74
     LAMBDA
       .New(this, 'Trusted')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Trusted@Graph', { ignoreValidation: true });
 
+    // 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA71b470c7a4c446e5b43adea7e
     LAMBDA
       .New(this, 'Trusts')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Trusts@Graph', { ignoreValidation: true });
 
+    // 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDAacb56742c6a342a8a3494587d
     LAMBDA
       .New(this, 'Identity', { yaml: true })
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .HandlesSyncApi('Identity@Graph', { ignoreValidation: true });
 
+    // 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA44399e7e0bfc4609a560d6c4a
     LAMBDA
       .New(this, 'Queryable')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       //.ReadsFromNeptune(neptune)
       .HandlesSyncApi('Queryable@Graph', { ignoreValidation: true });
 
+    // 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54
     LAMBDA
       .New(this, 'Translate')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .ReadsFromDynamoDB(codesTable, 'CODES')
       .HandlesSyncApi('Translate@Graph', { ignoreValidation: true });
 
+    // 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDAe17e4b66e30846a7b82ecce0c
     LAMBDA
       .New(this, 'PublicKey')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')
       .HandlesSyncApi('PublicKey@Graph', { ignoreValidation: true });
 
+    // 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDAe24fd83cf9c244078a0f67f7f
     LAMBDA
       .New(this, 'Schema')
       .ReadsFromDynamoDB(domainsTable, 'DOMAINS')

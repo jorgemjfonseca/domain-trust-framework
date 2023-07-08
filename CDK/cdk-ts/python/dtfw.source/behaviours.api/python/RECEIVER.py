@@ -143,8 +143,8 @@ class RECEIVER:
 
         print ('Returning...')
         if validation['Error']:
-            return dtfw.Utils().HttpResponse(400, output)
-        return dtfw.Utils().HttpResponse(200, output)
+            return dtfw.UTILS().HttpResponse(400, output)
+        return dtfw.UTILS().HttpResponse(200, output)
 
 
     def _parse(self, event):
@@ -182,7 +182,7 @@ class RECEIVER:
         envelope = self._parse(event)
         print(f'{envelope=}')
         if envelope == {}:
-            return dtfw.Utils().HttpResponse(200, { 'Result': 'Inbox is working :)' })
+            return dtfw.UTILS().HttpResponse(200, { 'Result': 'Inbox is working :)' })
 
         speed = {}
         started = self._timer.StartWatch()

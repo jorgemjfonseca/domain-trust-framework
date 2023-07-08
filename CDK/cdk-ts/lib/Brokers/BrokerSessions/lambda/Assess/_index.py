@@ -2,4 +2,4 @@
 
 def handler(event, context):
     from DTFW import DTFW
-    return DTFW().Broker().Sessions().HandleAssess(event)
+    return DTFW().BROKER().Sessions().HandleAssess(event)

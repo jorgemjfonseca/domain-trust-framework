@@ -3,4 +3,4 @@
 
 def handler(event, context):
     from DTFW import DTFW
-    return DTFW().Vault().HandleContinue(event)
+    return DTFW().VAULT().HandleContinue(event)

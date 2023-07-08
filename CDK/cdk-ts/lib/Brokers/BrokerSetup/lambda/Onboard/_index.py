@@ -2,4 +2,4 @@
 
 def handler(event, context):
     from DTFW import DTFW
-    return DTFW().Broker().Setup().HandleOnboard(event)
+    return DTFW().BROKER().Setup().HandleOnboard(event)

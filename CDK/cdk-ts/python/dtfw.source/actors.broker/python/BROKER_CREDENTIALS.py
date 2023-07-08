@@ -71,7 +71,7 @@ class BROKER_CREDENTIALS:
         '''
         msg = dtfw.MSG(event)
 
-        wallet = dtfw.Broker().Setup().Wallets().Get(msg)
+        wallet = dtfw.BROKER().Setup().Wallets().Get(msg)
         wallet.Require()     
 
         '''

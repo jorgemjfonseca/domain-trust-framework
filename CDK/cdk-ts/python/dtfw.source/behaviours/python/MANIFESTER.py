@@ -1,14 +1,13 @@
 # 📚 MANIFEST
 
 from DTFW import DTFW
-dtfw = DTFW()
 
 
 def test():
     return 'this is a MANIFESTER test.'
 
 
-class MANIFESTER:
+class MANIFESTER(DTFW):
         
 
     def HandleAlerter(self, event):
@@ -26,8 +25,8 @@ class MANIFESTER:
 
 
     def _viewer(self, format):
-        manifest = dtfw.MANIFEST().FromAppConfig()
-        return dtfw.Utils().HttpResponse(body=manifest, format=format)
+        manifest = self.MANIFEST().FromAppConfig()
+        return self.HttpResponse(body=manifest, format=format)
 
 
     def HandleYamlViewer(self):

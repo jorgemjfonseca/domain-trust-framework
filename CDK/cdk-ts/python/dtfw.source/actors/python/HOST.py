@@ -137,7 +137,7 @@ class HOST(DTFW, HANDLER, UTILS):
         goodbye = { 'Goodbye': True }
         self.Trigger('HandleCheckOut@Host', event, goodbye)
         if goodbye['Goodbye']: 
-            self.Broker().InvokeGoodbye(event)
+            self.BROKER().InvokeGoodbye(event)
         
 
     # ✅ DONE

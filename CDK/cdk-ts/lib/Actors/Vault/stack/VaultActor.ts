@@ -37,7 +37,7 @@ export class VaultActor extends STACK {
       .New(this, 'Bind')
       .WritesToDynamoDB(binds, 'BINDS')
       .HandlesMessenger('Bind@Vault')
-      .InvokesHandler('HandleBind@Vault');
+      .RaisesEvent('HandleBind@Vault');
 
     this.discloseFn = LAMBDA
       .New(this, 'Disclose')

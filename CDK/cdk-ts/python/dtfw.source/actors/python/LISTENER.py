@@ -1,101 +1,74 @@
 # 📚 LISTENER
 
-# 📚 Listener: https://quip.com/FCSiAU7Eku0X/-Listener
-
-def test():
-    return 'this is SUBSCRIBER test.'
-
 
 from STRUCT import STRUCT
 from ITEM import ITEM
 from MSG import MSG
 from PUBLISHER import PUBLISHER
+from SUBSCRIBER import SUBSCRIBER
 
-class LISTENER(PUBLISHER):
 
+# ✅ DONE
+class LISTENER(PUBLISHER, SUBSCRIBER):
+    ''' 👂 https://quip.com/FCSiAU7Eku0X/-Listener '''
+    
+    
+    # ✅ DONE
+    def HandleEnricher(self, event):
+        '''
+        🐌 Updated: https://quip.com/FCSiAU7Eku0X/-Listener#temp:C:GLfc7d59b1cc13e4c4e89f85ba7f
+        {
+            'UpdateID': self.UUID(),
+            'Domain': msg.From(),
+            'Timestamp': msg.Timestamp(),
+            'Correlation': "125a5c75-cb72-43d2-9695-37026dfcaa48"
+        }
+        🪣 https://quip.com/FCSiAU7Eku0X/-Listener#temp:C:GLf754341e1acba4cca8aa657b87
+        {
+            "Codes": [{
+                "Code": "iata.org/SSR/WCHR"
+            }]
+        }
+        '''
+        msg = self.MSG(event)
+        domain = msg.Require('Domain')
+
+        manifest = self.DOMAIN(domain).FetchManifest()
+        
+        codes = []
+        for code in manifest.Codes():
+            codes.append[{
+                'Code': domain + '/' + code.Require('Path')
+            }]
+
+        event['Codes'] = codes
+        return event
+    
 
     # ✅ DONE
-    def __init__(self):    
-        self.On('HandleFilter@Publisher', self._filter)
-
-
-
-    def _filter(self, update:STRUCT, subscriber:STRUCT, publish:bool):
-        '''
-        update= {
-            "UpdateID": "8e8cb55b-55a8-49a5-9f80-439138e340a2",
-            "Domain": "example.com",
-            "Timestamp": "2018-12-10T13:45:00.000Z"
-        }
-        subscriber= {
-            'Domain': ...
-            'Filter': {
-                "Conditions": [{
-                    "Action": "INCLUDE",
-                    "Query": "iata.org/SSR/*"
-                }]
-            }
-        }
-        '''
-        pass
-
-
-    def HandleConsume(self, event):
-        # 👉 https://quip.com/FCSiAU7Eku0X#temp:C:GLfcf27fefa09924f62b4f449abb
-
-        print(f'{event}')
-
-
-    def HandlePublisher(self, event):
-        # 👉 https://quip.com/FCSiAU7Eku0X/-Listener
-
-        print(f'{event}')
-
-        update = {}
-
-        # TODO
-
-
-    def HandleSubscribe(self, event):
-        # 👉 https://quip.com/FCSiAU7Eku0X/-Listener#temp:C:GLf0d5cf021894d4b6babb7e0f4d
-
+    def HandleFilterer(self, event):
+        # TODO: actually apply the filter -> requires the replay() not to send empty pages.
         '''
         {
-            "Header": {
-                "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
-            }
-            "Body": {
-                "Filter": {
-                    "Conditions": [{
-                        "Action": "INCLUDE",
-                        "Query": "iata.org/SSR/*"
-                    }]
-                }
-            }
+             'Update': {},
+             'Subscriber': {
+                'Domain': 'example.com'
+             },
+             'Ignore': False
         }
         '''
-        msg = self.MSG(event)        
-        return self.Subscribers().Insert({ 
-            'Domain': msg.From(),
-            'Filter': msg.Att('Filter'),
-            'Status': 'SUBSCRIBED'
-        })
+        return {
+            'Ignore': False
+        }
+    
 
+    # ✅ DONE
+    def HandleSubscriber(self, event):
+        ''' 👉 https://quip.com/FCSiAU7Eku0X#temp:C:GLf6557997154774ed384f9db947 '''
 
-    def HandleUpdated(self, event):
-        # 👉 https://quip.com/FCSiAU7Eku0X#temp:C:GLfc7d59b1cc13e4c4e89f85ba7f
-        
         print(f'{event}')
 
-        msg = self.MSG(event)
-        id = self.UUID()
-        update = {
-            'UpdateID': id,
-            'Domain': msg.From(),
-            'Timestamp': msg.Timestamp()
-        }
-
-        self.DYNAMO('UPDATES').Upsert(id, update)
-        
-        # TODO: this should be an event of dynamo, to be ACID
-        self.SQS('PUBLISHER').Send(update)
+        for update in self.DYNAMO().Records(event):
+            msg = self.WRAP(body=update)
+            msg.From(update['Domain'])
+            self.HandlePublish(msg)

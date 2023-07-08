@@ -39,9 +39,16 @@ export class Domain extends STACK {
       .New(this, Domain.HANDLERS)
       .Export(Domain.HANDLERS);
 
-    LAMBDA.prototype.InvokesHandler = 
+    LAMBDA.prototype.RaisesEvent = 
       function(event: string) {
         Domain.RaisesEvent(this, event);
+        return this;
+      };
+
+
+    LAMBDA.prototype.HandlesEvent = 
+      function(event: string) {
+        Domain.HandlesEvent(this, event);
         return this;
       };
 
@@ -65,6 +72,29 @@ export class Domain extends STACK {
     fn.InvokesLambdas();
   }
 
+
+  /** Registers an event to be handled by HANDLER.Trigger */
+  public static HandlesEvent(
+    fn: LAMBDA, 
+    event: string)
+  {
+    const handlers = DYNAMO
+      .Import(fn.Scope, Domain.HANDLERS);
+      
+    // TODO: this replaces any existing customization.
+    //   It should update the record by leaving other lambdas.
+    //   Should not update if this lambda is already registered.
+    handlers.PutItem({
+      'ID': DynamoAttributeValue.fromString(event),
+      'Lambdas': DynamoAttributeValue.fromList([
+        DynamoAttributeValue.fromString(
+          fn.FunctionName()
+        )
+      ])
+    });
+
+  }
+
 }
 
 
@@ -72,7 +102,10 @@ declare module '../../../Common/LAMBDA/LAMBDA' {
   interface LAMBDA {
 
     /** 👉 Registers an event to be handled in python by HANDLER.Trigger() */
-    InvokesHandler(event: string): LAMBDA;
+    RaisesEvent(event: string): LAMBDA;
+
+    /** 👉 Registers an function to be the handler in python for HANDLER.Trigger() */
+    HandlesEvent(event: string): LAMBDA;
 
   }
 }

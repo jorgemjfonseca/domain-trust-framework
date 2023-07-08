@@ -40,8 +40,10 @@ class STRUCT:
         return obj
 
 
-    def Obj(self):
-        ''' 👉 Returns the inner object. '''
+    def Obj(self, replace=None):
+        ''' 👉 Returns or replaces the inner object. '''
+        if replace != None:
+            self._obj = replace
         return self._obj
 
 
@@ -121,7 +123,16 @@ class STRUCT:
     
 
     def Require(self, name:str=None, set:any=None) -> any: 
-        """ 👉 Gets the value from the mandatory attribute, or throws an exception if missing/empty. """
+        """ 👉 Gets the value from the mandatory attribute, or throws an exception if missing/empty. 
+
+        To get chained atributes, use '.' for the hierarchy.
+
+        GIVEN name='Parent' 
+         THEN returns self._obj['Parent']
+
+        GIVEN name='Parent.Child' 
+         THEN returns self._obj['Parent']['Child']
+        """
         if not name:
             if not self._obj:
                 raise RequiredItemMissing()    

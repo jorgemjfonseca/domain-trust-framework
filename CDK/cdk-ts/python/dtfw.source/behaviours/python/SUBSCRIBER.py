@@ -2,6 +2,7 @@
 
 # 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
 from typing import List, Set, Tuple, Dict
+from HANDLER import HANDLER
 
 from ITEM import ITEM
 from STRUCT import STRUCT
@@ -11,7 +12,7 @@ from DTFW import DTFW
 
 
 # ✅ DONE
-class SUBSCRIBER(DTFW):
+class SUBSCRIBER(DTFW, HANDLER):
     ''' 👉 https://quip.com/9ab7AO56kkxY/-Subscriber '''
     
 
@@ -30,12 +31,12 @@ class SUBSCRIBER(DTFW):
     
 
     # ✅ DONE
-    def InvokeUpdate(self, update:any, to:str):
+    def InvokeUpdated(self, update:any, to:str, source:str):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a '''
         
         return self.MESSENGER().Push(
-            source= 'Publisher-Filter',
-            subject= 'Update@Subscriber',
+            source= source,
+            subject= 'Updated@Subscriber',
             to= to,
             body= update)
     
@@ -50,13 +51,19 @@ class SUBSCRIBER(DTFW):
         }
         '''
         msg = self.MSG(event)
-        self.Dedups().Upsert({
+        
+        update = {
             'Publisher': msg.From(),
             'UpdateID': msg.Att('UpdateID', default= self.UUID()), 
             'Timestamp': msg.Att('Timestamp', default= self.Timestamp()),
             'TTL': self.DYNAMO().TTL(days=1),
             'Domain': msg.Require('Domain'),
-        })
+        }
+
+        self.Dedups().Upsert(update)
+
+        # Call additional handlers.
+        self.TriggerLambdas('HandleUpdated@Subscriber')
                 
 
     # ✅ DONE
@@ -101,7 +108,7 @@ class SUBSCRIBER(DTFW):
 
         # Ask for the next group of updates.
         if not msg.IsMissingOrEmpty('Token'):
-            self.Publisher().InvokeNext(
+            self.PUBLISHER().InvokeNext(
                 token= msg.Require('Token'),
                 request= msg,
                 source='Subscriber-Consume')

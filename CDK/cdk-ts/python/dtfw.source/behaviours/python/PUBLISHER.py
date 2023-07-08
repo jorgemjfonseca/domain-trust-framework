@@ -4,17 +4,11 @@
 │  └─ writes to Subscribers table 
 ├─ handles Updated()
 │  ├─ writes to Updates table 
-│  └─ sends to Filter queue
-│     └─ triggers Filter() function
-│        └─ reads from Filters table
-│           └─ loops each registered filterer function
-│           │  └─ invokes function
-│           └─ sends to Messenger
+│  └─ sends to Messenger
 └──handles Replay(), and Next()
     ├── reads from Updates table
     ├── writes to Tokens table
-    └── sends to Filter queue
-        └─ triggers Filter() function...
+    └─ sends to Messenger
 '''
 
 import json
@@ -23,9 +17,6 @@ from MSG import MSG
 from DTFW import DTFW
 from ITEM import ITEM
 from STRUCT import STRUCT
-
-def test():
-    return 'this is PUBLISHER test.'
 
 
 # ✅ DONE
@@ -104,10 +95,8 @@ class PUBLISHER(DTFW, HANDLER):
 
 
     # ✅ DONE
-    def HandleUpdated(self, event):
-        ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK5a453bcdb55e4d41bcc57bbc6 '''
-
-        '''
+    def HandlePublish(self, event):
+        ''' 🐌 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK5a453bcdb55e4d41bcc57bbc6 
         {
             "Header": {
                 "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
@@ -116,53 +105,43 @@ class PUBLISHER(DTFW, HANDLER):
         '''
         msg = self.MSG(event)
 
+        # TODO: this should be a DynamoDB stream event, to be more resilient.
+        #   If the second step fails, a new UpdateID is inserted, growing to infinite.
+        #   By separating the second step, it can fail independently with adding DB items.
+
         # save to Updates table.
-        update = {
+        raw = {
             'UpdateID': self.UUID(),
             'Domain': msg.From(),
-            'Timestamp': msg.Timestamp()
+            'Timestamp': msg.Timestamp(),
+            'Correlation': msg.Correlation()
         }
+        update = self.TriggerLambdas('HandleEnrich@Publisher', raw)
         self.Updates().Upsert(update)
 
         # fan out to all subscribers.
         for subscriber in self.Subscribers().GetAll(): 
-            self.SQS('FILTER').Send({
-                'Update': update,
-                'Subscriber': subscriber
-            })
-
-
-    # ✅ DONE
-    def HandleFilter(self, event):
-        ''' 🏃 https://quip.com/sBavA8QtRpXu/-Publisher''' 
-        
-        # Parse the events from the Filter queue.
-        for msg in self.SQS().ParseMessages(event):
-            '''
-            {
-                'Update': {
-                    "UpdateID": "8e8cb55b-55a8-49a5-9f80-439138e340a2",
-                    "Domain": "example.com",
-                    "Timestamp": "2018-12-10T13:45:00.000Z"
-                },
-                'Subscriber: {
-                    'Domain': ...
-                    'Filter': {...}
-                }
-            }'''
-            
-            # Request confirmation from registered handlers.
-            update = msg.RequireStruct('Update')
-            subscriber = msg.RequireStruct('Subscriber')
-            publish = True
-            self.Trigger('HandleFilter@Publisher', update, subscriber, publish)
-
-            # Publish to the subscriber.
-            if publish == True:
-                return self.SUBSCRIBER().InvokeUpdate(
+            if not self._ignore(update, subscriber):
+                return self.SUBSCRIBER().InvokeUpdated(
                     update=update, 
                     to=subscriber.Require('Domain'))
 
+
+    # ✅ DONE
+    def _ignore(self, update, subscriber: ITEM):
+         ''' 👉 Verify if the subscriber asked this to be filtered. '''
+         payload = {
+             'Update': update,
+             'Subscriber': subscriber,
+             'Ignore': False
+         }
+
+         result = self.TriggerLambdas(
+             event=' HandleFilter@Publisher', 
+             payload= payload)
+         
+         return result['Ignore']
+             
 
     # ✅ DONE
     def HandleReplay(self, replay):
@@ -179,26 +158,40 @@ class PUBLISHER(DTFW, HANDLER):
         }
         '''
         msg = self.MSG(replay)
-
         timestamp = msg.Require('Timestamp')
+        
+        # Verify if the requester is registered.
+        domain = msg.From()
+        subscriber = self.Subscribers().Get(domain)
+        subscriber.Require()
         
         return self._replay(
             request=msg, 
-            timestamp= timestamp)
+            timestamp= timestamp, 
+            subscriber= subscriber)
 
 
     # ✅ DONE
-    def _replay(self, request:MSG, timestamp:str, lastEvaluatedKey=None):
+    def _replay(self, request:MSG, timestamp:str, subscriber=None, lastEvaluatedKey=None):
         ''' 🏃 Supports Replay() and Next().'''
-        page = self.Updates().GetPageFromTimestamp(timestamp, lastEvaluatedKey)
+        
+        # TODO Don't send empty pages.
+        #   Fill require to loop through the pages, or to set a filter().
+        #   Actually, filters won't work because the filter is external on self._ignore().
+
+        page = self.Updates().GetPageFromTimestamp(
+            timestamp= timestamp, 
+            lastEvaluatedKey= lastEvaluatedKey)
 
         items = []
         for item in page['Items']:
-            items.append({
+            update = {
                 'UpdateID': item['ID'],
                 'Domain': item['Domain'],
                 'Timestamp': item['Timestamp']
-            })
+            }
+            if not self._ignore(update, subscriber):
+                items.append(update)
         
         token = None
         if 'LastEvaluatedKey' in page:
@@ -245,7 +238,16 @@ class PUBLISHER(DTFW, HANDLER):
         token = self.Tokens().Get(msg)
         token.Match('Domain', msg.From())
 
+        # Check if it's an active subscriber.
+        subscriber = self.Subscribers().Get(msg.From())
+        subscriber.Require()
+
         # Get the next updates
         lastEvaluatedKey = json.loads(token.Require('LastEvaluatedKey'))
         timestamp = token.Require('Timestamp')
-        return self._replay(next, timestamp, lastEvaluatedKey)
+
+        return self._replay(
+            request= next, 
+            timestamp= timestamp, 
+            subscriber= subscriber,
+            lastEvaluatedKey= lastEvaluatedKey)

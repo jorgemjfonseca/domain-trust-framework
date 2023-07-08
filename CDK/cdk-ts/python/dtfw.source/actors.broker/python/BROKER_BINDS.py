@@ -35,7 +35,7 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
         }
         '''
         msg = self.MSG(event)
-        self.Graph().Invoke()
+        self.GRAPH().Invoke()
 
     
     # ✅ DONE
