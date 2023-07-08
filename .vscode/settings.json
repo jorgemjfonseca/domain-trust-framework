@@ -17,7 +17,8 @@
         "./CDK/cdk-ts/python/dtfw.source/cloud/python",
         "./CDK/cdk-ts/python/dtfw.source/actors.broker/python",
         "./CDK/cdk-ts/python/dtfw.source/behaviours/python",
-        "./CDK/cdk-ts/python/dtfw.source/behaviours.api/python"
+        "./CDK/cdk-ts/python/dtfw.source/behaviours.api/python",
+        "./CDK/cdk-ts/python/dtfw.source/aws/python"
     ],
     "files.exclude": {
         "**/*.d.ts": true,

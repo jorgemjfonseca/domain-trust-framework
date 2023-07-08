@@ -66,7 +66,7 @@ class RECEIVER:
         speed['Get DKIM over DNSSEC'] = self._timer.StopWatch(started)
 
         started = self._timer.StartWatch()
-        msg.ValidateSignature(publicKey)
+        msg.VerifySignature(publicKey)
         checks.append(f'Hash and Signature match?: {True}')
         speed['Verify signature'] = self._timer.StopWatch(started)
 

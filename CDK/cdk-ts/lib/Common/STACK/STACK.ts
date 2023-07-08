@@ -22,6 +22,7 @@ export class STACK extends cdk.Stack {
     }
 
 
+    /** 🔐 Internal */
     public NextMap: any = {};
     public Next(seed?: string): number {
         const safeSeed = seed ?? '';
@@ -34,6 +35,7 @@ export class STACK extends cdk.Stack {
     }
 
 
+    /** 🔐 Internal */
     public RandomName(seed?: string): string {
         const safeSeed = seed??'Random';
         const ret = safeSeed + this.Next(safeSeed + '');
@@ -70,6 +72,7 @@ export class STACK extends cdk.Stack {
         return cdk.Fn.importValue(alias);
     }
 
+    /** 🔐 Internal */
     private GetSsm(alias: string): ssm.IStringParameter {
         return ssm.StringParameter
             .fromStringParameterName(this, this.RandomName(alias), '/dtfw/' + alias);

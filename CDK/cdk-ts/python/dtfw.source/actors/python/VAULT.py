@@ -3,50 +3,63 @@
 def test():
     return 'this is VAULT test.'
 
-from BIND import BIND
-from DYNAMO import DYNAMO
-from STRUCT import ITEM
-from DTFW import DTFW
-from WALLET import WALLET
 
-dtfw = DTFW()
+from HOST import HOST
+from ITEM import ITEM
+from MSG import MSG
 
-
-class VAULT:
+class VAULT(HOST):
+    ''' 🗄️ https://quip.com/IZapAfPZPnOD '''
     
 
-    def Wallets(self) -> DYNAMO:
-        return dtfw.Dynamo('WALLETS')
-    def WalletKey(self, broker, walletID):
-        return f'{broker}/{walletID}'
-    def Wallet(self, broker, walletID) -> WALLET:
-        key = self.WalletKey(broker, walletID)
-        return WALLET(self.Wallets().Get(key))
+    def __init__(self):    
+        self.On('VerifyDownload@Host', self._verifyWalletSignature)
+        self.On('VerifyUpload@Host', self._verifyWalletSignature)
+        
+
+    def _verifyWalletSignature(self, msg:MSG, session:ITEM):
+        # 🏃 If the user is bound, check the signature with the public in the vault.
+        if not session.IsMissingOrEmpty('Wallet.WalletID'):
+            walletInSession = session.Att('Wallet')
+            publicKey = self.Wallets().Get(walletInSession).Require('PublicKey')
+            msg.VerifySignature(publicKey)
+
+
+    # ✅ DONE
+    def Wallets(self):
+        ''' 🪣 https://quip.com/IZapAfPZPnOD#temp:C:PDZ4a9cd6bab1ef4d08a9b4627f0 
+        {   
+            "VaultID": "EX123456",
+            "Broker": "any-broker.com",
+            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
+            "PublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDH+wPrKYG1KVlzQUVtBghR8n9dzcShSZo0+3KgyVdOea7Ei7vQ1U4wRn1zlI5rSqHDzFitblmqnB2anzVvdQxLQ3UqEBKBfMihnLgCSW8Xf7MCH+DSGHNvBg2xSNhcfEmnbLPLnbuz4ySn1UB0lH2eqxy50zstxhTY0binD9Y+rwIDAQAB",
+            "Confirmed": True
+        }'''
+        return self.Dynamo('WALLETS', keys=['Broker', 'WalletID'])
     
 
-    def Binds(self) -> DYNAMO:
-        return dtfw.Dynamo('BINDS')
-    def Bind(self, bindID) -> BIND:
-        return BIND(self.Binds().Get(bindID))
+    # ✅ DONE
+    def Binds(self):
+        ''' 🪣 https://quip.com/IZapAfPZPnOD#temp:C:PDZ669f275089004e74b3004d236 
+        {
+            "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
+            "Broker": "any-broker.com",
+            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
+            "Code": "iata.org/SSR/WCHR"
+        }
+        '''
+        return self.Dynamo('BINDS', keys=['BindID'])
     
 
-    def Disclosures(self) -> DYNAMO:
-        return dtfw.Dynamo('DISCLOSURES')
-    def Disclosure(self, disclosureID) -> ITEM:
-        return self.Disclosures().Item(disclosureID)
+    # ✅ DONE
+    def Disclosures(self):
+        ''' 🪣 https://quip.com/IZapAfPZPnOD#temp:C:PDZ71e7244be24842df9b773d541 '''
+        return self.Dynamo('DISCLOSURES', keys=['DisclosureID'])
     
 
-    def Grants(self) -> DYNAMO:
-        return dtfw.Dynamo('GRANTS')
-    def GrantKey(self, broker, walletID):
-        return f'{broker}/{walletID}'
-    def Grant(self, broker, walletID) -> ITEM:
-        key = self.GrantKey(broker, walletID)
-        return self.Grants().Item(key)
-
-
+    # ✅ DONE
     def TrustsConsumer(self, domain, code) -> bool:
-        return dtfw.Graph().InvokeTrusted(
+        return self.Graph().InvokeTrusted(
             domain= domain,
             context= 'CONSUMER',
             code= code
@@ -65,12 +78,13 @@ class VAULT:
             }]
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.Msg(event)
 
         # Validate if the session is still active in 🪣 Sessions: 🤗 Host
-        session = dtfw.Host().ValidateSession(msg)
+        session = self.Host().ValidateSession(msg)
         
         # Optionally, confirm the binding with an 😶 Identity
+        self.Trigger('VALIDATE@BIND', msg)
 
         # Add to 🪣 Wallets 
         vaultID = "<TBC>"

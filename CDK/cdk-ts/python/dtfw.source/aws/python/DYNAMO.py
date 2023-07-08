@@ -31,8 +31,10 @@ class DYNAMO:
 
     def _calculateID(self, struct:STRUCT) -> str:
         ''' 
-        👉 Returns the ID from a set of table keys
-        - e.g, for {A:x, B:y, C:z} where keys==[C,A], returns "z/x" 
+        👉 Returns the ID from a set of table keys\n
+        GIVEN a table with keys==[C,A] 
+        WHEN received a struct={A:x, B:y, C:z}
+         THEN returns "z/x" 
         '''
         if not self._keys:
             return struct.Require('ID')
@@ -44,6 +46,12 @@ class DYNAMO:
 
 
     def Get(self, key:any) -> ITEM:
+        ''' 
+        👉 Gets the item where the compositive key can be derived from the atributes of the given object.\n
+        GIVEN a table with key columns=[A,C]
+        WHEN received key={A:x, B:y, C:z}       
+         THEN return item where ID={x/z}" 
+        '''
         if not key:
             return None
         
@@ -105,7 +113,10 @@ class DYNAMO:
 
 
     def _getTable(self, alias):
-        table = dynamo.Table(os.environ[alias])
+        name = os.environ[alias]
+        if name == None:
+            return None
+        table = dynamo.Table(name)
         return table
 
 

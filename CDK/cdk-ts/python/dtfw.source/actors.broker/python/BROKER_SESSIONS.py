@@ -1,27 +1,25 @@
 
 # 📚 BROKER_SESSIONS
+      
 
-
+from BROKER_SETUP import BROKER_SETUP
 from DTFW import DTFW
-from MSG import MSG
-dtfw = DTFW()
-        
 
 
-class BROKER_SESSIONS:
+class BROKER_SESSIONS(DTFW, BROKER_SETUP):
     ''' 👉 https://quip.com/HrgkAuQCqBez#bXDABAe5brB '''
 
 
     # ✅ DONE
-    def Hosts(): 
+    def Hosts(self): 
         ''' 👉 https://quip.com/HrgkAuQCqBez#temp:C:bXD380faa067708498dbbc554b36 '''
-        return dtfw.Dynamo('HOSTS', keys=['WalletID', 'Host'])
+        return self.Dynamo('HOSTS', keys=['WalletID', 'Host'])
     
     
     # ✅ DONE
-    def Sessions(): 
+    def Sessions(self): 
         ''' 👉 https://quip.com/HrgkAuQCqBez#temp:C:bXDdd6c1585433f4b6495262e8df '''
-        return dtfw.Dynamo('SESSIONS', keys=['WalletID', 'Host', 'SessionID'])
+        return self.Dynamo('SESSIONS', keys=['WalletID', 'Host', 'SessionID'])
     
 
     # ✅ DONE
@@ -32,9 +30,9 @@ class BROKER_SESSIONS:
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.Msg(event)
 
-        wallet = dtfw.Broker().Setup().Wallets().Get(msg)
+        wallet = self.Wallets().Get(msg)
         wallet.Require()         
 
         '''
@@ -63,7 +61,7 @@ class BROKER_SESSIONS:
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }
         '''
-        dtfw.Msg(event)
+        self.Msg(event)
     
 
     def HandleCheckout(self, event):
@@ -99,6 +97,9 @@ class BROKER_SESSIONS:
         '''
         dtfw.Msg(event)
     
+
+    def InvokeGoodbye(self, event):
+        pass
 
     def HandleGoodbye(self, event):
         ''' 🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXD9f09e5f058ee4fc8a77be4ebe '''

@@ -125,7 +125,7 @@ class MSG(STRUCT):
         return copy.Canonicalize()
     
 
-    def ValidateHeader(self):
+    def VerifyHeader(self):
         ''' 👉 Throws an exception if any of the header attributes are missing. '''
         msg = self
         msg.To()
@@ -135,7 +135,7 @@ class MSG(STRUCT):
         msg.Correlation()
 
 
-    def ValidateSignature(self, publicKey: str):
+    def VerifySignature(self, publicKey: str):
         ''' 👉 Throws an exception if the Hash or Signature dont match the public key. '''
         
         validator = dtfw.SyncApi().Dkim().ValidateSignature(

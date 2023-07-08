@@ -12,6 +12,7 @@ def test():
 
 class WEB: 
 
+
     def Post(self, url: str, body: any) -> any:
         ''' 👉️ https://stackoverflow.com/questions/36484184/python-make-a-post-request-using-python-3-urllib  '''
     
@@ -54,3 +55,32 @@ class WEB:
         print (f'WEB.GetImage: {url=}')
         
         return base64.b64encode(urlopen(url).read())
+    
+
+    def HttpResponse(self, code=200, body='', format='json'):
+        print(f'HttpResponse: {body=}')
+        print(f'HttpResponse: {format=}')
+
+        ret = {
+            'statusCode': code,
+        }
+
+        if format == 'json':
+            ret['body'] = self.ToJson(body)
+
+        elif format == 'yaml':
+            ret['body'] = self.ToYaml(body)
+            # contentType: text/yaml -> shows on browser (because all text/* are text)
+            # contentType: application/x-yaml -> downloads (or is it application/yaml?)
+            ret["headers"] = {
+                "content-type": 'application/x-yaml'
+            }
+
+        elif format == 'text':
+            ret['body'] = body
+
+        else:
+            ret['body'] = body
+
+        print(f'HttpResponse: {ret=}')
+        return ret

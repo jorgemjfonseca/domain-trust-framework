@@ -16,6 +16,6 @@ class WALLET(STRUCT):
 
     def ValidateSignature(self, msg: MSG):
         publicKey = self.Require('PublicKey')
-        msg.ValidateSignature(publicKey)
+        msg.VerifySignature(publicKey)
 
 

@@ -1,6 +1,5 @@
 # 📚 UTILS
 
-import json
 
 def test():
     return 'this is a UTILS test.'
@@ -13,7 +12,15 @@ class InvalidRequestException(Exception):
     pass
 
 
-class UTILS: 
+from WEB import WEB
+from YAML import YAML
+
+class UTILS(WEB, YAML): 
+
+
+    def Timer(self):
+        from TIMER import TIMER as proxy
+        return proxy()
 
 
     def Struct(self, obj):
@@ -36,74 +43,6 @@ class UTILS:
         raise InvalidRequestException
     
 
-    def FromJson(self, text: str):
-        return self.Struct(json.loads(text))
-        
-    
-    def ToJson(self, obj: any):
-        ''' 👉 Converts the object into a json string.'''
-        print(f'Utils.ToJson: {obj=}')
-        return json.dumps(obj)
-    
-    
-    def FromYaml(self, text: str) -> any:
-        print(f'Utils.FromYaml: {text=}')
-        ''' 
-        👉 https://yaml.readthedocs.io/en/latest/detail.html
-        👉 https://stackoverflow.com/questions/50846431/converting-a-yaml-file-to-json-object-in-python
-        👉 https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
-        👉 https://yaml.readthedocs.io/en/latest/
-        👉 https://lyz-code.github.io/blue-book/coding/python/ruamel_yaml/
-        '''
-
-        # "products:\n  - item 1\n  - item 2\n"
-        
-        from ruamel.yaml import YAML
-        from io import StringIO 
-        
-        yaml = YAML()
-        stream = StringIO(text)
-        data = yaml.load(stream)
-        stream.close()
-        
-        return data
-        
-        
-    def ToYaml(self, obj: any) -> str:
-        ''' 👉 https://lyz-code.github.io/blue-book/coding/python/ruamel_yaml/ '''
-        # {'products': ['item 1', 'item 2']}
-        
-        from STRUCT import STRUCT
-        data = obj
-        if isinstance(obj, STRUCT):
-            data = obj.Obj()
-
-        from ruamel.yaml import YAML
-        from io import StringIO 
-        
-        # Configure YAML formatter
-        yaml = YAML()
-        yaml.indent(mapping=2, sequence=4, offset=2)
-        yaml.allow_duplicate_keys = True
-        yaml.explicit_start = False
-        
-        # Return the output to a string
-        stream = StringIO()
-        yaml.dump(data, stream)
-        text = stream.getvalue()
-        stream.close()
-    
-        return text
-
-
-    def FromJsonToYaml(self, text: str) -> str:
-        obj = self.FromJson(text)
-        return self.ToYaml(obj)
-        
-        
-    def FromYamlToJson(self, text: str) -> str:
-        obj = self.FromYaml(text)
-        return self.ToJson(obj)
 
 
     def Copy(self, obj):        
@@ -139,34 +78,6 @@ class UTILS:
         return canonicalized
     
 
-    def HttpResponse(self, code=200, body='', format='json'):
-        print(f'HttpResponse: {body=}')
-        print(f'HttpResponse: {format=}')
-
-        ret = {
-            'statusCode': code,
-        }
-
-        if format == 'json':
-            ret['body'] = self.ToJson(body)
-
-        elif format == 'yaml':
-            ret['body'] = self.ToYaml(body)
-            # contentType: text/yaml -> shows on browser (because all text/* are text)
-            # contentType: application/x-yaml -> downloads (or is it application/yaml?)
-            ret["headers"] = {
-                "content-type": 'application/x-yaml'
-            }
-
-        elif format == 'text':
-            ret['body'] = body
-
-        else:
-            ret['body'] = body
-
-        print(f'HttpResponse: {ret=}')
-        return ret
-
     
     def TryCall(self, obj, name):
         '''  👉️ https://bobbyhadz.com/blog/python-check-if-object-has-method#check-if-an-object-has-a-specific-method-in-python '''
@@ -178,11 +89,15 @@ class UTILS:
 
     def Merge(self, obj1, obj2):
         ''' 👉️ https://stackoverflow.com/questions/14839528/merge-two-objects-in-python '''
+        if obj1 == None:
+            return obj2
+        if obj2 == None:
+            return obj1
         obj1.update(obj2)
         return obj1
     
 
-    def Enrironment(name: str):
+    def Enrironment(self, name: str):
         ''' 👉️ Returns a configuration from os.environ, i.e. same as 'os.environ[name]'.'''
         import os
         return os.environ[name]

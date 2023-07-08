@@ -1,50 +1,86 @@
 # 📚 HOST
 
-def test():
-    return 'this is HOST test.'
-
-from DYNAMO import DYNAMO
-from STRUCT import ITEM
-from MSG import MSG
 from DTFW import DTFW
-
-dtfw = DTFW()
-
-
-class HOST:
+from HANDLER import HANDLER
+from UTILS import UTILS
 
 
-    def Sessions(self) -> DYNAMO:
-        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD20456e042b3f43d49a73e0f92 '''
-        return dtfw.Dynamo('SESSIONS', keys=['SessionID'])
+# ✅ DONE
+class HOST(DTFW, HANDLER, UTILS):
+    ''' 🤗 https://quip.com/s9oCAO3UR38A/-Host \n
+    Events:
+     * HandleCheckOut@Host (optional)
+     * HandleFound@Host (required)
+     * HandleTalker@Host (required)
+    '''
 
 
-    def Files(self) -> DYNAMO:
-        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD026a3fce1988455796a1a4621 '''
-        return dtfw.Dynamo('FILES', keys=['SessionID', 'FileID'])
+    # ✅ DONE
+    def Sessions(self):
+        ''' 🪣 https://quip.com/s9oCAO3UR38A#temp:C:TDD20456e042b3f43d49a73e0f92 
+        {
+            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
+            "Status": "CHECKING-OUT",
+            "CheckIn": {
+                "SessionTime": "2018-12-10T13:45:00.000Z",
+                "Code": "dtfw.org/THING",
+                "Locator": "MY-THING-ID"
+            },
+            "Wallet": {
+                "Language": "en-us",
+                "Broker": "any-broker.com",
+                "Locator": "MY-WALLET",
+                "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
+            }
+        }
+        '''
+        return self.Dynamo('SESSIONS', keys=['SessionID'])
 
 
-    def ValidateSession(self, msg: MSG) -> ITEM:
-        session = self.Sessions().Get(msg)
-        session.Require()
-        session.Match('Wallet.Broker', msg.From())
+    # ✅ DONE
+    def Files(self):
+        ''' 🪣 https://quip.com/s9oCAO3UR38A#temp:C:TDD026a3fce1988455796a1a4621 
+        {
+            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
+            "FileID": "bc3d5f49-5d30-467a-9e0e-0cb5fd80f3cc",
+            "Name": "a.jpg",
+            "Serialized": "bisYfsHkJIyudS/O8FQOWpEdK"
+        }
+        '''
+        return self.Dynamo('FILES', keys=['SessionID', 'FileID'])
         
 
+    # ✅ DONE
+    def VerifyBrokerMsg(self, event):
+        msg = self.Msg(event)
+        session = self.Sessions().Get(msg.Body())
+        session.Match('Wallet.Broker', msg.From())
+        return msg, session
+    
 
+    # ✅ DONE
+    def VerifyWalletMsg(self, event):
+        msg = self.Msg(event)
+        session = self.Sessions().Get(msg.Body())
+        session.Match('Wallet.Locator', msg.Att('Locator'))
+        return msg, session
+
+
+    # ✅ DONE
     def HandleAbandoned(self, event):
-        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDDbb2a3e48828a473b84c296777 '''
+        ''' 🐌 https://quip.com/s9oCAO3UR38A#temp:C:TDDbb2a3e48828a473b84c296777 '''
         '''
         "Body": {
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }
         '''
-        msg = dtfw.Msg(event)
-        session  = self.ValidateSession(msg)
-        self.Sessions().Delete(session.Att('SessionID'))
+        msg, session = self.VerifyBrokerMsg(event)
+        session.Delete()
 
 
+    # ✅ DONE
     def HandleCheckIn(self, event):
-        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDDf29b75b2d0214f9a87224b338 '''
+        ''' 🚀 https://quip.com/s9oCAO3UR38A#temp:C:TDDf29b75b2d0214f9a87224b338 '''
         '''
         "Body": {
             "Resource": {
@@ -58,20 +94,19 @@ class HOST:
             }
         }
         '''
-        msg = dtfw.Msg(event)
-        resource = msg.Require('Resource')
+        msg = self.Msg(event)
+        resource = msg.Att('Resource')
         wallet = msg.Require('Wallet')
 
-        utils = dtfw.Utils()
-        sessionID = utils.UUID()
+        sessionID = self.UUID()
 
-        self.Sessions().Upsert({
+        self.Sessions().Insert({
             'SessionID': sessionID,
             'Status': "CHECKING-IN",
-            'CheckIn': utils.Merge(resource, {
-                'SessionTime': utils.Timestamp()
+            'CheckIn': self.Merge(resource, {
+                'SessionTime': self.Timestamp()
             }),
-            'Wallet': utils.Merge(wallet, {
+            'Wallet': self.Merge(wallet, {
                 'Broker': msg.From()
             })
         })
@@ -79,6 +114,7 @@ class HOST:
         return { 'SessionID': sessionID }
 
 
+    # ✅ DONE
     def HandleCheckOut(self, event):
         ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD7b2a9a988f404282af7a63ff9 '''
         '''
@@ -86,22 +122,27 @@ class HOST:
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }
         '''
-        msg = dtfw.Msg(event)
-        self.ValidateSession(msg)
+        msg, session = self.VerifyBrokerMsg(event)
 
+        goodbye = { 'Goodbye': True }
+        self.Trigger('HandleCheckOut@Host', msg, session, goodbye)
+        if goodbye['Goodbye']: 
+            self.Broker().InvokeGoodbye(event)
+        
 
+    # ✅ DONE
     def HandleDownload(self, event):
-        ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD828d0b17f0fa414ba67fa5eab '''
+        ''' 🚀 https://quip.com/s9oCAO3UR38A#temp:C:TDD828d0b17f0fa414ba67fa5eab '''
         '''
         "Body": {
-            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
+            "Locator": "ABCDEF",
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",    
             "FileID": "bc3d5f49-5d30-467a-9e0e-0cb5fd80f3cc"
         }
         '''
-        msg = dtfw.Msg(event)
-        self.ValidateSession(msg)
-        
+        msg, session = self.VerifyWalletMsg(event)
+        self.Trigger('VerifyDownload@Host', msg, session)
+
         file = self.Files().Get(msg)
 
         return {
@@ -110,6 +151,7 @@ class HOST:
         }
         
 
+    # ✅ DONE
     def HandleFound(self, event):
         ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD558f6d6e0c8346e4bc9302b17 '''
         '''
@@ -119,10 +161,11 @@ class HOST:
             "Scanner": "heathrow.com"
         }
         '''
-        msg = dtfw.Msg(event)
-        self.ValidateSession(msg)
+        msg, session = self.VerifyBrokerMsg(event)
+        self.Trigger('HandleFound@Host', msg, session)
 
 
+    # ✅ DONE
     def HandleTalker(self, event):
         ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD7f08c68ca48949f19d0efc9bf '''
         '''
@@ -130,26 +173,28 @@ class HOST:
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
         }
         '''
-        msg = dtfw.Msg(event)
-        self.ValidateSession(msg)
+        msg, session = self.VerifyBrokerMsg(event)
+        self.Trigger('VerifyTalker@Host', msg, session)
+        self.Trigger('HandleTalker@Host', msg, session)
 
 
+    # ✅ DONE
     def HandleUpload(self, event):
         ''' 👉 https://quip.com/s9oCAO3UR38A#temp:C:TDD35cfdaff99ec49bbb6bbba1f0 '''
         '''
         "Body": {
-            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
+            "Locator": "ABCDEF",
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",        
             "Name": "a.jpg",
             "Serialized": "bisYfsHkJIyudS/O8FQOWpEdK"
         }
         '''
-        msg = dtfw.Msg(event)
-        self.ValidateSession(msg)
+        msg, session = self.VerifyWalletMsg(event)
+        self.Trigger('VerifyUpload@Host', msg, session)
 
         merge = msg.Body().Copy()
         merge.Merge({
-            "FileID": dtfw.Utils().UUID()
+            "FileID": self.UUID()
         })
 
-        self.Files().Upsert(merge)
+        self.Files().Insert(merge)

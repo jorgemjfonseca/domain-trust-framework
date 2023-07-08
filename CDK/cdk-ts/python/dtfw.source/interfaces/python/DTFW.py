@@ -2,21 +2,18 @@
 
 # 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
 from typing import List, Set, Tuple, Dict
+from AWS import AWS
+from UTILS import UTILS
+
 
 def test():
     return 'this is a DTFW test.'
 
 
-class DTFW:
+# ✅ DONE
+class DTFW(AWS, UTILS):
     ''' 👉 https://quip.com/z095AywlrA82/-Domain-Trust-Framework '''
     
-  
-    def AppConfig(self):
-        if not self._appConfig: 
-            from APPCONFIG import APPCONFIG as proxy
-            self._appConfig = proxy()
-        return self._appConfig
-        
 
     def Broker(self):
         ''' 👉 https://quip.com/SJadAQ8syGP0/-Broker '''
@@ -25,24 +22,12 @@ class DTFW:
             self._broker = proxy()
         return self._broker
 
-
-    def Bus(self):
-        if not self._bus: 
-            from BUS import BUS as proxy
-            self._bus = proxy()
-        return self._bus
-    
     
     def Code(self, item: any):
         from CODE import CODE as proxy
         return proxy(item)
     
 
-    def Dynamo(self, alias:str=None, keys:List[str]=None):
-        from DYNAMO import DYNAMO as proxy
-        return proxy(alias=alias, keys=keys)
-    
-    
     def Domain(self, name:str=None):
         from DOMAIN import DOMAIN as proxy
         return proxy(name)
@@ -60,21 +45,6 @@ class DTFW:
             from HOST import HOST as proxy
             self._host = proxy()
         return self._host
-    
-
-    def Struct(self, item):
-        from STRUCT import STRUCT as proxy
-        return proxy(item)
-    
-
-    def Unstruct(self, obj: any):
-        from UTILS import UTILS as proxy
-        return proxy.Unstruct(obj)
-    
-
-    def Lambda(self, alias: str=None):
-        from LAMBDA import LAMBDA as proxy
-        return proxy(alias)
 
 
     def Listener(self):
@@ -130,31 +100,6 @@ class DTFW:
         return self._publisher
     
 
-    def Route53(self, hosted_zone_id: str):
-        from ROUTE53 import ROUTE53 as proxy
-        return proxy(hosted_zone_id)
-    
-
-    def S3(self):
-        from S3 import S3 as proxy
-        return proxy()
-    
-
-    def Secrets(self):
-        from SECRETS import SECRETS as proxy
-        return proxy()
-
-
-    def Sqs(self, alias:str):
-        from SQS import SQS as proxy
-        return proxy(alias)
-    
-
-    def Ssm(self):
-        from SSM import SSM as proxy
-        return proxy()
-    
-
     def Subscriber(self):
         from SUBSCRIBER import SUBSCRIBER as proxy
         return proxy()
@@ -162,11 +107,6 @@ class DTFW:
 
     def SyncApi(self):
         from SYNCAPI import SYNCAPI as proxy
-        return proxy()
-    
-
-    def Timer(self):
-        from TIMER import TIMER as proxy
         return proxy()
     
 
@@ -180,6 +120,4 @@ class DTFW:
         return proxy()
     
 
-    def Web(self):
-        from WEB import WEB as proxy
-        return proxy()
+    
