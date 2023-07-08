@@ -12,7 +12,7 @@ class HANDLER(AWS, UTILS):
 
     def __init__(self):
         self.Memory = []
-        self.Table = self.Dynamo('HANDLERS')
+        self.Table = self.DYNAMO('HANDLERS')
 
 
     # ✅ DONE
@@ -44,6 +44,6 @@ class HANDLER(AWS, UTILS):
             ret = None
             event = self.Table.Get(event)
             for trigger in event.List('Lambdas'):
-                ret = self.Lambda(trigger).Invoke(*args)
+                ret = self.LAMBDA(trigger).Invoke(*args)
             # return the value of the last invocation.
             return ret

@@ -6,10 +6,38 @@ def test():
     return 'this is SUBSCRIBER test.'
 
 
-from DTFW import DTFW
-dtfw = DTFW()
+from STRUCT import STRUCT
+from ITEM import ITEM
+from MSG import MSG
+from PUBLISHER import PUBLISHER
 
-class LISTENER:
+class LISTENER(PUBLISHER):
+
+
+    # ✅ DONE
+    def __init__(self):    
+        self.On('HandleFilter@Publisher', self._filter)
+
+
+
+    def _filter(self, update:STRUCT, subscriber:STRUCT, publish:bool):
+        '''
+        update= {
+            "UpdateID": "8e8cb55b-55a8-49a5-9f80-439138e340a2",
+            "Domain": "example.com",
+            "Timestamp": "2018-12-10T13:45:00.000Z"
+        }
+        subscriber= {
+            'Domain': ...
+            'Filter': {
+                "Conditions": [{
+                    "Action": "INCLUDE",
+                    "Query": "iata.org/SSR/*"
+                }]
+            }
+        }
+        '''
+        pass
 
 
     def HandleConsume(self, event):
@@ -46,18 +74,12 @@ class LISTENER:
             }
         }
         '''
-        print(f'{event}')
-
-        # Copied from Publisher-Subscribe
-
-        msg = dtfw.Msg(event)
-        
-        return dtfw.Dynamo('SUBSCRIBERS').Upsert(
-            id= msg.From(), 
-            item= { 
-                'Filter': msg.Att('Filter'),
-                'Status': 'SUBSCRIBED'
-            })
+        msg = self.MSG(event)        
+        return self.Subscribers().Insert({ 
+            'Domain': msg.From(),
+            'Filter': msg.Att('Filter'),
+            'Status': 'SUBSCRIBED'
+        })
 
 
     def HandleUpdated(self, event):
@@ -65,15 +87,15 @@ class LISTENER:
         
         print(f'{event}')
 
-        msg = dtfw.Msg(event)
-        id = dtfw.Utils.UUID()
+        msg = self.MSG(event)
+        id = self.UUID()
         update = {
             'UpdateID': id,
             'Domain': msg.From(),
             'Timestamp': msg.Timestamp()
         }
 
-        dtfw.Dynamo('UPDATES').Upsert(id, update)
+        self.DYNAMO('UPDATES').Upsert(id, update)
         
         # TODO: this should be an event of dynamo, to be ACID
-        dtfw.Sqs('PUBLISHER').Send(update)
+        self.SQS('PUBLISHER').Send(update)

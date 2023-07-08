@@ -19,7 +19,7 @@ class MESSENGER(DTFW):
     def _publish(self, data:any, source:str):
         ''' 👉 Publishes a message to the BUS. '''
         
-        msg = dtfw.Msg(data)
+        msg = dtfw.MSG(data)
 
         # Validate if there's a destination domain.
         msg.To()
@@ -28,7 +28,7 @@ class MESSENGER(DTFW):
         detailType = msg.Subject()
         envelope = msg.Envelope()
         
-        dtfw.Bus().Publish(
+        dtfw.BUS().Publish(
             eventBusName= 'Messenger-Bus', 
             source= source,
             detailType= detailType, 
@@ -40,20 +40,16 @@ class MESSENGER(DTFW):
         self._publish(msg, source)
 
 
-    def Push(self, source:str, to:str, body:any):
+    def Push(self, source:str, to:str, body:any, subject:str, request=None):
         ''' 👉 Publishes a message to the BUS. '''
-        msg = self.Wrap(to=to, body=body)
+        msg = self.WRAP(to=to, body=body, subject=subject, request=request)
         self._publish(msg, source=source)
         
     
-    def Reply(self, req: MSG, body:any, source:str):
-        
-        to = req.From()
-
-        out = dtfw.Wrap(to, body)
-        out.Request(req)
-
-        self._publish(out, source)
+    def Reply(self, req: MSG, body:any, source:str, subject:str):
+        ''' 👉 Publishes a message to the BUS, using TO=REQUEST.FROM() '''
+        out = dtfw.WRAP(to=req.From(), body=body, req=req, subject=subject)
+        self._publish(out, source=source)
 
 
     def HandlePublisher(self, event):
@@ -66,7 +62,7 @@ class MESSENGER(DTFW):
     def HandleSender(self, event):
         print(f'{event=}')
 
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         msg.Stamp()
         
         return dtfw.SyncApi().Send(msg)

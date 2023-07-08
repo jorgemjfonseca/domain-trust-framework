@@ -13,13 +13,13 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
     # ✅ DONE
     def Hosts(self): 
         ''' 👉 https://quip.com/HrgkAuQCqBez#temp:C:bXD380faa067708498dbbc554b36 '''
-        return self.Dynamo('HOSTS', keys=['WalletID', 'Host'])
+        return self.DYNAMO('HOSTS', keys=['WalletID', 'Host'])
     
     
     # ✅ DONE
     def Sessions(self): 
         ''' 👉 https://quip.com/HrgkAuQCqBez#temp:C:bXDdd6c1585433f4b6495262e8df '''
-        return self.Dynamo('SESSIONS', keys=['WalletID', 'Host', 'SessionID'])
+        return self.DYNAMO('SESSIONS', keys=['WalletID', 'Host', 'SessionID'])
     
 
     # ✅ DONE
@@ -111,7 +111,7 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
             "QR": "🤝dtfw.org/QR,1,any-printer.com,7V8KD3G"
         }
         '''
-        self.Msg(event)
+        self.MSG(event)
     
 
     def InvokeGoodbye(self, event):
@@ -125,7 +125,7 @@ class BROKER_SESSIONS(BROKER_SETUP, DTFW):
             "Message": "Parking ended for vehicle AB-12-34.".
         }
         '''
-        self.Msg(event)
+        self.MSG(event)
     
 
     

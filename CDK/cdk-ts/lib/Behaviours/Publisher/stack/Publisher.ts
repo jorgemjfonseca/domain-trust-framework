@@ -47,13 +47,8 @@ export class Publisher extends STACK {
       .Export(Publisher.SUBSCRIBERS);
 
     LAMBDA
-      .New(this, 'Register')
-      .HandlesMessenger('Register@Publisher')
-      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS');
-
-    LAMBDA
-      .New(this, 'Unregister')
-      .HandlesMessenger('Unregister@Publisher')
+      .New(this, 'Unsubscribe')
+      .HandlesMessenger('Unsubscribe@Publisher')
       .WritesToDynamoDB(subscribers, 'SUBSCRIBERS');
 
     LAMBDA

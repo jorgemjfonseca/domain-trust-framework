@@ -23,7 +23,7 @@ class UTILS(WEB, YAML):
         return proxy()
 
 
-    def Struct(self, obj):
+    def STRUCT(self, obj):
         ''' 👉 Wraps an object with a STRUCT. '''
         from STRUCT import STRUCT
         return STRUCT(obj=obj)
@@ -97,7 +97,7 @@ class UTILS(WEB, YAML):
         return obj1
     
 
-    def Enrironment(self, name: str):
+    def Environment(self, name: str):
         ''' 👉️ Returns a configuration from os.environ, i.e. same as 'os.environ[name]'.'''
         import os
         return os.environ[name]

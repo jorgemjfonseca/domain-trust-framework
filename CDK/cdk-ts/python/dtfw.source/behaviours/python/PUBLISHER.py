@@ -18,45 +18,45 @@
 '''
 
 import json
-
+from HANDLER import HANDLER
 from MSG import MSG
+from DTFW import DTFW
+from ITEM import ITEM
+from STRUCT import STRUCT
 
 def test():
     return 'this is PUBLISHER test.'
 
 
-from DTFW import DTFW
-dtfw = DTFW()
-
-class PUBLISHER:
+# ✅ DONE
+class PUBLISHER(DTFW, HANDLER):
     ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher '''
 
 
-    def Updates():
-        ''' 👉 https://quip.com/sBavA8QtRpXu#temp:C:IEKd7992eec103b489a81b2576ca '''
-        '''
+    # ✅ DONE
+    def Updates(self):
+        ''' 🪣 https://quip.com/sBavA8QtRpXu#temp:C:IEKd7992eec103b489a81b2576ca
         {
             "UpdateID": "8e8cb55b-55a8-49a5-9f80-439138e340a2", 
             "Domain": "example.com",
             "Timestamp": "2018-12-10T13:45:00.000Z"
-        }
-        '''
-        return dtfw.Dynamo('UPDATES', keys=['UpdateID'])
+        }'''
+        return self.DYNAMO('Updates', keys=['UpdateID'])
     
 
-    def Subscribers():
-        ''' 👉 https://quip.com/sBavA8QtRpXu#temp:C:IEKd7992eec103b489a81b2576ca '''
-        '''
+    # ✅ DONE
+    def Subscribers(self):
+        ''' 🪣 https://quip.com/sBavA8QtRpXu#temp:C:IEKc08ac410e2ed414780eb190c8
         {
             "Domain": "example.com",
             "Filter": {}
-        }
-        '''
-        return dtfw.Dynamo('SUBSCRIBERS', keys=['Domain'])
+        }'''
+        return self.DYNAMO('Subscribers', keys=['Domain'])
     
-
-    def Tokens():
-        ''' 👉 https://quip.com/sBavA8QtRpXu#temp:C:IEK3e519726b3b04dedbfbcb11e4 '''
+    
+    # ✅ DONE
+    def Tokens(self):
+        ''' 🪣 https://quip.com/sBavA8QtRpXu#temp:C:IEK3e519726b3b04dedbfbcb11e4 '''
         '''
         {
             "Token": "...",
@@ -64,42 +64,34 @@ class PUBLISHER:
             "Domain": "..."
         }
         '''
-        return dtfw.Dynamo('Tokens', keys=['Token'])
-
-
-    def HandleFilter(self, event):
-        ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher '''
-
-        print(f'{event}')
-
-        msg = dtfw.Msg(event)
-
-        return dtfw.Subscriber().InvokeUpdate(msg)
-        
-        
+        return self.DYNAMO('Tokens', keys=['Token'])
     
 
-    def HandleNext(self, next):
-        ''' 👉 https://quip.com/sBavA8QtRpXu#temp:C:IEK9f614503f0d44441a02dcf37f '''
+    # ✅ DONE
+    def HandleSubscribe(self, event):
+        ''' 🐌 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4 '''
 
         '''
-        "Body": {
-            "Token": "8e8cb55b-55a8-49a5-9f80-439138e340a2"
+        {
+            "Header": {
+                "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
+            }
+            "Body": {
+                "Filter": {}
+            }
         }
         '''
-
-        msg = dtfw.Msg(next)
-        token = self.Tokens().Get(msg)
-
-        token.Match('Domain', msg.From())
-        lastEvaluatedKey = json.loads(token.Require('LastEvaluatedKey'))
-        timestamp = token.Require('Timestamp')
-
-        return self._replay(next, timestamp, lastEvaluatedKey)
+        msg = self.MSG(event)
+        self.Subscribers().Upsert({
+            "Domain": msg.From(),
+            "Filter": msg.Att('Filter', default={})
+        })
 
 
-    def HandleRegister(self, register):
-        ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4 '''
+    # ✅ DONE
+    def HandleUnsubscribe(self, event):
+        ''' 🐌 https://quip.com/sBavA8QtRpXu#temp:C:IEK2b8247c67fae4d4487321c2e1 '''
+
         '''
         {
             "Header": {
@@ -107,15 +99,72 @@ class PUBLISHER:
             }
         }
         '''
-        domain = dtfw.Msg(register).From()
+        domain = self.MSG(event).From()
+        self.Subscribers().Get(domain).Delete()
+
+
+    # ✅ DONE
+    def HandleUpdated(self, event):
+        ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK5a453bcdb55e4d41bcc57bbc6 '''
+
+        '''
+        {
+            "Header": {
+                "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
+            }
+        }
+        '''
+        msg = self.MSG(event)
+
+        # save to Updates table.
+        update = {
+            'UpdateID': self.UUID(),
+            'Domain': msg.From(),
+            'Timestamp': msg.Timestamp()
+        }
+        self.Updates().Upsert(update)
+
+        # fan out to all subscribers.
+        for subscriber in self.Subscribers().GetAll(): 
+            self.SQS('FILTER').Send({
+                'Update': update,
+                'Subscriber': subscriber
+            })
+
+
+    # ✅ DONE
+    def HandleFilter(self, event):
+        ''' 🏃 https://quip.com/sBavA8QtRpXu/-Publisher''' 
         
-        return self.Subscribers().Upsert({
-            'Domain': domain,
-            'Filter': {},
-            'Status': 'REGISTERED'
-        })
+        # Parse the events from the Filter queue.
+        for msg in self.SQS().ParseMessages(event):
+            '''
+            {
+                'Update': {
+                    "UpdateID": "8e8cb55b-55a8-49a5-9f80-439138e340a2",
+                    "Domain": "example.com",
+                    "Timestamp": "2018-12-10T13:45:00.000Z"
+                },
+                'Subscriber: {
+                    'Domain': ...
+                    'Filter': {...}
+                }
+            }'''
+            
+            # Request confirmation from registered handlers.
+            update = msg.RequireStruct('Update')
+            subscriber = msg.RequireStruct('Subscriber')
+            publish = True
+            self.Trigger('HandleFilter@Publisher', update, subscriber, publish)
+
+            # Publish to the subscriber.
+            if publish == True:
+                return self.SUBSCRIBER().InvokeUpdate(
+                    update=update, 
+                    to=subscriber.Require('Domain'))
 
 
+    # ✅ DONE
     def HandleReplay(self, replay):
         ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK1a95aeba490844ce9168b7f4d '''
 
@@ -129,7 +178,7 @@ class PUBLISHER:
             }
         }
         '''
-        msg = dtfw.Msg(replay)
+        msg = self.MSG(replay)
 
         timestamp = msg.Require('Timestamp')
         
@@ -138,76 +187,9 @@ class PUBLISHER:
             timestamp= timestamp)
 
 
-    def HandleSubscribe(self, event):
-        ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEKf5f88769121840418de6755e4 '''
-
-        '''
-        {
-            "Header": {
-                "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
-            }
-            "Body": {
-                "Filter": {}
-            }
-        }
-        '''
-        msg = dtfw.Msg(event)
-        
-        return self.Subscribers().Upsert({
-            'Domain': msg.From(), 
-            'Filter': msg.Att('Filter'),
-            'Status': 'SUBSCRIBED'
-        })
-
-
-    def HandleUnregister(self, event):
-        ''' 👉 https://quip.com/sBavA8QtRpXu#temp:C:IEK2b8247c67fae4d4487321c2e1 '''
-
-        '''
-        {
-            "Header": {
-                "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
-            }
-        }
-        '''
-        domain = dtfw.Msg(event).From()
-
-        return self.Subscribers().Delete({
-            "Domain": domain
-        })
-
-
-    def HandleUpdated(self, event):
-        ''' 👉 https://quip.com/sBavA8QtRpXu/-Publisher#temp:C:IEK5a453bcdb55e4d41bcc57bbc6 '''
-
-        '''
-        {
-            "Header": {
-                "From": "38ae4fa0-afc8-41b9-85ca-242fd3b735d2.dev.dtfw.org"
-            }
-        }
-        '''
-        msg = dtfw.Msg(event)
-
-        # save to Updates table.
-        self.Updates().Upsert({
-            'UpdateID': dtfw.Utils().UUID(),
-            'Domain': msg.From(),
-            'Timestamp': msg.Timestamp()
-        })
-
-        # fan out to all subscribers.
-        for sub in self.Subscribers().GetAll(): 
-            dtfw.Sqs('FILTER').Send(
-                msg= dtfw.Wrap(
-                    to= sub['Domain'], 
-                    body= msg.Body()
-                )
-            )
-
-
+    # ✅ DONE
     def _replay(self, request:MSG, timestamp:str, lastEvaluatedKey=None):
-        
+        ''' 🏃 Supports Replay() and Next().'''
         page = self.Updates().GetPageFromTimestamp(timestamp, lastEvaluatedKey)
 
         items = []
@@ -222,19 +204,48 @@ class PUBLISHER:
         if 'LastEvaluatedKey' in page:
             lastEvaluatedKey = page['LastEvaluatedKey']
 
-            token = dtfw.Utils().UUID()
-            self.Tokens().Upsert({
+            token = self.UUID()
+            self.Tokens().Insert({
                 'Token': token,
                 'LastEvaluatedKey': json.dumps(lastEvaluatedKey),
                 'TimeStamp': timestamp,
                 'Domain': request.From()
             })
 
-        body = { 'Updates': items }
-        if token:
-            body['Token'] = token
-
-        return dtfw.Messenger().Reply(
+        self.SUBSCRIBER().InvokeConsume(
             request= request, 
-            body= body,
-            source= 'Publisher-Replay')
+            source= 'Publisher-Replay',
+            updates= items,
+            token= token)
+    
+
+    # ✅ DONE
+    def InvokeNext(self, source:str, request:MSG, token:str):
+        ''' 🏃 Invokes Next@Publisher'''
+        self.MESSENGER().Push(
+            source= source,
+            to= request.From(),
+            subject= 'Next@Publisher',
+            body= {
+                'Token': token
+            }
+        )
+
+
+    # ✅ DONE
+    def HandleNext(self, next):
+        ''' 🐌 https://quip.com/sBavA8QtRpXu#temp:C:IEK9f614503f0d44441a02dcf37f 
+        "Body": {
+            "Token": "8e8cb55b-55a8-49a5-9f80-439138e340a2"
+        }
+        '''
+        msg = self.MSG(next)
+
+        # Check if the token belongs to this domain.
+        token = self.Tokens().Get(msg)
+        token.Match('Domain', msg.From())
+
+        # Get the next updates
+        lastEvaluatedKey = json.loads(token.Require('LastEvaluatedKey'))
+        timestamp = token.Require('Timestamp')
+        return self._replay(next, timestamp, lastEvaluatedKey)

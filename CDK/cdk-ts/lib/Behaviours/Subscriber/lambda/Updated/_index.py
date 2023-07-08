@@ -3,4 +3,4 @@
 
 def handler(event, context):
     from DTFW import DTFW
-    return DTFW().Subscriber().HandleUpdate(event)
+    return DTFW().SUBSCRIBER().HandleUpdate(event)

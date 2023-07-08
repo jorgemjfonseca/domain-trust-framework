@@ -97,12 +97,13 @@ class MSG(STRUCT):
 
 
     @staticmethod
-    def Wrap(to: str, body: any) -> MSG: 
+    def Wrap(to: str, body: any, subject=None) -> MSG: 
         ''' 👉 Returns a stamped message, with header and body. '''
 
         ret = MSG({
             'Header': {
-                'To': to
+                'To': to,
+                'Subject': subject
             },
             'Body': body
         })

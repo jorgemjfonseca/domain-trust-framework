@@ -12,13 +12,13 @@ class BROKER_CREDENTIALS:
     # ✅ DONE
     def Issuers(self):
         ''' 👉 https://quip.com/sN8DACFLN9wM#temp:C:AfTd1f9336151234ccebad4d72ee '''
-        return dtfw.Dynamo('ISSUERS', keys=['WalletID', 'Issuer'])
+        return dtfw.DYNAMO('ISSUERS', keys=['WalletID', 'Issuer'])
     
 
     # ✅ DONE
     def Credentials(): 
         ''' 👉 https://quip.com/sN8DACFLN9wM#temp:C:AfTbbe653b5e8ad4f38b44dc8e7d'''
-        return dtfw.Dynamo('CREDENTIALS', keys=['WalletID', 'Issuer', 'CredentialID'])
+        return dtfw.DYNAMO('CREDENTIALS', keys=['WalletID', 'Issuer', 'CredentialID'])
     
 
     def HandleIssue(self, event):
@@ -31,7 +31,7 @@ class BROKER_CREDENTIALS:
             "Source": "https://example.com/tf/credentials/7bcf138b-db79-4a42-9d36-2655f8ff1f7c"
         }
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)
 
     
     def HandleRevoke(self, event):
@@ -43,7 +43,7 @@ class BROKER_CREDENTIALS:
             "Source": "https://example.com/tf/credentials/7bcf138b-db79-4a42-9d36-2655f8ff1f7c"
         }
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)
 
 
     def HandleAccepted(self, event):
@@ -58,7 +58,7 @@ class BROKER_CREDENTIALS:
             "Path": "/storage/tf/creds/nhs.uk/7bcf138b-db79-4a42-9d36-2655f8ff1f7c"
         }
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)
 
 
     # ✅ DONE
@@ -69,7 +69,7 @@ class BROKER_CREDENTIALS:
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
 
         wallet = dtfw.Broker().Setup().Wallets().Get(msg)
         wallet.Require()     
@@ -100,4 +100,4 @@ class BROKER_CREDENTIALS:
             "Issuer": "nhs.uk"
         }
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)

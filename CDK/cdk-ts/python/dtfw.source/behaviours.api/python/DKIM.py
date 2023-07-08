@@ -28,7 +28,7 @@ class DKIM:
     def ValidateSignature(self, text, publicKey, signature) -> VALIDATOR:
         print(f'{self._elapsed()} Invoking validator...')
 
-        ret = dtfw.Lambda('VALIDATOR_FN').Invoke({
+        ret = dtfw.LAMBDA('VALIDATOR_FN').Invoke({
             'text': text,
             'publicKey': publicKey,
             'signature': signature
@@ -38,7 +38,7 @@ class DKIM:
     
 
     def HandleDkimCfn(self): 
-        dtfw.Lambda('KeyPairRotatorFn').Invoke()
+        dtfw.LAMBDA('KeyPairRotatorFn').Invoke()
 
 
     def HandleDkimSetter(self, event):
@@ -55,23 +55,23 @@ class DKIM:
         dkim = key[:200] + '""' + key[200:]
         hostedZoneId= os.environ['hostedZoneId']
 
-        dtfw.Route53(hostedZoneId).AddTXT(
+        dtfw.ROUTE53(hostedZoneId).AddTXT(
             record_name = os.environ['dkimRecordName'], 
             value = f'"v=DKIM1;k=rsa;p={dkim};"')    
         
         
     def HandleKeyPairRotator(self):
         # Get the keys
-        keys = dtfw.Lambda('KeyPairGeneratorFn').Invoke()
+        keys = dtfw.LAMBDA('KeyPairGeneratorFn').Invoke()
         print(f'{keys=}')
 
         # Set Route53 DKIM with public key
-        dtfw.Lambda('DkimSetterFn').Invoke({
+        dtfw.LAMBDA('DkimSetterFn').Invoke({
             'public_key': keys['publicKey']
         })
 
         # Store the key pair in Secrets Manager
-        dtfw.Lambda('SecretSetterFn').Invoke(keys)
+        dtfw.LAMBDA('SecretSetterFn').Invoke(keys)
 
 
     def HandleSecretSetter(self, event):
@@ -83,13 +83,13 @@ class DKIM:
         '''
         print(f'{event=}')
 
-        dtfw.Secrets().Set('/dtfw/publicKey', value=event['publicKey'])
-        dtfw.Secrets().Set('/dtfw/privateKey', value=event['privateKey'])
+        dtfw.SECRETS().Set('/dtfw/publicKey', value=event['publicKey'])
+        dtfw.SECRETS().Set('/dtfw/privateKey', value=event['privateKey'])
 
 
     def HandleSetAlias(self):
         import os
-        r53 = dtfw.Route53(os.environ['hostedZoneId'])
+        r53 = dtfw.ROUTE53(os.environ['hostedZoneId'])
 
         r53.AddApiGW(
             customDomain = os.environ['customDomain'], 

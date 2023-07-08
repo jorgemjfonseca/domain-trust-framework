@@ -1,13 +1,19 @@
 # 📚 MANIFEST
 
+# 👉 https://stackoverflow.com/questions/33533148/how-do-i-type-hint-a-method-with-the-type-of-the-enclosing-class
+from __future__ import annotations
+
 from DTFW import DTFW
+from STRUCT import STRUCT
+from UTILS import UTILS
 dtfw = DTFW()
 
 def test():
     return 'this is a MANIFEST test.'
 
 
-class MANIFEST:
+class MANIFEST(UTILS):
+    ''' 👉 Wrapper of a YAML Manifest. '''
         
     def __init__(self, manifest: any = None):
         if manifest is MANIFEST:
@@ -17,6 +23,7 @@ class MANIFEST:
     
 
     def Manifest(self):
+        ''' 👉 Returns the internal manifest object. '''
         return self._manifest
 
 
@@ -26,10 +33,15 @@ class MANIFEST:
         CONFIG_ENV: str = 'CONFIG_ENV', 
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'
     ) -> any:
+        ''' 
+        👉 Reads the manifest's YAML from the AppConfig,
+        then converts the YAML into an object, 
+        then returns the object.
+        '''
         
-        yaml = dtfw.AppConfig().Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
+        yaml = dtfw.APPCONFIG().Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
 
-        obj = dtfw.Utils().FromYaml(yaml)
+        obj = self.Utils().FromYaml(yaml)
         
         print (f'Manifest.FromAppConfig.return: {obj}')
         return obj
@@ -41,23 +53,13 @@ class MANIFEST:
         CONFIG_ENV: str = 'CONFIG_ENV', 
         CONFIG_PROFILE: str = 'CONFIG_PROFILE'
     ) -> str:
-        
+        ''' 👉 Returns the manifest string inside AppConfig.'''
         from APPCONFIG import APPCONFIG
         yaml = APPCONFIG.Get(CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE)
 
         return yaml
     
-
-    def LoadFromAppConfig(
-        self,
-        CONFIG_APP: str = 'CONFIG_APP', 
-        CONFIG_ENV: str = 'CONFIG_ENV', 
-        CONFIG_PROFILE: str = 'CONFIG_PROFILE'
-    ):
-        self._manifestManifest.FromAppConfig(
-            CONFIG_APP, CONFIG_ENV, CONFIG_PROFILE
-        )
-        
+       
 
     def _fromDomain(self, domain) -> any:
         return dtfw.DOMAIN(domain).GetManifest()

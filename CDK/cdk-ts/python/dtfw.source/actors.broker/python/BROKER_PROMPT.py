@@ -19,6 +19,6 @@ class BROKER_PROMPT:
         '''
         
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)
 
     

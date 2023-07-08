@@ -34,7 +34,7 @@ class HOST(DTFW, HANDLER, UTILS):
             }
         }
         '''
-        return self.Dynamo('SESSIONS', keys=['SessionID'])
+        return self.DYNAMO('SESSIONS', keys=['SessionID'])
 
 
     # ✅ DONE
@@ -47,12 +47,12 @@ class HOST(DTFW, HANDLER, UTILS):
             "Serialized": "bisYfsHkJIyudS/O8FQOWpEdK"
         }
         '''
-        return self.Dynamo('FILES', keys=['SessionID', 'FileID'])
+        return self.DYNAMO('FILES', keys=['SessionID', 'FileID'])
         
 
     # ✅ DONE
     def VerifyBrokerMsg(self, event):
-        msg = self.Msg(event)
+        msg = self.MSG(event)
         session = self.Sessions().Get(msg.Body())
         session.Require('Wallet.Broker')
         session.Match('Wallet.Broker', msg.From())
@@ -61,7 +61,7 @@ class HOST(DTFW, HANDLER, UTILS):
 
     # ✅ DONE
     def VerifyWalletMsg(self, event):
-        msg = self.Msg(event)
+        msg = self.MSG(event)
         session = self.Sessions().Get(msg.Body())
         session.Require('Wallet.Locator')
         session.Match('Wallet.Locator', msg.Require('Locator'))
@@ -96,7 +96,7 @@ class HOST(DTFW, HANDLER, UTILS):
             }
         }
         '''
-        msg = self.Msg(event)
+        msg = self.MSG(event)
         resource = msg.Att('Resource')
         wallet = msg.Require('Wallet')
 
@@ -118,7 +118,7 @@ class HOST(DTFW, HANDLER, UTILS):
 
     # ✅ DONE
     def InvokeChekOut(self, source:str, to:str, sessionID:str):
-        self.Messenger().Push(
+        self.MESSENGER().Push(
             source=source, 
             to=to,
             body= { "SessionID": sessionID })
@@ -177,7 +177,7 @@ class HOST(DTFW, HANDLER, UTILS):
 
     # ✅ DONE
     def InvokeTalker(self, source:str, to:str, sessionID:str):
-        self.Messenger().Push(
+        self.MESSENGER().Push(
             source=source, 
             to=to,
             body= { "SessionID": sessionID })

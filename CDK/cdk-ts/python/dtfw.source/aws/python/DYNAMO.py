@@ -20,8 +20,8 @@ def test():
 
 
 dynamo = boto3.resource('dynamodb')
-class DYNAMO:
-    
+class DYNAMO(UTILS):
+    ''' 👉 DynamoDB table manager. '''
 
     def __init__(self, alias=None, keys:List[str]=None):
         if alias:
@@ -59,7 +59,7 @@ class DYNAMO:
          THEN return item where ID='abc'
         '''
         if not key:
-            return None
+            return ITEM(None)
         
         id = None
         if isinstance(key, str) or isinstance(key, int):
@@ -75,16 +75,6 @@ class DYNAMO:
             table= self)
     
 
-    def GetByID(self, id:str) -> ITEM:
-        if not id:
-            return None
-        return ITEM(self._getItem(self._table, id), table=self)
-    
-
-    def Item(self, struct:STRUCT) -> ITEM:
-        return self.Get(struct)
-    
-
     def _save(self, any: any, method):  
         struct = STRUCT(any)
 
@@ -98,25 +88,35 @@ class DYNAMO:
 
 
     def Insert(self, any: any):
+        ''' 👉 Inserts an item where the ID doesn't exist. '''
         return self._save(any=any, method='INSERT')
     
 
     def Update(self, any: any):
+        ''' 👉 Updates an item where the ID must exist. '''
         return self._save(any=any, method='UPDATE')        
     
 
     def Upsert(self, any: any):
+        ''' 👉 Inserts or updates an item. '''
         self._save(any=any, method='INSERT,UPDATE')
         return self.Get(any)
 
 
     def Delete(self, struct: STRUCT):
+        if not struct or struct.IsMissingOrEmpty():
+            return 
         id = struct.Require['ID']
         return self._delete_item(self._table, 'ID', id)
     
     
-    def GetAll(self):
-        return self._get_items(self)
+    def GetAll(self) -> List[STRUCT]:
+        ''' 👉 Returns all items in the table. '''
+        ret = []
+        for item in self._get_items(self):
+            struct = self.STRUCT(item)
+            ret.append(struct)
+        return ret
 
 
     def _getTable(self, alias):
@@ -247,6 +247,7 @@ class DYNAMO:
 
 
     def TTL(self, days):
+        ''' 👉 Returns a TTL timestamp expressin that DynamoDB understands. '''
         return int(time()) + (days * 24 * 60 * 60)
     
 
@@ -291,6 +292,8 @@ class DYNAMO:
 
     def Records(self, event):
         ''' 
+        👉 Parses an event from DynamoDB streams, returnin an array of all DynamoDB items changed.
+
         👉 https://stackoverflow.com/questions/63126782/how-to-desalinize-json-coming-from-dynamodb-stream 
         👉 https://stackoverflow.com/questions/63050735/how-to-design-dynamodb-to-elastic-search-with-insert-modify-remove
         👉 https://www.thelambdablog.com/getting-dynamodb-data-changes-with-streams-and-processing-them-with-lambdas-using-python/

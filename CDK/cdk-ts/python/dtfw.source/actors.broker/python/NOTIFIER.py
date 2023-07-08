@@ -13,8 +13,8 @@ class NOTIFIER:
     # ✅ DONE
     def Invoke(self, notifier:str, data: any, source:str):
         ''' 👉 ends a message to the notifier of the wallet. '''
-        msg = dtfw.Wrap(to=notifier, body=data)
-        dtfw.Messenger().Send(msg=msg, source=source)
+        msg = dtfw.WRAP(to=notifier, body=data)
+        dtfw.MESSENGER().Send(msg=msg, source=source)
 
 
     def HandleOnboard(self, event):
@@ -25,7 +25,7 @@ class NOTIFIER:
             "PublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDH+wPrKYG1KVlzQUVtBghR8n9dzcShSZo0+3KgyVdOea7Ei7vQ1U4wRn1zlI5rSqHDzFitblmqnB2anzVvdQxLQ3UqEBKBfMihnLgCSW8Xf7MCH+DSGHNvBg2xSNhcfEmnbLPLnbuz4ySn1UB0lH2eqxy50zstxhTY0binD9Y+rwIDAQAB"
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
 
 
     def HandleTranslated(self, event):
@@ -36,7 +36,7 @@ class NOTIFIER:
             "Language": "pt-br"
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         
 
     def HandleUpdated(self, event):
@@ -47,7 +47,7 @@ class NOTIFIER:
             "Updates": ["CREDENTIALS"]
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         
 
     def HandlePrompt(self, event):
@@ -59,7 +59,7 @@ class NOTIFIER:
             "Prompt": {...}
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         
 
     def HandleBindable(self, event):
@@ -76,7 +76,7 @@ class NOTIFIER:
             ]
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         
 
     def HandleBound(self, event):
@@ -91,7 +91,7 @@ class NOTIFIER:
             }]
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         
 
     def HandleIssued(self, event):
@@ -105,7 +105,7 @@ class NOTIFIER:
             "Source": "https://example.com/tf/credentials/7bcf138b-db79-4a42-9d36-2655f8ff1f7c"
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         
 
     def HandleRevoked(self, event):
@@ -117,7 +117,7 @@ class NOTIFIER:
             "Source": "https://example.com/tf/credentials/7bcf138b-db79-4a42-9d36-2655f8ff1f7c"
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         
 
     def HandleQuery(self, event):
@@ -145,7 +145,7 @@ class NOTIFIER:
             }]
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)
         
 
     def HandleCharge(self, event):
@@ -168,4 +168,4 @@ class NOTIFIER:
             ]
         }
         '''    
-        msg = dtfw.Msg(event)
+        msg = dtfw.MSG(event)

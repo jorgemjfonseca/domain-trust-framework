@@ -23,12 +23,12 @@ class DTFW(AWS, UTILS):
         return self._broker
 
     
-    def Code(self, item: any):
+    def CODE(self, item: any):
         from CODE import CODE as proxy
         return proxy(item)
     
 
-    def Domain(self, name:str=None):
+    def DOMAIN(self, name:str=None):
         from DOMAIN import DOMAIN as proxy
         return proxy(name)
     
@@ -54,7 +54,8 @@ class DTFW(AWS, UTILS):
         return self._listener
     
 
-    def Manifest(self, manifest:any = None):
+    def MANIFEST(self, manifest:any = None):
+        ''' 👉 Wrapper of a YAML Manifest. '''
         from MANIFEST import MANIFEST as proxy
         return proxy(manifest)
     
@@ -66,7 +67,7 @@ class DTFW(AWS, UTILS):
         return self._manifester
     
 
-    def Messenger(self):
+    def MESSENGER(self):
         ''' 👉 Messagenger behaviour of a domain. '''
         if not self._messenger:
             from MESSENGER import MESSENGER as proxy
@@ -74,16 +75,16 @@ class DTFW(AWS, UTILS):
         return self._messenger
 
 
-    def Msg(self, event:any = {}):
+    def MSG(self, event:any = {}):
         ''' 👉 Structure of a message: { Header, Body, Hash, Signature }. '''
         from MSG import MSG as proxy
         return proxy(event)
     
 
-    def Wrap(self, to:str=None, body:any=None):
+    def WRAP(self, to:str=None, body:any=None, subject=None):
         ''' 👉 Returns a stamped message, with header and body. '''
         from MSG import MSG as proxy
-        return proxy.Wrap(to= to, body= body)
+        return proxy.Wrap(to= to, body= body, subject=subject)
 
 
     def Notifier(self):
@@ -100,7 +101,7 @@ class DTFW(AWS, UTILS):
         return self._publisher
     
 
-    def Subscriber(self):
+    def SUBSCRIBER(self):
         from SUBSCRIBER import SUBSCRIBER as proxy
         return proxy()
     

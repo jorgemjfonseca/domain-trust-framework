@@ -23,11 +23,11 @@ class RECEIVER:
     def _invokeDkimReader(self, envelope, checks):
         print(f'{self._elapsed()} Invoke dns.google...')
 
-        domain = dtfw.Msg(envelope).From()
+        domain = dtfw.MSG(envelope).From()
         hostname = f'dtfw._domainkey.{domain}'
         checks.append(f'Valid domain?: {hostname}')
         
-        d = dtfw.Domain(domain)
+        d = dtfw.DOMAIN(domain)
         d.GoogleDns()
         print(f'{self._elapsed()} Validate dns.google...')
 
@@ -108,13 +108,13 @@ class RECEIVER:
             print(f'{ret=}')
             return ret
 
-        msg = dtfw.Msg(envelope)
+        msg = dtfw.MSG(envelope)
         subject = msg.Subject()
-        target = dtfw.Dynamo().Get(subject)
+        target = dtfw.DYNAMO().Get(subject)
         
         answer = None 
         if (target):
-            answer = dtfw.Lambda(target['Target']).Invoke(envelope)
+            answer = dtfw.LAMBDA(target['Target']).Invoke(envelope)
 
         ret = {
             'Result': 'Executed',
@@ -186,7 +186,7 @@ class RECEIVER:
 
         speed = {}
         started = self._timer.StartWatch()
-        msg = dtfw.Msg(envelope)
+        msg = dtfw.MSG(envelope)
         validation = self._validate(msg, speed)
         execution = self._execute(validation, envelope, speed)
         speed['Total handling'] = self._timer.StopWatch(started)

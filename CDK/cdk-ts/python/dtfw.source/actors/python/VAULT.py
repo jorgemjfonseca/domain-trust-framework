@@ -36,7 +36,7 @@ class VAULT(HOST):
             "PublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDH+wPrKYG1KVlzQUVtBghR8n9dzcShSZo0+3KgyVdOea7Ei7vQ1U4wRn1zlI5rSqHDzFitblmqnB2anzVvdQxLQ3UqEBKBfMihnLgCSW8Xf7MCH+DSGHNvBg2xSNhcfEmnbLPLnbuz4ySn1UB0lH2eqxy50zstxhTY0binD9Y+rwIDAQAB",
             "Confirmed": True
         }'''
-        return self.Dynamo('WALLETS', keys=['Broker', 'WalletID'])
+        return self.DYNAMO('WALLETS', keys=['Broker', 'WalletID'])
     
 
     # ✅ DONE
@@ -49,13 +49,13 @@ class VAULT(HOST):
             "Code": "iata.org/SSR/WCHR"
         }
         '''
-        return self.Dynamo('BINDS', keys=['BindID'])
+        return self.DYNAMO('BINDS', keys=['BindID'])
     
 
     # ✅ DONE
     def Disclosures(self):
         ''' 🪣 https://quip.com/IZapAfPZPnOD#temp:C:PDZ71e7244be24842df9b773d541 '''
-        return self.Dynamo('DISCLOSURES', keys=['DisclosureID'])
+        return self.DYNAMO('DISCLOSURES', keys=['DisclosureID'])
     
 
     # ✅ DONE
@@ -144,7 +144,7 @@ class VAULT(HOST):
             "Continue": "6704488d-fb53-446d-a52c-a567dac20d20"
         }
         '''
-        msg = self.Msg(event)
+        msg = self.MSG(event)
 
 
     def HandleDisclose(self, event):
@@ -159,7 +159,7 @@ class VAULT(HOST):
             }],
         }
         '''
-        msg = self.Msg(event)
+        msg = self.MSG(event)
 
         # Validate the user’s signature in the ✉️ Msg
         # -> compare with the key in 🪣 Wallets
@@ -202,7 +202,7 @@ class VAULT(HOST):
                 "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa4"
         }
         '''
-        msg = self.Msg(event)
+        msg = self.MSG(event)
 
 
     def HandleUnbind(self, event):
@@ -212,4 +212,4 @@ class VAULT(HOST):
             "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5"
         }
         '''
-        msg = self.Msg(event)
+        msg = self.MSG(event)

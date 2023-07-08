@@ -19,7 +19,7 @@ class BROKER_PAY:
         '''
         
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)
 
 
     def HandleSubscribe(self, event):
@@ -27,7 +27,7 @@ class BROKER_PAY:
         '''
         
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)
 
 
     def HandleResubscribe(self, event):
@@ -35,7 +35,7 @@ class BROKER_PAY:
         '''
         
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)
 
 
     def HandleUnsubscribe(self, event):
@@ -43,6 +43,6 @@ class BROKER_PAY:
         '''
         
         '''
-        dtfw.Msg(event)
+        dtfw.MSG(event)
 
     

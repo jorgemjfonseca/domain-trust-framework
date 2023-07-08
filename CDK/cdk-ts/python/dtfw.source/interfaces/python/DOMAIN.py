@@ -98,7 +98,7 @@ class DOMAIN:
         import os
         hosted_zone_id = os.environ['hostedZoneId']  
 
-        zone = dtfw.Route53(hosted_zone_id)
+        zone = dtfw.ROUTE53(hosted_zone_id)
 
         domain = zone.Domain()
         serverList = zone.NameServerList()
@@ -121,7 +121,7 @@ class DOMAIN:
         domainName = os.environ['domainName']
         
         try:
-            param = dtfw.Ssm().Get(paramName)
+            param = dtfw.SSM().Get(paramName)
         except:
             param = None
 
@@ -130,10 +130,10 @@ class DOMAIN:
             return
         else:
             print(f'Setting new parameter: ' + domainName)
-            dtfw.Ssm().Set(paramName, domainName)
+            dtfw.SSM().Set(paramName, domainName)
 
 
     def HandleNamerDelete(self):
         import os
         paramName = os.environ['paramName']
-        dtfw.Ssm().Delete(paramName)
+        dtfw.SSM().Delete(paramName)

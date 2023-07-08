@@ -12,9 +12,8 @@ from MSG import MSG
 from STRUCT import ITEM, STRUCT
 from DTFW import DTFW
 
-dtfw = DTFW()
 
-class GRAPH:
+class GRAPH(DTFW):
     
     
     def _graphDomain(self) -> str: 
@@ -23,53 +22,52 @@ class GRAPH:
     
 
     def Domains(self):
-        return dtfw.Dynamo('DOMAINS')
-    def Domain(self, domainName):
-        return self.Domains().Get(domainName)
+        return self.DYNAMO('DOMAINS')
+    
 
-
-    def Manifest(self, domainName):
-        item = self.Domain(domainName)        
-        manifest = dtfw.Manifest(item['Manifest'])
+    # ✅ DONE
+    def StoredManifest(self, domainName):
+        item = self.Domains().Get(domainName)        
+        manifest = self.MANIFEST(item['Manifest'])
         # TODO: test if we need a UTILS.FromYaml/Json
 
         return manifest
 
 
+    # ✅ DONE
     def Codes(self) -> DYNAMO:
-        return dtfw.Dynamo('CODES')
-    def Code(self, code):
-        return self.Codes().Get(code)
+        return self.DYNAMO('CODES')
 
 
+    # ✅ DONE
     def Invoke(self, subject, body: any) -> STRUCT: 
         ''' 👉 Sends a message to the registered Graph endpoint. '''
-        msg = dtfw.Msg()
-        msg.To(self._graphDomain())
-        msg.Subject(subject)
-        msg.Body(body)
-        resp = dtfw.SyncApi().Send(msg)
-        return dtfw.Struct(resp)
+        resp = self.SyncApi().Send(
+            to= self._graphDomain(),
+            subject= subject,
+            body= body)
+        return self.STRUCT(resp)
 
 
-    def HandleConsumer(self, event):
+    def HandleConsume(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAeaf662df90ec442284b7aaef9 '''
 
         print(f'{event}')
 
-        for r in dtfw.Dynamo().Records(event):
+        for r in self.DYNAMO().Records(event):
 
             domainName = r['Domain']
 
-            dtfw.Dynamo('DOMAINS').Upsert(domainName, {
+            self.DYNAMO('DOMAINS').Upsert(domainName, {
                 'Domain': domainName,
-                'Timestamp': dtfw.Utils().Timestamp(),
-                'Manifest': dtfw.Domain(domainName).Manifest()
+                'Timestamp': self.Timestamp(),
+                'Manifest': self.DOMAIN(domainName).Manifest()
             })
             
 
     def _trusts(self, source, target, role, code):
-        domain = self.Manifest(source)
+        ''' 🏃 Internal method to search a trust path in the database. '''
+        domain = self.MANIFEST(source)
         if not domain:
             return False
 
@@ -79,8 +77,9 @@ class GRAPH:
             code=code)
         
 
+    # ✅ DONE
     def InvokeTrusted(self, domain, context, code) -> bool: 
-        ''' 👉 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
+        ''' 🏃 https://quip.com/hgz4A3clvOes/-Graph#temp:C:bDA0807933d618043e6b1873dc74 '''
         '''
         "Body": {
             "Domain": "ec.europa.eu",
@@ -110,11 +109,11 @@ class GRAPH:
             "Code": "iata.org/SSR/WCHR"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.MSG(event)
 
         trusts = self._trusts(
             source= msg.From(),
-            target= msg.Att('Domain'), 
+            target= msg.Require('Domain'), 
             role= msg.Att('Role'), 
             code= msg.Att('Code'))
 
@@ -136,10 +135,10 @@ class GRAPH:
             "Code": "dtfw.org/PALM/FOUND"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.MSG(event)
 
-        source = msg.Att('Truster')
-        target = msg.Att('Domain')
+        source = msg.Require('Truster')
+        target = msg.Require('Domain')
         role = msg.Att('Role')
         code = msg.Att('Code')
 
@@ -151,6 +150,7 @@ class GRAPH:
         }
     
 
+    # ✅ DONE
     def HandleIdentity(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAacb56742c6a342a8a3494587d '''
 
@@ -159,8 +159,8 @@ class GRAPH:
             "Domain": "example.com"
         }
         '''
-        domainName = dtfw.Msg(event).Att('Domain')
-        return self.Manifest(domainName).Identity()
+        domainName = self.MSG(event).Att('Domain')
+        return self.MANIFEST(domainName).Identity()
     
 
     def HandleQueryable(self, event):
@@ -178,20 +178,22 @@ class GRAPH:
         '''
         print(f'{event}')
         
-        binds = dtfw.Msg(event).Att('Binds')
+        binds = self.MSG(event).Att('Binds')
         binds['Alert'] = 'Logic not yet implemented, this is just an echo!'
         return binds
     
 
+    # ✅ DONE
     def InvokeTranslate(self, body: any) -> STRUCT: 
-        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
+        ''' 🏃 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
         return self.Invoke(
             subject='Translate@Graph', 
             body=body)
     
 
+    # ✅ DONE
     def HandleTranslate(self, event):
-        ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
+        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
 
         '''
         "Body": {
@@ -218,14 +220,14 @@ class GRAPH:
             return ret
         
         for domain in domains:
-            translation = self.Manifest(domain).Translate(language)
+            translation = self.MANIFEST(domain).Translate(language)
             ret['Domains'].append({
                 'Domain': domain,
                 'Translation': translation
             })
 
         for code in codes:
-            item = self.Code(code)
+            item = self.CODE(code)
             translation = dtfw.Code(item).Translate(language)
             ret['Codes'].append({
                 'Code': code,
@@ -259,12 +261,13 @@ class GRAPH:
             "Date": "2022/01/09"
         }
         '''
-        msg = dtfw.Msg(event)
+        msg = self.MSG(event)
         return {
             'Alert': 'Not yet implemented!'
         }
     
 
+    # ✅ DONE
     def HandleSchema(self, event):
         ''' 👉 https://quip.com/hgz4A3clvOes#temp:C:bDAe24fd83cf9c244078a0f67f7f '''
 
@@ -277,7 +280,7 @@ class GRAPH:
         '''
         msg = dtfw.Msg(event)
         code = msg.Att('Code')
-        item = self.Code(code)
+        item = self.CODE(code)
 
         return dtfw.Code(item).Schema(
             output= msg.Att('Output'), 
@@ -286,8 +289,8 @@ class GRAPH:
 
     def HandlePublisher(self, event):
         
-        domainName = dtfw.Msg(event).From()
-        manifest = dtfw.Manifest().Fetch(domainName)
+        domainName = self.MSG(event).From()
+        manifest = self.MANIFEST().Fetch(domainName)
 
         # TODO: save the domain and code
         # TODO: Ignore older records by looking at the Timestamps (envelope+table)

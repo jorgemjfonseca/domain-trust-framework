@@ -26,7 +26,7 @@ class MANIFESTER:
 
 
     def _viewer(self, format):
-        manifest = dtfw.Manifest().FromAppConfig()
+        manifest = dtfw.MANIFEST().FromAppConfig()
         return dtfw.Utils().HttpResponse(body=manifest, format=format)
 
 

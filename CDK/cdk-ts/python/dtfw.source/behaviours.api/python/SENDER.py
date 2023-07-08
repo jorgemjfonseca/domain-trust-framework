@@ -13,7 +13,7 @@ class SENDER:
         ''' 👉️ https://hands-on.cloud/boto3-kms-tutorial/ '''
         # REQUEST { privateKey, publicKey, text }
         # RESPONSE { hash, signature, isVerified }
-        return dtfw.Lambda('SIGNER_FN').Invoke({
+        return dtfw.LAMBDA('SIGNER_FN').Invoke({
             'privateKey': privateKey,
             'publicKey': publicKey,
             'text': text
@@ -22,8 +22,8 @@ class SENDER:
 
     def _get_keys(self): 
         return {
-            'publicKey': dtfw.Secrets().Get('/dtfw/publicKey'),
-            'privateKey': dtfw.Secrets().Get('/dtfw/privateKey')
+            'publicKey': dtfw.SECRETS().Get('/dtfw/publicKey'),
+            'privateKey': dtfw.SECRETS().Get('/dtfw/privateKey')
         }
 
 
@@ -82,7 +82,7 @@ class SENDER:
 
     def _send_envelope(self, envelope: any):
 
-        to = dtfw.Msg(envelope).To()
+        to = dtfw.MSG(envelope).To()
         url = f'https://dtfw.{to}/inbox'
         
         return dtfw.Web.Post(url, envelope)

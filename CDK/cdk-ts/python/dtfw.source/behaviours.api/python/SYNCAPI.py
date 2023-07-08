@@ -9,7 +9,7 @@ def test():
     return 'this is SYNCAPI test.'
 
 
-class SYNCAPI:
+class SYNCAPI(DTFW):
     
 
     def Sender(self):
@@ -27,19 +27,22 @@ class SYNCAPI:
         return proxy()
     
     
-    def Send(self, msg: MSG): 
+    def Send(self, msg:MSG=None, to=None, body=None, subject=None): 
+
+        if msg == None:
+            msg = self.WRAP(to=to, body=body, subject=subject)
 
         msg.Stamp()
         envelope = msg.Envelope()
 
-        sent = dtfw.Lambda('SENDER').Invoke(envelope)
+        sent = dtfw.LAMBDA('SENDER').Invoke(envelope)
         return sent
 
 
 
     def HandleSetAlias(self):
         import os
-        r53 = dtfw.Route53(os.environ['hostedZoneId'])
+        r53 = dtfw.ROUTE53(os.environ['hostedZoneId'])
 
         r53.AddApiGW(
             customDomain = os.environ['customDomain'], 

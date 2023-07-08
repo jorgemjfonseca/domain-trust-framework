@@ -15,13 +15,13 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
     # ✅ DONE
     def Binds(self):
         ''' 👉 https://quip.com/oSzpA7HRICjq#temp:C:DSDcace3164ba9e44608c1a16cb1 '''
-        return self.Dynamo('BINDS', keys=['WalletID', 'Vault', 'Code'])
+        return self.DYNAMO('BINDS', keys=['WalletID', 'Vault', 'Code'])
     
 
     # ✅ DONE
     def Vaults(self):
         ''' 👉 https://quip.com/oSzpA7HRICjq#temp:C:DSD1ead4d286ae34b40a565e308c '''
-        return self.Dynamo('VAULTS', keys=['WalletID', 'Vault'])
+        return self.DYNAMO('VAULTS', keys=['WalletID', 'Vault'])
     
     
     def HandleBindable(self, event):
@@ -34,7 +34,7 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
             }]
         }
         '''
-        msg = self.Msg(event)
+        msg = self.MSG(event)
         self.Graph().Invoke()
 
     
@@ -46,7 +46,7 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
           "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        msg = self.Msg(event)
+        msg = self.MSG(event)
 
         wallet = self.Wallets().Get(msg)
         wallet.Require()      
@@ -73,7 +73,7 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
     def InvokeBound(self, source:str, to:str, walletID:str, binds:List[object], request:MSG):
         ''' 🏃 Broker.Bound: 🐌 https://quip.com/oSzpA7HRICjq/-Broker-Binds#temp:C:DSD3f7309f961e24f0ebb5897e2f '''        
 
-        self.Messenger().Push(
+        self.MESSENGER().Push(
             source= source,
             to= to,
             body= {
@@ -95,7 +95,7 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
             }]
         }
         '''
-        self.Msg(event)
+        self.MSG(event)
 
 
     def HandleUnbind(self, event):

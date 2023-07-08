@@ -3,7 +3,7 @@
 from DTFW import DTFW
 
 def on_create(event):
-    DTFW().Domain().HandleNamerCreate()    
+    DTFW().DOMAIN().HandleNamerCreate()    
     return {'PhysicalResourceId': 'custom'}
 
 
@@ -12,7 +12,7 @@ def on_update(event):
 
 
 def on_delete(event):
-    DTFW().Domain().HandleNamerDelete()    
+    DTFW().DOMAIN().HandleNamerDelete()    
     return {'PhysicalResourceId': 'custom'}
 
     

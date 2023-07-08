@@ -5,7 +5,7 @@ def on_create(event):
     print(f'on_create: {event}')
 
     from DTFW import DTFW
-    DTFW().Domain().HandleRegisterer()
+    DTFW().DOMAIN().HandleRegisterer()
     
     return {'PhysicalResourceId': 'custom'}
 

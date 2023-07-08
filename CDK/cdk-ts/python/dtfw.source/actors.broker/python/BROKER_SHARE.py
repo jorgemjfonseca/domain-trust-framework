@@ -21,7 +21,7 @@ class BROKER_SHARE(DTFW):
             }]
         }
         '''
-        self.Msg(event)
+        self.MSG(event)
 
         # SUBSET = Call 🚀 Queryable: 🕸 Graph
         #    * Host: ♌ From: ✉️ Msg
