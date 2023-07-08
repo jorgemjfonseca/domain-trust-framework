@@ -97,7 +97,7 @@ class MSG(STRUCT):
 
 
     @staticmethod
-    def Wrap(to: str, body: any, subject=None) -> MSG: 
+    def Wrap(to: str, body: any, subject=None, header=None) -> MSG: 
         ''' 👉 Returns a stamped message, with header and body. '''
 
         ret = MSG({
@@ -107,6 +107,10 @@ class MSG(STRUCT):
             },
             'Body': body
         })
+
+        if header != None:
+            ret.Header(header)
+
         ret.Stamp()
         return ret
 

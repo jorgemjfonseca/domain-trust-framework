@@ -81,10 +81,10 @@ class DTFW(AWS, UTILS):
         return proxy(event)
     
 
-    def WRAP(self, to:str=None, body:any=None, subject=None):
+    def WRAP(self, to:str=None, body:any=None, subject=None, header=None):
         ''' 👉 Returns a stamped message, with header and body. '''
         from MSG import MSG as proxy
-        return proxy.Wrap(to= to, body= body, subject=subject)
+        return proxy.Wrap(to= to, body= body, subject=subject, header= header)
 
 
     def Notifier(self):

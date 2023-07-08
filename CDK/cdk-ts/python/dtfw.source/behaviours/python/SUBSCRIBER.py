@@ -3,64 +3,61 @@
 # 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
 from typing import List, Set, Tuple, Dict
 
-
 from ITEM import ITEM
 from STRUCT import STRUCT
 from MSG import MSG
 from DTFW import DTFW
-dtfw = DTFW()
 
 
-def test():
-    return 'this is SUBSCRIBER test.'
 
-
+# ✅ DONE
 class SUBSCRIBER(DTFW):
     ''' 👉 https://quip.com/9ab7AO56kkxY/-Subscriber '''
+    
+
+    # ✅ DONE
+    def Dedups(self):
+        ''' 🪣 https://quip.com/9ab7AO56kkxY#temp:C:ISd04f7e560d00b442f9efed03f1
+        {
+            "Publisher": "any.publisher.com",
+            "UpdateID": "8e8cb55b-55a8-49a5-9f80-439138e340a2", 
+            "Domain": "example.com",
+            "Timestamp": "2018-12-10T13:45:00.000Z",
+            "TTL": "2018-12-12T00:00:00.000Z"
+        }
+        '''
+        return self.DYNAMO('DEDUPS', keys=['Publisher', 'UpdateID'])
     
 
     # ✅ DONE
     def InvokeUpdate(self, update:any, to:str):
         ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a '''
         
-        return dtfw.MESSENGER().Push(
+        return self.MESSENGER().Push(
             source= 'Publisher-Filter',
             subject= 'Update@Subscriber',
             to= to,
             body= update)
     
 
-    def HandleUpdate(self, event):
-        ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a '''
-
-        '''
+    # ✅ DONE
+    def HandleUpdated(self, event):
+        ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISdeb655f34cef549fbbb9669e4a 
         "Body": {
             "UpdateID": "8e8cb55b-55a8-49a5-9f80-439138e340a2",
             "Domain": "example.com",
             "Timestamp": "2018-12-10T13:45:00.000Z"
         }
         '''
-
-        print(f'{event}')
-        
-        msg = dtfw.MSG(event)
-
-        required = {
+        msg = self.MSG(event)
+        self.Dedups().Upsert({
             'Publisher': msg.From(),
-            'UpdateID': msg.Att('UpdateID', default= dtfw.Utils().UUID()), 
-            'Timestamp': msg.Att('Timestamp', default= dtfw.Utils().Timestamp()),
-            'TTL': dtfw.DYNAMO().TTL(days=1)
-        }
-
-        item = dtfw.Utils().Merge(
-            msg.Body(),
-            required
-        ) 
-
-        dtfw.DYNAMO('DEDUPS').Upsert(
-            id= msg.Att('UpdateID'), 
-            item= item)
-        
+            'UpdateID': msg.Att('UpdateID', default= self.UUID()), 
+            'Timestamp': msg.Att('Timestamp', default= self.Timestamp()),
+            'TTL': self.DYNAMO().TTL(days=1),
+            'Domain': msg.Require('Domain'),
+        })
+                
 
     # ✅ DONE
     def InvokeConsume(self, request:MSG, source:str, token:str, updates:List):
@@ -79,8 +76,9 @@ class SUBSCRIBER(DTFW):
             body= body)
 
 
+    # ✅ DONE
     def HandleConsume(self, page):
-        ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISd000c9e83bc4945b293024175e 
+        ''' 👉 https://quip.com/9ab7AO56kkxY#temp:C:ISd000c9e83bc4945b293024175e \n
         "Body": {
             "Updates":[
                 {
@@ -92,36 +90,18 @@ class SUBSCRIBER(DTFW):
             "Token": "cdaf19d8-3e51-4f1f-b5c7-2c7d9dda0c0d"
         }
         '''
-
-        # TODO Consider removing duplicates 
-        # TODO Consider ignoring old updates
-
-        '''
-        "Body": {
-            "Updates":[
-                {
-                    "UpdateID": "8e8cb55b-55a8-49a5-9f80-439138e340a2",
-                    "Domain": "example.com",
-                    "Timestamp": "2018-12-10T13:45:00.000Z"
-                }
-            ],
-            "Token": "cdaf19d8-3e51-4f1f-b5c7-2c7d9dda0c0d"
-        }
-        '''
-        print(f'{page}')
-
-        list = dtfw.MSG(page)
+        msg = self.MSG(page)
 
         # Execute individual updates.
-        for update in list.Body()['Updates']:
-            single = dtfw.MSG()
-            single.Header(list.Header())
-            single.Body(update)
-            self.HandleUpdate(single)
+        for update in msg.Body()['Updates']:
+            single = self.WRAP(
+                header= msg.Header(),
+                body= update)
+            self.HandleUpdated(single)
 
         # Ask for the next group of updates.
-        if not list.IsMissingOrEmpty('Token'):
+        if not msg.IsMissingOrEmpty('Token'):
             self.Publisher().InvokeNext(
-                token= list.Require('Token'),
-                request= list,
+                token= msg.Require('Token'),
+                request= msg,
                 source='Subscriber-Consume')
