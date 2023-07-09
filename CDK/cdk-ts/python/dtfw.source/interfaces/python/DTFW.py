@@ -101,6 +101,11 @@ class DTFW(AWS, UTILS):
             self._publisher = proxy()
         return self._publisher
     
+    
+    def QR(self, item: any):
+        from QR import QR as proxy
+        return proxy(item)
+    
 
     def SUBSCRIBER(self):
         from SUBSCRIBER import SUBSCRIBER as proxy

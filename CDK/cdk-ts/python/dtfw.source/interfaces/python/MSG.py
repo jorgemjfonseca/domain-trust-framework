@@ -27,7 +27,11 @@ class MSG(STRUCT):
         print(f'MSG.Envelope()={envelope}')
 
         # set the Body as the root for the Att() method.
-        super().SetAttRoot(self.Body())
+        self.SetAttRoot(self.Body())
+
+        # map alias to the header.
+        self.MapAtt('Host', 'Header.From')
+        self.MapAtt('Domain', 'Header.From')
     
 
     def Envelope(self) -> any:
@@ -55,14 +59,14 @@ class MSG(STRUCT):
         return self.Header().RequireStr('To', set=set)
     
     
-    def Timestamp(self) -> str:
-        ''' 👉 Gets the Timestamp. '''
-        return self.Header().RequireStr('To')
+    def Timestamp(self, set:str=None) -> str:
+        ''' 👉 Gets or sets the Timestamp. '''
+        return self.Header().RequireStr('Timestamp', set=set)
     
 
-    def Correlation(self) -> str:
-        ''' 👉 Gets the Correlation. '''
-        return self.Header().RequireStr('Correlation')
+    def Correlation(self, set:str=None) -> str:
+        ''' 👉 Gets or sets the Correlation. '''
+        return self.Header().RequireStr('Correlation', set=set)
         
 
     def Body(self, body=None) -> STRUCT:
@@ -105,7 +109,7 @@ class MSG(STRUCT):
                 'To': to,
                 'Subject': subject
             },
-            'Body': body
+            'Body': STRUCT.Unstruct(body)
         })
 
         if header != None:
@@ -162,3 +166,4 @@ class MSG(STRUCT):
 
         if not isVerified:
             raise Exception(f'Invalid signature!')
+        

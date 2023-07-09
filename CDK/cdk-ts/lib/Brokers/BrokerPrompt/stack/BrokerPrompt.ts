@@ -8,7 +8,7 @@ export interface BrokerPromptDependencies {
   brokerTables: BrokerTables
 }
 
-/** 👉 https://quip.com/FNbzAVSVu9z6#RCPABAYylHR */
+/** 🤵📎 https://quip.com/FNbzAVSVu9z6#RCPABAYylHR */
 export class BrokerPrompt extends STACK {
 
   public static New(scope: Construct, deps: BrokerPromptDependencies, props?: cdk.StackProps): BrokerPrompt {
@@ -22,6 +22,7 @@ export class BrokerPrompt extends STACK {
 
     const wallets = BrokerTables.ImportWallets(this);
 
+    // 🤗🐌 https://quip.com/FNbzAVSVu9z6/-Broker-Prompt#temp:C:RCPf6c15c5e6e2d47c294917a750
     LAMBDA
       .New(this, 'Prompt')
       .WritesToDynamoDB(wallets, 'WALLETS')

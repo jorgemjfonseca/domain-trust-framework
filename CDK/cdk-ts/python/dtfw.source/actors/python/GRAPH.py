@@ -3,7 +3,9 @@
 # TODO implement graph DB
 
 
+from typing import List
 from DYNAMO import DYNAMO
+from MANIFEST import MANIFEST
 from MSG import MSG
 from STRUCT import ITEM, STRUCT
 from DTFW import DTFW
@@ -73,7 +75,7 @@ class GRAPH(DTFW):
     def Domains(self):
         return self.DYNAMO('DOMAINS')
     
-    
+
     # ✅ DONE
     def LoadManifest(self, domain):
         item = self.Domains().Get(domain)
@@ -98,7 +100,7 @@ class GRAPH(DTFW):
     # ✅ DONE
     def Invoke(self, subject, body: any) -> STRUCT: 
         ''' 👉 Sends a message to the registered Graph endpoint. '''
-        resp = self.SyncApi().Send(
+        resp = self.SYNCAPI().Send(
             to= self._graphDomain(),
             subject= subject,
             body= body)
@@ -111,9 +113,9 @@ class GRAPH(DTFW):
 
         print(f'{event}')
 
-        for r in self.DYNAMO().Records(event):
+        for struct in self.DYNAMO().Records(event):
 
-            domainName = r['Domain']
+            domainName = struct.Require('Domain')
 
             self.Domains().Upsert(domainName, {
                 'Domain': domainName,
@@ -196,24 +198,51 @@ class GRAPH(DTFW):
     
 
     # ✅ DONE
-    def HandleIdentity(self, event):
-        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDAacb56742c6a342a8a3494587d '''
+    def InvokeIdentity(self, domain): 
+        ''' 🏃 https://quip.com/hgz4A3clvOes#temp:C:bDAacb56742c6a342a8a3494587d '''
+        ret = self.Invoke(
+            subject='Identity@Graph', 
+            body={
+                "Domain": domain
+            })
+        
+        return MANIFEST(ret, section='Identity')
+    
 
-        '''
+    # ✅ DONE
+    def HandleIdentity(self, event):
+        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDAacb56742c6a342a8a3494587d 
         "Body": {
             "Domain": "example.com"
         }
         '''
         domainName = self.MSG(event).Att('Domain')
-        return self.MANIFEST(domainName).Identity()
+        ret = self.MANIFEST(domainName).Identity()
+
+        '''{
+            "Domain": "example.com",
+            "Name": "Any Domain, Inc.",
+            "SmallIcon": "",
+            "BigIcon": "https://example.com/big-icon.png",
+            "Translations": [{
+                "Language": "en-us",
+                "Translation": "Any Domain, Inc."
+            }]
+        }'''
+
+        return ret
     
 
     # ✅ DONE
-    def InvokeTranslate(self, body: any) -> STRUCT: 
+    def InvokeTranslate(self, language:str, domains:List[str]=[], codes:List[str]=[]) -> STRUCT: 
         ''' 🏃 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
         return self.Invoke(
             subject='Translate@Graph', 
-            body=body)
+            body={
+                "Language": language,
+                "Domains": domains,
+                "Codes": codes
+            })
     
 
     # ✅ DONE

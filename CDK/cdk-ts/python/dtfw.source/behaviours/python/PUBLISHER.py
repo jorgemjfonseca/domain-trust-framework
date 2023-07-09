@@ -32,7 +32,27 @@ class PUBLISHER(DTFW, HANDLER):
             "Domain": "example.com",
             "Timestamp": "2018-12-10T13:45:00.000Z"
         }'''
-        return self.DYNAMO('Updates', keys=['UpdateID'])
+        return self.DYNAMO('UPDATES', keys=['UpdateID'])
+    
+
+    # ✅ DONE
+    def Domains(self):
+        ''' Used for replays
+        {
+            "Domain": "example.com",
+            "Timestamp": "2018-12-10T13:45:00.000Z"
+        }'''
+        return self.DYNAMO('DOMAINS', keys=['Domain'])
+    
+
+    # ✅ DONE
+    def Correlations(self):
+        ''' Used for dedups
+        {
+            "Domain": "example.com",
+            "Correlation": "2018-12-10T13:45:00.000Z"
+        }'''
+        return self.DYNAMO('CORRELATIONS', keys=['Domain', 'Correlation'])
     
 
     # ✅ DONE
@@ -105,10 +125,22 @@ class PUBLISHER(DTFW, HANDLER):
         '''
         msg = self.MSG(event)
 
-        # TODO: this should be a DynamoDB stream event, to be more resilient.
-        #   If the second step fails, a new UpdateID is inserted, growing to infinite.
-        #   By separating the second step, it can fail independently with adding DB items.
-
+        # Check for duplicates.
+        correlation = self.Correlations().Get({
+            'Domain': msg.From(),
+            'Correlation': msg.Correlation()
+        })
+        if not correlation.IsMissingOrEmpty():
+            print(f'Duplicate event, ignoring.')
+            return 
+        
+        # Check for old events.
+        domain = self.Domains().Get(msg.From())
+        if not domain.IsMissingOrEmpty():
+            if domain.Require('Timestamp') >= msg.Timestamp():
+                print(f'Old event, ignoring.')
+                return 
+        
         # save to Updates table.
         raw = {
             'UpdateID': self.UUID(),
@@ -116,8 +148,15 @@ class PUBLISHER(DTFW, HANDLER):
             'Timestamp': msg.Timestamp(),
             'Correlation': msg.Correlation()
         }
+
         update = self.TriggerLambdas('HandleEnrich@Publisher', raw)
-        self.Updates().Upsert(update)
+        self.Updates().Insert(update)
+        self.Correlations().Insert(correlation, days=1)
+        self.Domains().Upsert(update)
+
+        # TODO: this should be a DynamoDB stream event, to be more resilient.
+        #   If the second step fails, a new UpdateID is inserted, growing to infinite.
+        #   By separating the second step, it can fail independently with adding DB items.
 
         # fan out to all subscribers.
         for subscriber in self.Subscribers().GetAll(): 
@@ -179,7 +218,7 @@ class PUBLISHER(DTFW, HANDLER):
         #   Fill require to loop through the pages, or to set a filter().
         #   Actually, filters won't work because the filter is external on self._ignore().
 
-        page = self.Updates().GetPageFromTimestamp(
+        page = self.Domains().GetPageFromTimestamp(
             timestamp= timestamp, 
             lastEvaluatedKey= lastEvaluatedKey)
 

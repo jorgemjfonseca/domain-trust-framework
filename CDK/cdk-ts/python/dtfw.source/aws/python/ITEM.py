@@ -7,14 +7,16 @@ from DYNAMO import DYNAMO
 class ITEM(STRUCT): 
     ''' 👉 STRUCT created from a DynamoDB item. '''
 
-    def __init__(self, item:any, table:DYNAMO):
-        if not item:
-            raise Exception('Item is required!')
-        if not table:
+    def __init__(self, item:any, table:DYNAMO=None):
+        if table != None:
+            self._table = table
+        elif isinstance(item, ITEM):
+            self._table = item._table
+
+        if not self._table:
             raise Exception('Table is required!')
-        
+
         super().__init__(item)
-        self._table = table
 
 
     def ID(self) -> str:

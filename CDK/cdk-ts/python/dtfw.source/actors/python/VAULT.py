@@ -193,13 +193,26 @@ class VAULT(HOST):
             # -> 🐌 Consume: 🔎 Consumer
 
 
+    # ✅ DONE
+    def InvokeSuppress(self, to:str, consumer:str, sessionID:str, source:str):
+        ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZeda25d5a05a3470a994e6689d '''
+        self.MESSENGER().Push(
+            to= to,
+            subject= 'Suppress@Vault',
+            source= source,
+            body= {
+                "Consumer": consumer,
+                "SessionID": sessionID
+            }
+        )
+
 
     def HandleSuppress(self, event):
         ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZeda25d5a05a3470a994e6689d '''
         '''
         "Body": {
             "Consumer": "airfrance.fr",
-                "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa4"
+            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa4"
         }
         '''
         msg = self.MSG(event)

@@ -6,6 +6,8 @@ from __future__ import annotations
 # 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
 from typing import List, Set, Tuple, Dict
 
+from UTILS import UTILS
+
 
 class RequiredAttributeMissing(Exception):
     pass
@@ -16,7 +18,7 @@ class AttributeDoesntMatch(Exception):
 
 
 
-class STRUCT: 
+class STRUCT(UTILS): 
     ''' 
     👉 Generic structure that wraps a non-STRUCT object. 
     If a STRUCT object is received to be wrapped, 
@@ -25,11 +27,22 @@ class STRUCT:
 
 
     def __init__(self, obj:any, attRoot=None):
-        safe = STRUCT.Unstruct(obj)
-        self._obj = safe
-        self._attRoot = safe 
-        if attRoot:
-            self._attRoot = attRoot
+        if isinstance(obj, STRUCT):
+            self._obj = obj._obj
+            self._attRoot = obj._attRoot
+            self._attMap =  obj._attRoot
+        else:
+            safe = STRUCT.Unstruct(obj)
+            self._obj = safe
+            self._attRoot = safe 
+            self._attMap = {}
+            if attRoot:
+                self._attRoot = attRoot
+
+    
+    def MapAtt(self, alias:str, name:str):
+        '''Add alias to attributes'''
+        self._attMap[alias] = name
 
 
     @staticmethod
@@ -55,7 +68,7 @@ class STRUCT:
     def Print(self, title=None):
         ''' 👉 Prints the json representation of the inner object. '''
         print(f'{title}={self.Obj()}')
-    
+
 
     def SetAttRoot(self, attRoot:any):
         ''' 
@@ -94,9 +107,14 @@ class STRUCT:
         
         # root getter
         if '.' not in name:
-            if name not in root:
-                return default
-            return root[name]
+            if name in root:
+                return root[name]
+            
+            # not found, look in attribute alias from the root.
+            if name in self._attMap:
+                return self.Att(self._attMap, default=default, root=self._obj)
+            
+            return default
         
         # chained getter
         if '.' in name:
@@ -177,6 +195,32 @@ class STRUCT:
         return list
     
 
+    def Lenght(self):
+        return self.Size()
+    
+    
+    def Size(self):
+        return len(self.Obj)
+
+
+    def RemoveWhere(self, att:str, equals=str):
+        ''' 👉 Loops a list to find and remove a child with a matching property. '''
+        list = self.Obj()
+        for index, value in enumerate(list):
+            if value[att] == equals:
+                list.pop(index)
+                return 
+            
+
+    def Where(self, att:str, equals=str) -> STRUCT:
+        ''' 👉 Loops a list to find a child with a matching property. '''
+        for child in self.Obj():
+            struct = STRUCT(child)
+            if struct.Att(att) == equals:
+                return struct
+        return STRUCT({})
+
+
     def Structs(self, name:str) -> List[STRUCT]:
         """ 👉 Returns a list of structures referenced by the property. """
         list = self.Att(name)
@@ -220,7 +264,7 @@ class STRUCT:
         return False
 
 
-    def Default(self, name:str, default:str):
+    def Default(self, name:str, default:any):
         """ 👉 Sets the value of a string attribute, if not set. """
         if self.IsMissingOrEmpty(name):
             self.Att(name, set=default)
@@ -268,3 +312,11 @@ class STRUCT:
     def AttExists(self, name:str) -> bool:
         ''' 👉 Indicates if an attribute exists.'''
         return not self.IsMissingOrEmpty()
+    
+
+    def AppendToAtt(self, att:str, obj:any):
+        ''' 👉 Adds an object to a list attribute. '''
+        self.Default(att, default=[])
+        array = self.Att(att)
+        array.append(obj)
+        

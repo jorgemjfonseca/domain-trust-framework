@@ -70,5 +70,9 @@ class LISTENER(PUBLISHER, SUBSCRIBER):
 
         for update in self.DYNAMO().Records(event):
             msg = self.WRAP(body=update)
-            msg.From(update['Domain'])
-            self.HandlePublish(msg)
+
+            msg.From(update.Require('Domain'))
+            msg.Timestamp(update.Require('Timestamp'))
+            msg.Correlation(update.Require('Correlation'))
+
+            self.LAMBDA('PUBLISHER').Invoke(msg)

@@ -45,7 +45,23 @@ class DYNAMO(UTILS):
         return '/'.join(vals)
 
 
-    def Get(self, key:any) -> ITEM:
+    def Require(self, key:any) -> ITEM:
+        ''' 
+        👉 Gets a required item with ID=key, or where the compositive key can be derived from the atributes of the given object.\n
+        GIVEN a table with keys=[ID,A,C]
+        WHEN received key={A:x, B:y, C:z}       
+         THEN return item where ID={x/z}" 
+
+        WHEN received key=123
+         THEN return item where ID=123
+
+        WHEN received key='abc'
+         THEN return item where ID='abc'
+        '''
+        return self.Get(self, key=key, require=True)
+
+
+    def Get(self, key:any, require:bool=False) -> ITEM:
         ''' 
         👉 Gets the item with ID=key, or where the compositive key can be derived from the atributes of the given object.\n
         GIVEN a table with keys=[ID,A,C]
@@ -59,7 +75,10 @@ class DYNAMO(UTILS):
          THEN return item where ID='abc'
         '''
         if not key:
-            return ITEM(None)
+            ret = ITEM(None)
+            if require==True:
+                ret.Require()
+            return ret
         
         id = None
         if isinstance(key, str) or isinstance(key, int):
@@ -70,15 +89,22 @@ class DYNAMO(UTILS):
             struct = STRUCT(key)
             id = self._calculateID(struct)
 
-        return ITEM(
+        ret = ITEM(
             item= self._getItem(self._table, id), 
             table= self)
+        
+        if require==True:
+            ret.Require()
+        return ret
     
 
-    def _save(self, any: any, method):  
+    def _save(self, any: any, method, days:int=None):  
         struct = STRUCT(any)
 
         struct.Default('ID', self._calculateID())
+
+        if days != None:
+            struct.Default('TTL', self.TTL(days=days))
 
         return self._update_item(
             table=self._table, 
@@ -87,9 +113,9 @@ class DYNAMO(UTILS):
             method= method)
 
 
-    def Insert(self, any: any):
+    def Insert(self, any: any, days:int=None):
         ''' 👉 Inserts an item where the ID doesn't exist. '''
-        return self._save(any=any, method='INSERT')
+        return self._save(any=any, method='INSERT', days=days)
     
 
     def Update(self, any: any):
@@ -97,9 +123,9 @@ class DYNAMO(UTILS):
         return self._save(any=any, method='UPDATE')        
     
 
-    def Upsert(self, any: any):
+    def Upsert(self, any: any, days:int=None):
         ''' 👉 Inserts or updates an item. '''
-        self._save(any=any, method='INSERT,UPDATE')
+        self._save(any=any, method='INSERT,UPDATE', days=days)
         return self.Get(any)
 
 
@@ -290,7 +316,7 @@ class DYNAMO(UTILS):
         '''
 
 
-    def Records(self, event):
+    def Records(self, event) -> List[STRUCT]:
         ''' 
         👉 Parses an event from DynamoDB streams, returnin an array of all DynamoDB items changed.
 
@@ -313,6 +339,7 @@ class DYNAMO(UTILS):
                 elif 'NULL' in v:
                     tmp[k] = None
 
-            result.append(tmp)
+            struct = STRUCT(tmp)
+            result.append(struct)
 
         return result

@@ -38,10 +38,7 @@ export class Listener extends STACK {
 
 
   private SetUpPublisher() {
-
-    const subscribers = Publisher.GetSubscribers(this);
-    const updates = Publisher.GetUpdates(this);
-
+    
     LAMBDA
       .New(this, 'Enricher')
       .HandlesEvent('HandleEnrich@Publisher');
@@ -56,10 +53,12 @@ export class Listener extends STACK {
   private SetUpSubscriber() {
 
     const dedups = Subscriber.GetDedups(this);
+    const publisher = Publisher.GetPublisher(this);
 
     LAMBDA
       .New(this, 'Subscriber')
-      .TriggeredByDynamoDB(dedups);
+      .TriggeredByDynamoDB(dedups)
+      .InvokesLambda(publisher, 'PUBLISHER');
   }
 
 }

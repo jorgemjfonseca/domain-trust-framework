@@ -22,6 +22,7 @@
     ],
     "files.exclude": {
         "**/*.d.ts": true,
-        "**/*.js": {"when": "$(basename).ts"}
+        "**/*.js": {"when": "$(basename).ts"},
+        "**/cdk.out/**": true
     }
 }

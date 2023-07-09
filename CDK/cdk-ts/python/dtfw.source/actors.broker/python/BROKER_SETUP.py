@@ -6,17 +6,18 @@ import random
 from BROKER import BROKER
 
 from DTFW import DTFW
+from STRUCT import STRUCT
+from WALLET import WALLET
 
 
 # ✅ DONE
-class BROKER_SETUP():
+class BROKER_SETUP(DTFW):
     ''' 👉 https://quip.com/zaYoA4kibXAP/-Broker-Setup '''
 
 
     # ✅ DONE
     def Wallets(self): 
-        ''' 👉 https://quip.com/zaYoA4kibXAP#temp:C:DQN5a1b1a16ec7f4a29907cd1215'''
-        '''
+        ''' 👉 https://quip.com/zaYoA4kibXAP#temp:C:DQN5a1b1a16ec7f4a29907cd1215
         {    
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
             "WalletQR": "🤝dtfw.org/WALLET,1,any-trust-broker.com,1AB2CD",
@@ -55,7 +56,7 @@ class BROKER_SETUP():
             }
         }
         '''
-        return self.Dynamo('WALLETS', keys=['WalletID'])
+        return self.DYNAMO('WALLETS', keys=['WalletID'])
 
 
     # ✅ DONE
@@ -67,7 +68,7 @@ class BROKER_SETUP():
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        return self.Dynamo('LOCATORS', keys=['Locator'])
+        return self.DYNAMO('LOCATORS', keys=['Locator'])
     
 
     # ✅ DONE
@@ -91,29 +92,36 @@ class BROKER_SETUP():
 
     # ✅ DONE
     def Domain(self) -> str:
-        return self.Utils().Enrironment('DOMAIN')
+        return self.Environment('DOMAIN')
 
 
     # ✅ DONE
     def VerifySignature(self, event):
-        msg = self.Msg(event)
-        wallet = self.Wallets().Get(msg.Body())
-        publicKey = wallet.Require('PublicKey')
-        msg.VerifySignature(publicKey)
+        msg = self.MSG(event)
+        walletID = msg.Require('WalletID')
+        wallet = WALLET(self.Wallets().Get(walletID))
+        wallet.VerifySignature(msg)
         return msg, wallet
 
 
     # ✅ DONE
     def HandleOnboard(self, event):
-        ''' 🚀 https://quip.com/zaYoA4kibXAP#temp:C:DQN1f2d80d98fdd4e69a98a32887 '''
-        '''
+        ''' 🧑‍🦰🚀 https://quip.com/zaYoA4kibXAP#temp:C:DQN1f2d80d98fdd4e69a98a32887 
+        "Header": {
+            "From": "any-notifier.com"
+        },
         "Body": {
             "Language": "en-us",
             "PublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDH+wPrKYG1KVlzQUVtBghR8n9dzcShSZo0+3KgyVdOea7Ei7vQ1U4wRn1zlI5rSqHDzFitblmqnB2anzVvdQxLQ3UqEBKBfMihnLgCSW8Xf7MCH+DSGHNvBg2xSNhcfEmnbLPLnbuz4ySn1UB0lH2eqxy50zstxhTY0binD9Y+rwIDAQAB"
         }
         '''
-        msg = self.Msg(event) 
+        msg = self.MSG(event) 
 
+        # Check if the wallet is properly signing requests with the public key.
+        publicKey = msg.Require('PublicKey')
+        msg.VerifySignature(publicKey)
+
+        # Collect broker info.
         walletID = self.UUID()
         brokerDomain = self.Domain()
         brokerLocator = self.UnusedLocator()
@@ -125,7 +133,7 @@ class BROKER_SETUP():
         }
 
         # Configure the wallet.
-        wallet = {
+        wallet = WALLET({
             'WalletID': walletID,
             'Locator': brokerLocator,
             'WalletQR': f'🤝dtfw.org/WALLET,1,{brokerDomain},{brokerLocator}',
@@ -134,7 +142,7 @@ class BROKER_SETUP():
             'PublicKey': msg.Require('PublicKey'),
             'Notifier': msg.From(),
             'Hosts': []
-        }
+        })
         
         # Save both to DB.
         # TODO: make it a transaction, or a chained event.
@@ -142,14 +150,14 @@ class BROKER_SETUP():
         self.Wallets().Insert(wallet)
 
         return {
-            "WalletID": wallet.Require('WalletID'),
-            "Locator": wallet.Require('Locator')
+            "WalletID": wallet.ID(),
+            "Locator": wallet.Locator()
         }
 
     
     # ✅ DONE
     def HandleTranslate(self, event):
-        ''' 🐌 https://quip.com/zaYoA4kibXAP#temp:C:DQN0cc419509625497ea39fa08e9 '''
+        ''' 🧑‍🦰🐌 https://quip.com/zaYoA4kibXAP#temp:C:DQN0cc419509625497ea39fa08e9 '''
         '''
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
@@ -160,14 +168,14 @@ class BROKER_SETUP():
 
         # Call 🚀 Translate: 🕸 Graph for:
         domains = []
-        for host in wallet.Structs('Hosts'):
+        for host in wallet.HostsList():
             domains.append(host.Require('Host'))
-        for vault in wallet.Structs('Vaults'):
+        for vault in wallet.VaultsList():
             domains.append(vault.Require('Vault'))
-        for issuer in wallet.Structs('Issuers'):
+        for issuer in wallet.IssuersList():
             domains.append(issuer.Require('Issuer'))
 
-        ret = self.Graph().InvokeTranslate({
+        ret = self.GRAPH().InvokeTranslate({
             "Language": msg.Require('Language'),
             "Domains": domains
         })
@@ -185,22 +193,12 @@ class BROKER_SETUP():
         }
         '''
 
-        for lang in ret.Structs('Domains'):
-            for host in wallet.Structs('Hosts'):
-                if host.Att('Host') == lang.Att('Domain'):
-                    host.Att('Translation', lang.Require('Translation'))
-            for vault in wallet.Structs('Vaults'):
-                if vault.Att('Vault') == lang.Att('Domain'):
-                    vault.Att('Translation', lang.Require('Translation'))
-            for issuer in wallet.Structs('Issuers'):
-                if issuer.Att('Issuer') == lang.Att('Domain'):
-                    issuer.Att('Translation', lang.Require('Translation'))
-
-        # Save to DB
+        # Translate the wallet.
+        wallet.Translate(ret.Structs('Domains'))
         wallet.Update()
 
         # Call 🐌 Translated: 📣 Notifier
-        self.Notifier().Invoke(
+        self.NOTIFIER().Invoke(
             notifier= wallet.Require('Notifier'),
             data= {
                 "WalletID": msg.Require('WalletID'),
@@ -212,16 +210,13 @@ class BROKER_SETUP():
     
     # ✅ DONE
     def HandleReplace(self, event):
-        ''' 🚀 https://quip.com/zaYoA4kibXAP#temp:C:DQN148380274b884fc7b9d104743 '''
+        ''' 🧑‍🦰🚀 https://quip.com/zaYoA4kibXAP#temp:C:DQN148380274b884fc7b9d104743 '''
         '''
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        msg = self.Msg(event)
-
-        wallet = self.Wallets().Get(msg)
-        wallet.Require()
+        msg, wallet = self.VerifySignature(event)
 
         # Delete the old locator.
         self.Locators().Get(wallet).Delete()
@@ -230,7 +225,7 @@ class BROKER_SETUP():
         brokerLocator = self.UnusedLocator()
         self.Locators().Insert({
             'Locator': brokerLocator,
-            'WalletID': wallet.Require('WalletID')
+            'WalletID': wallet.ID()
         })
 
         # Update the wallet.
@@ -249,22 +244,17 @@ class BROKER_SETUP():
     
     # ✅ DONE
     def HandleQR(self, event):
-        ''' 🚀 https://quip.com/zaYoA4kibXAP#temp:C:DQN7a84fa77334c4b00b0173b9c8 '''
+        ''' 🧑‍🦰🚀 https://quip.com/zaYoA4kibXAP#temp:C:DQN7a84fa77334c4b00b0173b9c8 '''
         '''
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
         }
         '''
-        msg = self.Msg(event)
-        wallet = self.Wallets().Get(msg)
-        wallet.Require()
-
-        brokerDomain = self.Domain()
-        locator = wallet.Require('Locator')
-        data = f'🤝dtfw.org/WALLET,1,{brokerDomain},{locator}'
-
+        msg, wallet = self.VerifySignature(event)
+        qr = wallet.QR()
+        
         return {
-            "Base64": self.GetImageQR(data)
+            "Base64": self.GetImageQR(qr)
         }
 
         

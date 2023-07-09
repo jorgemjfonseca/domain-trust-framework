@@ -11,7 +11,7 @@ export interface BrokerSetupDependencies {
   brokerTables: BrokerTables
 }
 
-/** 👉 https://quip.com/zaYoA4kibXAP/-Broker-Setup */
+/** 🤵📎 https://quip.com/zaYoA4kibXAP/-Broker-Setup */
 export class BrokerSetup extends STACK {
 
   public static New (scope: Construct, deps: BrokerSetupDependencies, props?: cdk.StackProps): BrokerSetup {
@@ -44,8 +44,9 @@ export class BrokerSetup extends STACK {
       .WritesToDynamoDB(wallets, 'WALLETS')
       .WritesToDynamoDB(locators, 'LOCATORS')
       //.AddEnvironment(rootDomain, 'DOMAIN')
-      .HandlesSyncApi('Onboard@Broker')
-
+      .HandlesSyncApi('Onboard@Broker', { ignoreValidation: true })
+    
+    // 🧑‍🦰🐌 https://quip.com/zaYoA4kibXAP/-Broker-Setup#temp:C:DQN0cc419509625497ea39fa08e9
     LAMBDA
       .New(this, 'Translate')
       .WritesToDynamoDB(wallets, 'WALLETS')
@@ -56,18 +57,20 @@ export class BrokerSetup extends STACK {
       .WritesToDynamoDB(issuers, 'ISSUERS')
       .WritesToDynamoDB(credentials, 'CREDENTIALS')
       .WritesToDynamoDB(queries, 'QUERIES')
-      .HandlesMessenger('Translate@Broker')
+      .HandlesMessenger('Translate@Broker', { ignoreValidation: true })
       .SendsSyncMessages() // Invoke Graph
 
+    // 🧑‍🦰🚀 https://quip.com/zaYoA4kibXAP#temp:C:DQN148380274b884fc7b9d104743
     LAMBDA
       .New(this, 'Replace')
       .WritesToDynamoDB(wallets, 'WALLETS')
-      .HandlesSyncApi('Replace@Broker')
+      .HandlesSyncApi('Replace@Broker', { ignoreValidation: true })
 
+    // 🧑‍🦰🚀 https://quip.com/zaYoA4kibXAP#temp:C:DQN7a84fa77334c4b00b0173b9c8
     LAMBDA
       .New(this, 'QR')
       .ReadsFromDynamoDB(wallets, 'WALLETS')
-      .HandlesSyncApi('QR@Broker')
+      .HandlesSyncApi('QR@Broker', { ignoreValidation: true })
 
   }
 

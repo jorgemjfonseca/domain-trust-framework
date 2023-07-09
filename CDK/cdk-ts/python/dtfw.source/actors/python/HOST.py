@@ -2,6 +2,8 @@
 
 from DTFW import DTFW
 from HANDLER import HANDLER
+from QR import QR, RESOURCE
+from STRUCT import STRUCT
 from UTILS import UTILS
 
 
@@ -69,6 +71,15 @@ class HOST(DTFW, HANDLER, UTILS):
 
 
     # ✅ DONE
+    def InvokeAbandoned(self, source:str, to:str, sessionID:str):
+        self.MESSENGER().Push(
+            source=source, 
+            to=to,
+            subject= 'Abandoned@Host',
+            body= { "SessionID": sessionID })
+        
+
+    # ✅ DONE
     def HandleAbandoned(self, event):
         ''' 🐌 https://quip.com/s9oCAO3UR38A#temp:C:TDDbb2a3e48828a473b84c296777 '''
         '''
@@ -81,9 +92,36 @@ class HOST(DTFW, HANDLER, UTILS):
 
 
     # ✅ DONE
+    def InvokeCheckIn(self, to:str, language:str, locator:str, walletID:str=None, resource={}) -> STRUCT:
+        ''' 🤵🚀 https://quip.com/s9oCAO3UR38A#temp:C:TDDf29b75b2d0214f9a87224b338 '''
+
+        body = { 
+            "Resource": resource,
+            "Wallet": {
+                "Language": language,
+                "Locator": locator,
+                "WalletID": walletID
+            }
+        }
+    
+        if walletID != None:
+            body['WalletID'] = walletID
+
+        ret = self.SYNCAPI().Send(
+            to=to,
+            subject= 'CheckIn@Host',
+            body= body)
+        
+        ''' { 
+            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
+        }'''
+        return ret
+        
+        
+        
+    # ✅ DONE
     def HandleCheckIn(self, event):
-        ''' 🚀 https://quip.com/s9oCAO3UR38A#temp:C:TDDf29b75b2d0214f9a87224b338 '''
-        '''
+        ''' 🚀 https://quip.com/s9oCAO3UR38A#temp:C:TDDf29b75b2d0214f9a87224b338 
         "Body": {
             "Resource": {
                 "Code": "dtfw.org/THING",
@@ -91,13 +129,13 @@ class HOST(DTFW, HANDLER, UTILS):
             },
             "Wallet": {
                 "Language": "en-us",    
-                "Locator": "MY-WALLET"
+                "Locator": "MY-WALLET",
                 "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
             }
         }
         '''
         msg = self.MSG(event)
-        resource = msg.Att('Resource')
+        resource = msg.Att('Resource', default={})
         wallet = msg.Require('Wallet')
 
         sessionID = self.UUID()
@@ -121,6 +159,7 @@ class HOST(DTFW, HANDLER, UTILS):
         self.MESSENGER().Push(
             source=source, 
             to=to,
+            subject= 'ChekOut@Host',
             body= { "SessionID": sessionID })
         
 
@@ -180,6 +219,7 @@ class HOST(DTFW, HANDLER, UTILS):
         self.MESSENGER().Push(
             source=source, 
             to=to,
+            subject= 'Talker@Host',
             body= { "SessionID": sessionID })
         
 

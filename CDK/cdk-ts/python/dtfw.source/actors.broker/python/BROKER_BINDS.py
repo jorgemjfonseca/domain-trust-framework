@@ -2,13 +2,14 @@
 
 # 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
 from typing import List, Set, Tuple, Dict
+from BROKER_SESSIONS import BROKER_SESSIONS
 
 from BROKER_SETUP import BROKER_SETUP
 from DTFW import DTFW
 from MSG import MSG
 
 
-class BROKER_BINDS(BROKER_SETUP, DTFW):
+class BROKER_BINDS(BROKER_SESSIONS, BROKER_SETUP, DTFW):
     ''' 👉 https://quip.com/oSzpA7HRICjq/-Broker-Binds '''
 
     
@@ -25,8 +26,7 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
     
     
     def HandleBindable(self, event):
-        ''' 🐌 https://quip.com/oSzpA7HRICjq#temp:C:DSD2aa2718d92bf4941ac7bb41e9 '''
-        '''
+        ''' 🐌 https://quip.com/oSzpA7HRICjq#temp:C:DSD2aa2718d92bf4941ac7bb41e9 
         "Body": {
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
             "Binds": [{
@@ -35,7 +35,45 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
         }
         '''
         msg = self.MSG(event)
-        self.GRAPH().Invoke()
+
+        session = self.Sessions().Require(msg)
+        wallet = self.Wallets().Require(session)
+        language = wallet.Require('Language')
+    
+        codes = [bind.Require('Code') for bind in msg.Structs('Binds')]
+
+        ret = self.GRAPH().InvokeTranslate(
+            language= language,
+            codes= codes
+        )
+        ''' 🏃 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 
+        {
+            "Language": "pt-br",
+            "Domains": [{
+                "Domain": "example.com",
+                "Translation": "Example Airlines"
+            }],
+            "Codes": [{
+                "Code": "iata.org/SSR/WCHR",
+                "Translation": "Wheelchair assistance required"
+            }]
+        }
+        '''
+
+        ''' 🐌 https://quip.com/PCunAKUqSObO/-Notifier#temp:C:UKEe59fd4b4d73345348afd67d5f '''
+        bindable = {
+            "WalletID": wallet.ID(),
+            "SessionID": session.ID(),
+            "Codes": [
+                {
+                    "Code": "iata.org/SSR/WCHR",
+                    "Translation": "Wheelchair assistance required; passenger can walk short distance up or down stairs."
+                }
+            ]
+        }
+
+        session.Att('Bindabale')
+
 
     
     # ✅ DONE
@@ -106,4 +144,4 @@ class BROKER_BINDS(BROKER_SETUP, DTFW):
             "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5"
         }
         '''
-        dtfw.Msg(event)
+        self.MSG(event)

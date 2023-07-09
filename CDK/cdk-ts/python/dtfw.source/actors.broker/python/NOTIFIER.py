@@ -6,7 +6,7 @@ from STRUCT import STRUCT
 dtfw = DTFW()
 
 
-class NOTIFIER:
+class NOTIFIER(DTFW):
     ''' 📣 https://quip.com/PCunAKUqSObO/-Notifier '''
     
 
@@ -39,9 +39,21 @@ class NOTIFIER:
         msg = dtfw.MSG(event)
         
 
-    def HandleUpdated(self, event):
+    def InvokeUpdated(self, notifier:str, walletID:str, updates:any, source:str):
         ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 '''
-        '''
+        self.MESSENGER().Push(
+            source= source,
+            to= notifier, 
+            subject= 'Updated@Notifier',
+            body= {
+                "WalletID": walletID,
+                "Updates": updates
+            }
+        )
+
+
+    def HandleUpdated(self, event):
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
             "Updates": ["CREDENTIALS"]

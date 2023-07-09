@@ -7,6 +7,20 @@ from DTFW import DTFW
 class BROKER_SHARE(DTFW):
     ''' 🤵📎 https://quip.com/rKzMApUS5QIi#WTIABAsxxkW '''
 
+
+    def Queries(self):
+        ''' 🪣 https://quip.com/rKzMApUS5QIi/-Broker-Share#temp:C:WTI65d339805abc4a79afae419df
+        {
+            "Host": "airfrance.fr",
+            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
+            "Vaults": [
+                "one.amazon.com",
+                "any-profile.com",
+                "nhs.uk"
+            ]
+        }'''
+        return self.DYNAMO('QUERIES', keys=['Host', 'SessionID'])
+
     
     def HandleQuery(self, event):
         ''' 🐌 https://quip.com/rKzMApUS5QIi#temp:C:WTI8724d650e2ae45dabb56baea4 '''

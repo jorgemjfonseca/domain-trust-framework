@@ -21,10 +21,16 @@ class MANIFEST(STRUCT, DTFW, UTILS):
     ''' 📜 Wrapper of a YAML Manifest. '''
         
 
-    def __init__(self, manifest: any = None):
+    def __init__(self, manifest: any = None, section:str=None):
         obj = manifest
         if manifest is MANIFEST:
             obj = manifest.Manifest()
+        elif section != None: 
+            obj = {}
+            obj[section] = manifest
+        else:
+            obj = manifest
+            
         super().__init__(obj=obj)
 
 

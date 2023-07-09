@@ -2,10 +2,8 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
-import { SQS } from '../../../Common/SQS/SQS';
 import { STACK } from '../../../Common/STACK/STACK';
 import { Domain } from '../../Domain/stack/Domain';
-import { Lambda } from 'aws-cdk-lib/aws-ses-actions';
 
 export interface PublisherDependencies {
   domain: Domain
@@ -22,90 +20,121 @@ export class Publisher extends STACK {
   }
 
 
+  private Subscribers: DYNAMO;
+  private Updates: DYNAMO;
+  private Domains: DYNAMO;
+  private Correlations: DYNAMO;
+  private Tokens: DYNAMO;
+
   private constructor(scope: Construct, props?: cdk.StackProps) {
     super(scope, Publisher.name, { 
       description: 'Publisher behaviour.',
       ...props
     });
 
-    const subscribers = this.SetUpRegistration();
-    const updates = this.SetUpUpdates(subscribers);
-    this.SetUpReplays(updates, subscribers);
+    this.SetUpRegistration();
+    this.SetUpUpdates();
+    this.SetUpReplays();
   }
 
+
+  // =================================================
+  // REGISTRATION
+  // =================================================
 
   private static readonly SUBSCRIBERS = 'Subscribers';
   public static GetSubscribers(stack: STACK): DYNAMO {
     return DYNAMO.Import(stack, Publisher.SUBSCRIBERS);
   }
 
-  private SetUpRegistration(): DYNAMO {
+  private SetUpRegistration() {
 
-    const subscribers = DYNAMO
+    this.Subscribers = DYNAMO
       .New(this, 'Subscribers')
       .Export(Publisher.SUBSCRIBERS);
 
     LAMBDA
       .New(this, 'Unsubscribe')
       .HandlesMessenger('Unsubscribe@Publisher')
-      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS');
+      .WritesToDynamoDB(this.Subscribers, 'SUBSCRIBERS');
 
     LAMBDA
       .New(this, 'Subscribe')
       .HandlesMessenger('Subscribe@Publisher')
-      .WritesToDynamoDB(subscribers, 'SUBSCRIBERS');
-      
-    return subscribers;
+      .WritesToDynamoDB(this.Subscribers, 'SUBSCRIBERS');
   }
 
-  public static GetUpdates(stack: STACK): DYNAMO {
-    return DYNAMO.Import(stack, Publisher.UPDATES);
+
+  // =================================================
+  // UPDATES
+  // =================================================
+
+  public static GetPublisher(stack: STACK): LAMBDA {
+    return LAMBDA.Import(stack, 'Publisher');
   }
 
   private static readonly UPDATES = 'Updates';
-  private SetUpUpdates(subscribers: DYNAMO): DYNAMO {  
+  private SetUpUpdates() {  
     
-    const updates = DYNAMO
+    this.Updates = DYNAMO
       .New(this, Publisher.UPDATES, {
         stream: true,
         dated: true
       });
 
+    this.Domains = DYNAMO
+      .New(this, 'Domains', {
+        dated: true
+      });
+
+    this.Correlations = DYNAMO
+      .New(this, 'Correlations', {
+        ttl: true
+      });
+
     LAMBDA
       .New(this, 'Publish')
       .HandlesMessenger('Publish@Publisher')
-      .WritesToDynamoDB(updates, 'UPDATES')
-      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS');
-
-    return updates;
+      .ReadsFromDynamoDB(this.Subscribers, 'SUBSCRIBERS')
+      .WritesToDynamoDB(this.Updates, 'UPDATES')
+      .WritesToDynamoDB(this.Domains, 'DOMAINS')
+      .WritesToDynamoDB(this.Correlations, 'CORRRELATIONS')
+      .PublishesToMessenger()
+      .Export('Publisher');
   }
 
+
+  // =================================================
+  // REPLAYS
+  // =================================================
 
   private static readonly TOKENS = 'Tokens';
   public static GetTokens(stack: STACK): DYNAMO {
     return DYNAMO.Import(stack, Publisher.TOKENS);
   }
 
-  private SetUpReplays(updates: DYNAMO, subscribers: DYNAMO) {
+  private SetUpReplays() {
 
-    const tokens = DYNAMO
+    this.Tokens = DYNAMO
       .New(this, 'Tokens', { ttl: true })
       .Export(Publisher.TOKENS);
 
     LAMBDA
       .New(this, 'Replay')
-      .ReadsFromDynamoDB(updates, 'UPDATES')
-      .WritesToDynamoDB(tokens, 'TOKENS')
-      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
+      .ReadsFromDynamoDB(this.Updates, 'UPDATES')
+      .ReadsFromDynamoDB(this.Domains, 'DOMAINS')
+      .WritesToDynamoDB(this.Tokens, 'TOKENS')
+      .ReadsFromDynamoDB(this.Subscribers, 'SUBSCRIBERS')
       .HandlesMessenger('Replay@Publisher')
       .PublishesToMessenger();
 
     LAMBDA
       .New(this, 'Next')
       .HandlesMessenger('Next@Publisher')
-      .ReadsFromDynamoDB(updates, 'UPDATES')
-      .ReadsFromDynamoDB(subscribers, 'SUBSCRIBERS')
-      .WritesToDynamoDB(tokens, 'TOKENS')
+      .ReadsFromDynamoDB(this.Updates, 'UPDATES')
+      .ReadsFromDynamoDB(this.Domains, 'DOMAINS')
+      .ReadsFromDynamoDB(this.Subscribers, 'SUBSCRIBERS')
+      .WritesToDynamoDB(this.Tokens, 'TOKENS')
       .PublishesToMessenger();
 
   }

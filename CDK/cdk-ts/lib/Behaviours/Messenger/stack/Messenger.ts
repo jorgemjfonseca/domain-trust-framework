@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { BUS } from '../../../Common/BUS/BUS';
-import { SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
+import { HandlesSyncApiParameters, SyncApiHandlers } from '../../SyncApiHandlers/stack/SyncApiHandlers';
 import { STACK } from '../../../Common/STACK/STACK';
 import { SyncApi } from '../../SyncApi/stack/SyncApi';
 
@@ -48,8 +48,8 @@ export class Messenger extends STACK {
       .Export(Messenger.PUBLISHER);
 
     // REGISTER EXTENSIONS
-    LAMBDA.prototype.HandlesMessenger = function(action: string) {
-      return Messenger.HandlesMessenger(this.Scope, action, this);
+    LAMBDA.prototype.HandlesMessenger = function(action: string, props?: HandlesSyncApiParameters) {
+      return Messenger.HandlesMessenger(this.Scope, action, this, props);
     };
     
     LAMBDA.prototype.PublishesToMessenger = function() {
@@ -72,12 +72,16 @@ export class Messenger extends STACK {
 
 
   // EXTENSION
-  public static HandlesMessenger(scope: STACK, action: string, fn: LAMBDA): LAMBDA {
+  public static HandlesMessenger(
+    scope: STACK, 
+    action: string, 
+    fn: LAMBDA, 
+    props?: HandlesSyncApiParameters): LAMBDA {
     
     // Receive all messages for this action from the API, and sends to the bus.
     Messenger
       .GetPublisher(scope)
-      .HandlesSyncApi(action);
+      .HandlesSyncApi(action, props);
 
     // Receives all messages from this action from the Bus.
     Messenger
@@ -103,7 +107,7 @@ declare module '../../../Common/LAMBDA/LAMBDA' {
     /** 👉 Registers the lambda to receive messages from other domains in the BUS, 
      * and authorizes it to publish to the BUS in order to continue the workflow. 
      * Details: https://quip.com/Fxj4AdnE6Eu5/-Messenger*/
-    HandlesMessenger(action: string): LAMBDA;
+    HandlesMessenger(action: string, props?: HandlesSyncApiParameters): LAMBDA;
 
     /** 👉 Authorizes the lambda to publish to the BUS messages, 
      * starting workflows by sending commands to other domains. 

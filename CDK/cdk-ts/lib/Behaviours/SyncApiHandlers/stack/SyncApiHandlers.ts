@@ -10,7 +10,7 @@ export interface SyncApiHandlersDependencies {
   syncApiDkim: SyncApiDkim
 }
 
-/** 👉 https://quip.com/RnO6Ad0BuBSx/-Sync-API */
+/** 🚀 https://quip.com/RnO6Ad0BuBSx/-Sync-API */
 export class SyncApiHandlers extends STACK {
 
   private static readonly MAP = 'SyncApiMap';
@@ -135,7 +135,7 @@ export class SyncApiHandlers extends STACK {
 }
 
 
-interface HandlesSyncApiParameters {
+export interface HandlesSyncApiParameters {
   ignoreValidation?: boolean,
 }
 

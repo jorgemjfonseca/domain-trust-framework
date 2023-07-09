@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { STACK } from '../../../Common/STACK/STACK';
-import { DYNAMO } from '../../../Common/DYNAMO/DYNAMO';
 import { LAMBDA } from '../../../Common/LAMBDA/LAMBDA';
 import { BrokerTables } from '../../BrokerTables/stack/BrokerTables';
 
@@ -9,7 +8,7 @@ export interface BrokerSessionsDependencies {
   brokerTables: BrokerTables
 }
 
-/** 👉 https://quip.com/HrgkAuQCqBez#bXDABAe5brB */
+/** 🤵📎 https://quip.com/HrgkAuQCqBez#bXDABAe5brB */
 export class BrokerSessions extends STACK {
 
   public static New(scope: Construct, deps: BrokerSessionsDependencies, props?: cdk.StackProps): BrokerSessions {
@@ -25,41 +24,47 @@ export class BrokerSessions extends STACK {
     const hosts = BrokerTables.ImportHosts(this);
     const sessions = BrokerTables.ImportSessions(this);
 
+    // 🧑‍🦰🚀 https://quip.com/HrgkAuQCqBez/-Broker-Sessions#temp:C:bXD09ae7595fe4943d5985d83fd0
     LAMBDA
       .New(this, 'Sessions')
       .ReadsFromDynamoDB(wallets, 'WALLETS')
       .ReadsFromDynamoDB(hosts, 'HOSTS')
       .ReadsFromDynamoDB(sessions, 'SESSIONS')
-      .HandlesSyncApi('Sessions@Broker')
+      .HandlesSyncApi('Sessions@Broker', { ignoreValidation: true })
 
+    // 🧑‍🦰🐌 https://quip.com/HrgkAuQCqBez/-Broker-Sessions#temp:C:bXDff3472e2ec4d4733bd1b38141
     LAMBDA
       .New(this, 'Talker')
       .WritesToDynamoDB(wallets, 'WALLETS')
       .WritesToDynamoDB(hosts, 'HOSTS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
-      .HandlesMessenger('Talker@Broker');
+      .HandlesMessenger('Talker@Broker', { ignoreValidation: true });
 
+    // 🧑‍🦰🐌 https://quip.com/HrgkAuQCqBez/-Broker-Sessions#temp:C:bXDca9dada42bf6431daed5f1c07
     LAMBDA
       .New(this, 'Checkout')
       .WritesToDynamoDB(wallets, 'WALLETS')
       .WritesToDynamoDB(hosts, 'HOSTS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
-      .HandlesMessenger('Checkout@Broker');
+      .HandlesMessenger('Checkout@Broker', { ignoreValidation: true });
 
+    // 🧑‍🦰🐌 https://quip.com/HrgkAuQCqBez/-Broker-Sessions#temp:C:bXD2d6cd3790047405c89019c170
     LAMBDA
       .New(this, 'Abandon')
       .WritesToDynamoDB(wallets, 'WALLETS')
       .WritesToDynamoDB(hosts, 'HOSTS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
-      .HandlesMessenger('Abandon@Broker');
+      .HandlesMessenger('Abandon@Broker', { ignoreValidation: true });
 
+    // 🧑‍🦰🚀 https://quip.com/HrgkAuQCqBez/-Broker-Sessions#temp:C:bXD4396f26fefe34874a12828c36
     LAMBDA
       .New(this, 'Assess')
       .WritesToDynamoDB(wallets, 'WALLETS')
       .WritesToDynamoDB(hosts, 'HOSTS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
-      .HandlesSyncApi('Assess@Broker');
+      .HandlesSyncApi('Assess@Broker', { ignoreValidation: true });
 
+    // 🤗🐌 https://quip.com/HrgkAuQCqBez/-Broker-Sessions#temp:C:bXD9f09e5f058ee4fc8a77be4ebe
     LAMBDA
       .New(this, 'Goodbye')
       .WritesToDynamoDB(wallets, 'WALLETS')

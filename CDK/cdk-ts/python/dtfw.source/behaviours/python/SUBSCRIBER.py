@@ -51,16 +51,15 @@ class SUBSCRIBER(DTFW, HANDLER):
         }
         '''
         msg = self.MSG(event)
-        
+
         update = {
             'Publisher': msg.From(),
             'UpdateID': msg.Att('UpdateID', default= self.UUID()), 
             'Timestamp': msg.Att('Timestamp', default= self.Timestamp()),
-            'TTL': self.DYNAMO().TTL(days=1),
             'Domain': msg.Require('Domain'),
         }
 
-        self.Dedups().Upsert(update)
+        self.Dedups().Upsert(update, days=1)
 
         # Call additional handlers.
         self.TriggerLambdas('HandleUpdated@Subscriber')
