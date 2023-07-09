@@ -10,8 +10,9 @@ from MANIFEST import MANIFEST
 from WALLET import WALLET
 
 
+# ✅ DONE
 class BROKER_SESSIONS(BROKER_SETUP, BROKER_SHARE, DTFW):
-    ''' 👉 https://quip.com/HrgkAuQCqBez#bXDABAe5brB '''
+    ''' 🤵📎 https://quip.com/HrgkAuQCqBez#bXDABAe5brB '''
 
 
     # ✅ DONE
@@ -42,7 +43,7 @@ class BROKER_SESSIONS(BROKER_SETUP, BROKER_SHARE, DTFW):
 
     # ✅ DONE
     def HandleSessions(self, event):
-        ''' 🚀 https://quip.com/HrgkAuQCqBez#temp:C:bXD09ae7595fe4943d5985d83fd0 '''
+        ''' 🧑‍🦰🚀 https://quip.com/HrgkAuQCqBez#temp:C:bXD09ae7595fe4943d5985d83fd0 '''
         '''
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a"
@@ -69,7 +70,7 @@ class BROKER_SESSIONS(BROKER_SETUP, BROKER_SHARE, DTFW):
 
     # ✅ DONE
     def HandleTalker(self, event):
-        ''' 🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXDff3472e2ec4d4733bd1b38141 
+        ''' 🧑‍🦰🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXDff3472e2ec4d4733bd1b38141 
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
             "Host": "iata.org",
@@ -86,7 +87,7 @@ class BROKER_SESSIONS(BROKER_SETUP, BROKER_SHARE, DTFW):
     
     # ✅ DONE
     def HandleCheckout(self, event):
-        ''' 🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXDca9dada42bf6431daed5f1c07 '''
+        ''' 🧑‍🦰🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXDca9dada42bf6431daed5f1c07 '''
         '''
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
@@ -100,46 +101,6 @@ class BROKER_SESSIONS(BROKER_SETUP, BROKER_SHARE, DTFW):
             source='Broker-Checkout', 
             to= msg.Require('Host'),
             sessionID= msg.Require('SessionID'))
-    
-
-    # ✅ DONE
-    def HandleAbandon(self, event):
-        ''' 🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXD2d6cd3790047405c89019c170 
-        "Body": {
-            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
-            "Host": "iata.org",
-            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
-        }
-        '''
-        msg, wallet = self.VerifySignature(event)
-
-        sessionID = msg.Require('SessionID')
-        host = msg.Require('Host')
-        
-        # 🪣 https://quip.com/rKzMApUS5QIi/-Broker-Share#temp:C:WTI65d339805abc4a79afae419df
-        # For every vault in 🪣 Queries: 🤵📎 Broker.Share():
-            # where session’s match
-            # call 🐌 Suppress: 🗄️ Vault
-        for vault in self.Queries().Get(msg).Structs['Vaults']:
-            self.VAULT().InvokeSuppress(
-                to= vault,
-                consumer= host,
-                sessionID= sessionID,
-                source= 'Abandon@Broker'
-            )
-
-        # Call 🐌 Abandoned: 🤗 Host on the host
-        self.HOST().InvokeAbandoned(
-            source= 'Abandon@Broker',
-            to= host,
-            sessionID= sessionID
-        )
-
-        # Remove from 🪣 Sessions
-        self.Sessions().Require(msg).Delete()
-
-        # Remove from 🪣 Wallets
-        wallet.RemoveSession(host= host, sessionID= sessionID)
     
 
     # ✅ DONE
@@ -208,16 +169,89 @@ class BROKER_SESSIONS(BROKER_SETUP, BROKER_SHARE, DTFW):
             source= 'Asssess@Broker')
 
     
-    def InvokeGoodbye(self, event):
-        pass
+    # ✅ DONE
+    def InvokeGoodbye(self, source:str, sessionID:str, message:str, to:str):
+        ''' 🤗🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXD9f09e5f058ee4fc8a77be4ebe '''
+        self.MESSENGER().Push(
+            source=source, 
+            to= to, 
+            subject= 'Goodbye@Broker',
+            body={
+                "SessionID": sessionID,
+                "Message": message
+            })
 
 
+    # ✅ DONE
     def HandleGoodbye(self, event):
-        ''' 🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXD9f09e5f058ee4fc8a77be4ebe '''
-        '''
+        ''' 🤗🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXD9f09e5f058ee4fc8a77be4ebe 
         "Body": {
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
             "Message": "Parking ended for vehicle AB-12-34.".
         }
         '''
-        self.MSG(event)    
+        msg = self.MSG(event)
+        sessionID = msg.Require('SessionID')
+        host = msg.From()
+
+        # 🪣 https://quip.com/rKzMApUS5QIi/-Broker-Share#temp:C:WTI65d339805abc4a79afae419df
+        # For every vault in 🪣 Queries: 🤵📎 Broker.Share():
+            # where session’s match
+            # call 🐌 Suppress: 🗄️ Vault
+        for vault in self.Queries().Get(msg).Structs['Vaults']:
+            self.VAULT().InvokeSuppress(
+                to= vault,
+                consumer= host,
+                sessionID= sessionID,
+                source= 'Abandon@Broker'
+            )
+
+        # Remove from 🪣 Sessions
+        session = self.Sessions().Require(msg)
+        session.Delete()
+
+        # Remove from 🪣 Wallets
+        walletID = session.Require('WalletID')
+        wallet = self.Wallets().Get(walletID)
+        WALLET(wallet).RemoveSession(host= host, sessionID= sessionID)
+
+
+    # ✅ DONE
+    def HandleAbandon(self, event):
+        ''' 🧑‍🦰🐌 https://quip.com/HrgkAuQCqBez#temp:C:bXD2d6cd3790047405c89019c170 
+        "Body": {
+            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
+            "Host": "iata.org",
+            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48"
+        }
+        '''
+        msg, wallet = self.VerifySignature(event)
+
+        sessionID = msg.Require('SessionID')
+        host = msg.Require('Host')
+        
+        # 🪣 https://quip.com/rKzMApUS5QIi/-Broker-Share#temp:C:WTI65d339805abc4a79afae419df
+        # For every vault in 🪣 Queries: 🤵📎 Broker.Share():
+            # where session’s match
+            # call 🐌 Suppress: 🗄️ Vault
+        for vault in self.Queries().Get(msg).Structs['Vaults']:
+            self.VAULT().InvokeSuppress(
+                to= vault,
+                consumer= host,
+                sessionID= sessionID,
+                source= 'Abandon@Broker'
+            )
+
+        # Call 🐌 Abandoned: 🤗 Host on the host
+        self.HOST().InvokeAbandoned(
+            source= 'Abandon@Broker',
+            to= host,
+            sessionID= sessionID
+        )
+
+        # Remove from 🪣 Sessions
+        self.Sessions().Require(msg).Delete()
+
+        # Remove from 🪣 Wallets
+        wallet.RemoveSession(host= host, sessionID= sessionID)
+    

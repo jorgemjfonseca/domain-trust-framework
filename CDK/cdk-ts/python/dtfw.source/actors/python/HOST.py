@@ -175,8 +175,16 @@ class HOST(DTFW, HANDLER, UTILS):
 
         goodbye = { 'Goodbye': True }
         self.Trigger('HandleCheckOut@Host', event, goodbye)
-        if goodbye['Goodbye']: 
-            self.BROKER().InvokeGoodbye(event)
+
+        if goodbye['Goodbye'] == True: 
+            
+            goodbye = STRUCT(goodbye)
+            self.BROKER().InvokeGoodbye(
+                source= 'CheckOut@Host',
+                to= msg.From(),
+                sessionID= session.ID,
+                message= goodbye.Att('Message')
+            )
         
 
     # ✅ DONE
