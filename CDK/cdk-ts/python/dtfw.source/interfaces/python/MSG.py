@@ -30,7 +30,10 @@ class MSG(STRUCT):
         self.SetAttRoot(self.Body())
 
         # map alias to the header.
+        self.MapAtt('WalletID', 'Header.From')
         self.MapAtt('Host', 'Header.From')
+        self.MapAtt('Broker', 'Header.From')
+        self.MapAtt('Issuer', 'Header.From')
         self.MapAtt('Domain', 'Header.From')
     
 
@@ -95,9 +98,9 @@ class MSG(STRUCT):
         return self.RequireStr('Hash')
 
 
-    def Request(self, request:STRUCT) -> STRUCT:
+    def Request(self, request:STRUCT) -> MSG:
         ''' 👉 Gets or sets the Header.Request. '''
-        return self.Header().RequireStruct('Request', set=request)
+        return MSG(self.Header().RequireStruct('Request', set=request))
 
 
     @staticmethod

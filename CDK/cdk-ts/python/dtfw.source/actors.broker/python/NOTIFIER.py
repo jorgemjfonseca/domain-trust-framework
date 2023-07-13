@@ -1,8 +1,14 @@
 # 📚 NOTIFIER
 
+# 👉 https://stackoverflow.com/questions/24853923/type-hinting-a-collection-of-a-specified-type
+from typing import List, Set, Tuple, Dict, Union
+
+from BIND import BIND
 from DTFW import DTFW
 from MSG import MSG
+from SESSION import SESSION
 from STRUCT import STRUCT
+from WALLET import WALLET
 dtfw = DTFW()
 
 
@@ -29,7 +35,7 @@ class NOTIFIER(DTFW):
 
 
     def HandleTranslated(self, event):
-        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE27bcb1e6dd3e493f88b36b695 '''
+        ''' 🤵🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE27bcb1e6dd3e493f88b36b695 '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -39,21 +45,21 @@ class NOTIFIER(DTFW):
         msg = dtfw.MSG(event)
         
 
-    def InvokeUpdated(self, notifier:str, walletID:str, updates:any, source:str):
-        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 '''
+    def InvokeUpdated(self, source:str, wallet:WALLET, updates:any):
+        ''' 🤵🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 '''
         self.MESSENGER().Push(
             source= source,
-            to= notifier, 
+            to= wallet.Notifier(), 
             subject= 'Updated@Notifier',
             body= {
-                "WalletID": walletID,
+                "WalletID": wallet.ID(),
                 "Updates": updates
             }
         )
 
 
     def HandleUpdated(self, event):
-        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 
+        ''' 🤵🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
             "Updates": ["CREDENTIALS"]
@@ -63,7 +69,7 @@ class NOTIFIER(DTFW):
         
 
     def HandlePrompt(self, event):
-        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKEc385117d31e042358eaa48ea1 '''
+        ''' 🤵🐌 https://quip.com/PCunAKUqSObO#temp:C:UKEc385117d31e042358eaa48ea1 '''
         '''
         "Body": {
             "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e",
@@ -73,6 +79,20 @@ class NOTIFIER(DTFW):
         '''    
         msg = dtfw.MSG(event)
         
+
+    def InvokeBindable(self, wallet:WALLET, session:SESSION, codes:List[any], source:str):
+        ''' 🤵🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 '''
+        self.MESSENGER().Push(
+            source= source,
+            to= wallet.Notifier(), 
+            subject= 'Bindable@Notifier',
+            body= {
+                "WalletID": wallet.ID(),
+                "SessionID": session.ID(),
+                "Codes": codes
+            }
+        )
+
 
     def HandleBindable(self, event):
         ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKEe59fd4b4d73345348afd67d5f '''
@@ -91,16 +111,34 @@ class NOTIFIER(DTFW):
         msg = dtfw.MSG(event)
         
 
+    def InvokeBound(self, wallet:WALLET, binds:any, source:str):
+        ''' 🤵🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE46862f6d9130436a9c9396213 '''
+        self.MESSENGER().Push(
+            source= source,
+            to= wallet.Notifier(), 
+            subject= 'Bound@Notifier',
+            body= {
+                "WalletID": wallet.ID(),
+                'Binds': binds
+            }
+        )
+
+
     def HandleBound(self, event):
-        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE1c11313f9113455b9857c5bc2 '''
-        '''
+        ''' 🐌 https://quip.com/PCunAKUqSObO#temp:C:UKE1c11313f9113455b9857c5bc2 
         "Body": {
             "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
-            "Request": {...},
-            "Binds": [{
-                "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
-                "Code": "iata.org/SSR/WCHR"
-            }]
+            "Binds": [
+                "ID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
+                "Vault": {
+                    "Domain": "iata.org",
+                    "Translation": "IATA"
+                },
+                "Code": {
+                    "Code": "iata.org/SSR/WCHR",
+                    "Translation": "Wheelchair for ramp"   
+                }
+            ]
         }
         '''    
         msg = dtfw.MSG(event)

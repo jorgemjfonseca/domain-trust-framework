@@ -2,25 +2,15 @@
 # 📚 BROKER_CREDENTIALS
 
 
+from BROKER_SETUP import BROKER_SETUP
 from DTFW import DTFW
 dtfw = DTFW()
 
 
-class BROKER_CREDENTIALS:
+class BROKER_CREDENTIALS(BROKER_SETUP):
     ''' 👉 https://quip.com/sN8DACFLN9wM#AfTABAujlEx '''
 
-    # ✅ DONE
-    def Issuers(self):
-        ''' 👉 https://quip.com/sN8DACFLN9wM#temp:C:AfTd1f9336151234ccebad4d72ee '''
-        return dtfw.DYNAMO('ISSUERS', keys=['WalletID', 'Issuer'])
     
-
-    # ✅ DONE
-    def Credentials(): 
-        ''' 👉 https://quip.com/sN8DACFLN9wM#temp:C:AfTbbe653b5e8ad4f38b44dc8e7d'''
-        return dtfw.DYNAMO('CREDENTIALS', keys=['WalletID', 'Issuer', 'CredentialID'])
-    
-
     def HandleIssue(self, event):
         ''' 🐌 https://quip.com/sN8DACFLN9wM#temp:C:AfT7b35acc03fa342b9bc6e581e0 '''
         '''
@@ -63,31 +53,13 @@ class BROKER_CREDENTIALS:
 
     # ✅ DONE
     def HandleCredentials(self, event):
-        ''' 🚀 https://quip.com/sN8DACFLN9wM#temp:C:AfTa9a1f10023324c448a569fa05 '''
+        ''' 🚀 https://quip.com/sN8DACFLN9wM#temp:C:AfTa9a1f10023324c448a569fa05 
+        "Body": {}
         '''
-        "Body": {
-            "WalletID": "1313c5c6-4038-44ea-815b-73d244eda85e"
-        }
-        '''
-        msg = dtfw.MSG(event)
+        msg, wallet = self.VerifyWalletSignature(event)
 
-        wallet = dtfw.BROKER().Setup().Wallets().Get(msg)
-        wallet.Require()     
-
-        '''
-            "Issuers": {
-                "Issuer": "nhs.uk",
-                "Translation": "NHS",
-                "Credentials": [{
-                    "CredentialID": "7bcf138b-db79-4a42-9d36-2655f8ff1f7c",
-                    "Code": "iata.org/SSR/WCHR",
-                    "Translation": "Wheelchair for ramp"
-                    "Path": "/storage/tf/creds/nhs.uk/7bcf138b-db79-4a42-9d36-2655f8ff1f7c"
-                }]
-            }
-        '''
         return { 
-            'Issuers': wallet.Att('Issuers', default=[])
+            "Binds": self.Binds().Query('WalletID', equals=wallet.ID()) 
         }
 
 

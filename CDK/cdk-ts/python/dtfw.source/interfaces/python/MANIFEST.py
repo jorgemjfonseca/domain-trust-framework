@@ -132,7 +132,7 @@ class MANIFEST(STRUCT, DTFW, UTILS):
         return self.Att('Identity.Translations', default= default)
     
 
-    def Translate(self, language):
+    def Translate(self, language) -> str:
         ''' 
         📜 Returns the translation of the domain title into a the given language. 
         👉 https://quip.com/lcSaAX7AiEXL/-Domain#temp:C:RSEbf2bcdeaf8e244ae885e09e41 

@@ -3,6 +3,7 @@
 import boto3
 import botocore
 from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 import os
 from time import time
@@ -98,10 +99,20 @@ class DYNAMO(UTILS):
         return ret
     
 
+    def Query(self, name:str, equals:str) -> List[ITEM]:
+        '''👉 Queries a global secondary index (GSI).
+          https://aws.amazon.com/getting-started/hands-on/create-manage-nonrelational-database-dynamodb/module-3/'''
+        resp = self._table.query(
+                IndexName= name+"Index",
+                KeyConditionExpression=Key(name).eq(equals)
+            )
+        return [ITEM(item) for item in resp['Items']]
+            
+
     def _save(self, any: any, method, days:int=None):  
         struct = STRUCT(any)
 
-        struct.Default('ID', self._calculateID())
+        struct.Default('ID', self._calculateID(any))
 
         if days != None:
             struct.Default('TTL', self.TTL(days=days))
@@ -237,7 +248,7 @@ class DYNAMO(UTILS):
         return status_code
         
 
-    def my_scan(self, table, index, start):
+    def _my_scan(self, table, index, start):
         if index != '':
             
             if start != '':
@@ -257,14 +268,14 @@ class DYNAMO(UTILS):
 
     def _get_items(self, table, index=''):
         
-        response = self.my_scan(table, index, '')
+        response = self._my_scan(table, index, '')
         items = response['Items']
         print ('my_scan.Items returned: ', len(response['Items']))
         
         while 'LastEvaluatedKey' in response:
             lastEvaluatedKey = response['LastEvaluatedKey']
             
-            response = self.my_scan(table, index, lastEvaluatedKey)
+            response = self._my_scan(table, index, lastEvaluatedKey)
             print ('my_scanItems returned: ', len(response['Items']))
             items.extend(response['Items'])
             

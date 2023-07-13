@@ -3,12 +3,15 @@
 def test():
     return 'this is VAULT test.'
 
-
+from typing import List, Set, Tuple, Dict, Union
+from HANDLER import HANDLER
 from HOST import HOST
 from ITEM import ITEM
 from MSG import MSG
+from SESSION import SESSION
+from STRUCT import STRUCT
 
-class VAULT(HOST):
+class VAULT(HOST, HANDLER):
     ''' 🗄️ https://quip.com/IZapAfPZPnOD '''
     
 
@@ -17,7 +20,7 @@ class VAULT(HOST):
         self.On('VerifyUpload@Host', self._verifyWalletSignature)
         
 
-    # ✅ DONE
+    
     def _verifyWalletSignature(self, msg:MSG, session:ITEM):
         # 🏃 If the user is bound, check the signature with the public in the vault.
         if not session.IsMissingOrEmpty('Wallet.WalletID'):
@@ -25,63 +28,59 @@ class VAULT(HOST):
             publicKey = self.Wallets().Get(walletInSession).Require('PublicKey')
             msg.VerifySignature(publicKey)
 
-
-    # ✅ DONE
-    def Wallets(self):
-        ''' 🪣 https://quip.com/IZapAfPZPnOD#temp:C:PDZ4a9cd6bab1ef4d08a9b4627f0 
-        {   
-            "VaultID": "EX123456",
-            "Broker": "any-broker.com",
-            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
-            "PublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDH+wPrKYG1KVlzQUVtBghR8n9dzcShSZo0+3KgyVdOea7Ei7vQ1U4wRn1zlI5rSqHDzFitblmqnB2anzVvdQxLQ3UqEBKBfMihnLgCSW8Xf7MCH+DSGHNvBg2xSNhcfEmnbLPLnbuz4ySn1UB0lH2eqxy50zstxhTY0binD9Y+rwIDAQAB",
-            "Confirmed": True
-        }'''
-        return self.DYNAMO('WALLETS', keys=['Broker', 'WalletID'])
     
-
     # ✅ DONE
     def Binds(self):
         ''' 🪣 https://quip.com/IZapAfPZPnOD#temp:C:PDZ669f275089004e74b3004d236 
         {
-            "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
             "Broker": "any-broker.com",
-            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
-            "Code": "iata.org/SSR/WCHR"
+            "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
+            "PublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDH+wPrKYG1KVlzQUVtBghR8n9dzcShSZo0+3KgyVdOea7Ei7vQ1U4wRn1zlI5rSqHDzFitblmqnB2anzVvdQxLQ3UqEBKBfMihnLgCSW8Xf7MCH+DSGHNvBg2xSNhcfEmnbLPLnbuz4ySn1UB0lH2eqxy50zstxhTY0binD9Y+rwIDAQAB",
+            "Code": "iata.org/SSR/WCHR",
+            "Confirmed": True
         }
         '''
-        return self.DYNAMO('BINDS', keys=['BindID'])
+        return self.DYNAMO('BINDS', keys=['Broker', 'BindID'])
     
 
     # ✅ DONE
-    def Disclosures(self):
-        ''' 🪣 https://quip.com/IZapAfPZPnOD#temp:C:PDZ71e7244be24842df9b773d541 '''
-        return self.DYNAMO('DISCLOSURES', keys=['DisclosureID'])
+    def GetBind(self, broker:str, bindID:str) -> ITEM:
+        item = self.Binds().Get({
+            'Broker': broker, 
+            'BindID': bindID
+        })
+        return ITEM(item)
     
 
     # ✅ DONE
-    def TrustsConsumer(self, domain, code) -> bool:
-        return self.GRAPH().InvokeTrusted(
-            domain= domain,
-            context= 'CONSUMER',
-            code= code
-        )
+    def InvokeBound(self, source:str, vault:str, sessionID:str, binds:List[any], publicKey:str):
+        ''' 🏃 Broker.Bound: 🐌 https://quip.com/oSzpA7HRICjq/-Broker-Binds#temp:C:DSD3f7309f961e24f0ebb5897e2f '''        
 
+        self.MESSENGER().Push(
+            source= source,
+            to= vault,
+            body= {
+                "SessionID": sessionID,
+                "PublicKey": publicKey,
+                "Binds": binds
+            })
 
-    # ✅ DONE
-    def HandleBind(self, event):
-        ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZf81764583b31439f999550159 '''
-        '''
+    
+    def HandleBound(self, event):
+        ''' 
+        🗄️🐌 https://quip.com/oSzpA7HRICjq/-Broker-Binds#temp:C:DSD3f7309f961e24f0ebb5897e2f 
+        🗄️🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZf81764583b31439f999550159  
         "Body": {
-            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
-            "WalletID": "61738d50-d507-42ff-ae87-48d8b9bb0e5a",
+            "SessionID": "...",
             "PublicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDH+wPrKYG1KVlzQUVtBghR8n9dzcShSZo0+3KgyVdOea7Ei7vQ1U4wRn1zlI5rSqHDzFitblmqnB2anzVvdQxLQ3UqEBKBfMihnLgCSW8Xf7MCH+DSGHNvBg2xSNhcfEmnbLPLnbuz4ySn1UB0lH2eqxy50zstxhTY0binD9Y+rwIDAQAB",
-            "Codes": [{
-                    "Code": "iata.org/SSR/WCHR"
+            "Binds": [{
+                "ID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
+                "Code": "iata.org/SSR/WCHR"
             }]
         }
         '''
-        msg, session = self.VerifyWalletMsg(event)
-        
+        msg, session = self.VerifySession(event)
+                
         # Optionally, confirm the binding with an 😶 Identity
         outcomes = { 
             'Confirmed': True,
@@ -89,8 +88,6 @@ class VAULT(HOST):
         }
         self.Trigger('HandleBind@Vault', event, outcomes)
 
-        broker = session.Require('Wallet.Broker')
-        walletID = msg.Require('WalletID')
         vaultID = outcomes['VaultID']
 
         # Update 🪣 Session
@@ -137,8 +134,33 @@ class VAULT(HOST):
             request= event)
 
 
+    # ✅ DONE
+    def Disclosures(self):
+        ''' 🪣 https://quip.com/IZapAfPZPnOD#temp:C:PDZ71e7244be24842df9b773d541 
+        {
+            "Consumer": "any-host.com",
+            "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",   
+            "Timestamp": "2018-12-10T13:45:00.000Z",
+            "Binds": [
+                "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5",
+                "Status": "@OTP",
+                "Continue": "6704488d-fb53-446d-a52c-a567dac20d20"
+            ]
+        }'''
+        return self.DYNAMO('DISCLOSURES', keys=['DisclosureID'])
+    
+
+    # ✅ DONE
+    def TrustsConsumer(self, domain, code) -> bool:
+        return self.GRAPH().InvokeTrusted(
+            domain= domain,
+            context= 'CONSUMER',
+            code= code
+        )
+
+
     def HandleContinue(self, event):
-        ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZ67394972376e4fb8979d41209 '''
+        ''' 📦🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZ67394972376e4fb8979d41209 '''
         '''
         "Body": {
             "Continue": "6704488d-fb53-446d-a52c-a567dac20d20"
@@ -148,8 +170,7 @@ class VAULT(HOST):
 
 
     def HandleDisclose(self, event):
-        ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZa3f3ba7f94154a2fbd520e931 '''
-        '''
+        ''' 🧑‍🦰🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZa3f3ba7f94154a2fbd520e931 
         "Body": {
             "Consumer": "any-coffee-shop.com",
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa48",
@@ -195,7 +216,7 @@ class VAULT(HOST):
 
     # ✅ DONE
     def InvokeSuppress(self, to:str, consumer:str, sessionID:str, source:str):
-        ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZeda25d5a05a3470a994e6689d '''
+        ''' 🤵🏃 https://quip.com/IZapAfPZPnOD#temp:C:PDZeda25d5a05a3470a994e6689d '''
         self.MESSENGER().Push(
             to= to,
             subject= 'Suppress@Vault',
@@ -207,22 +228,51 @@ class VAULT(HOST):
         )
 
 
+    # ✅ DONE
     def HandleSuppress(self, event):
-        ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZeda25d5a05a3470a994e6689d '''
-        '''
+        ''' 🤵🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZeda25d5a05a3470a994e6689d 
         "Body": {
             "Consumer": "airfrance.fr",
             "SessionID": "125a5c75-cb72-43d2-9695-37026dfcaa4"
         }
         '''
         msg = self.MSG(event)
+        
+        # If the session is tracked, stop it - e.g.: 
+        #   GIVEN a vault that is a palm reader 
+        #     AND the palm reader is actively looking for the session’s user
+        #    WHEN suppressed 
+        #    THEN stop searching for it, and stop sending findings to the host.
+        self.Trigger('HandleSupress@Vault', event)
+        
+        # Remove the session from 🪣 Disclosures
+        # If the session is not found on disclosures, just discard the message.
+        disclosure = self.Disclosures().Get(msg)
+        if not disclosure.IsMissingOrEmpty():
+            disclosure.Delete()
+
+
+    # ✅ DONE
+    def InvokeUnbind(self, source:str, vault:str, bindID: str):
+        self.MESSENGER().Push(
+            to= vault,
+            subject= 'Unbind@Vault',
+            source= source,
+            body= {
+                "BindID": bindID
+            }
+        )
+
 
 
     def HandleUnbind(self, event):
-        ''' 🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZ7c06cfb34057465cadb320937 '''
-        '''
+        ''' 🤵🐌 https://quip.com/IZapAfPZPnOD#temp:C:PDZ7c06cfb34057465cadb320937 
         "Body": {
             "BindID": "793af21d-12b1-4cea-8b55-623a19a28fc5"
         }
         '''
         msg = self.MSG(event)
+        bind = self.Binds().Get(msg)
+        bind.Require()
+        bind.Match('Broker', msg.From())
+        bind.Delete()

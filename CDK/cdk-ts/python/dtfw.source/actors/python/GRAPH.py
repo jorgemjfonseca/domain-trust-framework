@@ -247,9 +247,7 @@ class GRAPH(DTFW):
 
     # ✅ DONE
     def HandleTranslate(self, event):
-        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 '''
-
-        '''
+        ''' 🚀 https://quip.com/hgz4A3clvOes#temp:C:bDA9d34010d13574c2f95fe4de54 
         "Body": {
             "Language": "pt-br",
             "Domains": ["example.com"],

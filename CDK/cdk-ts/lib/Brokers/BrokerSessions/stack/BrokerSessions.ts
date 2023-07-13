@@ -21,14 +21,16 @@ export class BrokerSessions extends STACK {
     super(scope, BrokerSessions.name, props);
 
     const wallets = BrokerTables.ImportWallets(this);
-    const hosts = BrokerTables.ImportHosts(this);
+    const domains = BrokerTables.ImportDomains(this);
+    const domainTranslations = BrokerTables.ImportDomainTranslations(this);
     const sessions = BrokerTables.ImportSessions(this);
 
     // 🧑‍🦰🚀 https://quip.com/HrgkAuQCqBez/-Broker-Sessions#temp:C:bXD09ae7595fe4943d5985d83fd0
     LAMBDA
       .New(this, 'Sessions')
       .ReadsFromDynamoDB(wallets, 'WALLETS')
-      .ReadsFromDynamoDB(hosts, 'HOSTS')
+      .ReadsFromDynamoDB(domains, 'DOMAINS')
+      .ReadsFromDynamoDB(domainTranslations, 'DOMAIN_TRANSLATIONS')
       .ReadsFromDynamoDB(sessions, 'SESSIONS')
       .HandlesSyncApi('Sessions@Broker', { ignoreValidation: true })
 
@@ -36,7 +38,8 @@ export class BrokerSessions extends STACK {
     LAMBDA
       .New(this, 'Talker')
       .WritesToDynamoDB(wallets, 'WALLETS')
-      .WritesToDynamoDB(hosts, 'HOSTS')
+      .ReadsFromDynamoDB(domains, 'DOMAINS')
+      .ReadsFromDynamoDB(domainTranslations, 'DOMAIN_TRANSLATIONS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Talker@Broker', { ignoreValidation: true });
 
@@ -44,7 +47,8 @@ export class BrokerSessions extends STACK {
     LAMBDA
       .New(this, 'Checkout')
       .WritesToDynamoDB(wallets, 'WALLETS')
-      .WritesToDynamoDB(hosts, 'HOSTS')
+      .ReadsFromDynamoDB(domains, 'DOMAINS')
+      .ReadsFromDynamoDB(domainTranslations, 'DOMAIN_TRANSLATIONS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Checkout@Broker', { ignoreValidation: true });
 
@@ -52,7 +56,8 @@ export class BrokerSessions extends STACK {
     LAMBDA
       .New(this, 'Abandon')
       .WritesToDynamoDB(wallets, 'WALLETS')
-      .WritesToDynamoDB(hosts, 'HOSTS')
+      .ReadsFromDynamoDB(domains, 'DOMAINS')
+      .ReadsFromDynamoDB(domainTranslations, 'DOMAIN_TRANSLATIONS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Abandon@Broker', { ignoreValidation: true });
 
@@ -60,7 +65,8 @@ export class BrokerSessions extends STACK {
     LAMBDA
       .New(this, 'Assess')
       .WritesToDynamoDB(wallets, 'WALLETS')
-      .WritesToDynamoDB(hosts, 'HOSTS')
+      .WritesToDynamoDB(domains, 'DOMAINS')
+      .WritesToDynamoDB(domainTranslations, 'DOMAIN_TRANSLATIONS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesSyncApi('Assess@Broker', { ignoreValidation: true });
 
@@ -68,7 +74,8 @@ export class BrokerSessions extends STACK {
     LAMBDA
       .New(this, 'Goodbye')
       .WritesToDynamoDB(wallets, 'WALLETS')
-      .WritesToDynamoDB(hosts, 'HOSTS')
+      .ReadsFromDynamoDB(domains, 'DOMAINS')
+      .ReadsFromDynamoDB(domainTranslations, 'DOMAIN_TRANSLATIONS')
       .WritesToDynamoDB(sessions, 'SESSIONS')
       .HandlesMessenger('Goodbye@Broker');
   }

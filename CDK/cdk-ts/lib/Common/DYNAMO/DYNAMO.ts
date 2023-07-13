@@ -73,12 +73,12 @@ export class DYNAMO {
     
 
     
-    public AddIndex(): DYNAMO {
+    public AddIndex(name:string): DYNAMO {
       // 👉 https://bobbyhadz.com/blog/aws-cdk-add-global-secondary-index-dynamodb
       this.Super.addGlobalSecondaryIndex({
-        indexName: 'userIdIndex',
-        partitionKey: {name: 'userId', type: dynamodb.AttributeType.STRING},
-        sortKey: {name: 'status', type: dynamodb.AttributeType.STRING},
+        indexName: name+'Index',
+        partitionKey: {name: name, type: dynamodb.AttributeType.STRING},
+        //sortKey: {name: 'status', type: dynamodb.AttributeType.STRING},
         readCapacity: 1,
         writeCapacity: 1,
         projectionType: dynamodb.ProjectionType.ALL,

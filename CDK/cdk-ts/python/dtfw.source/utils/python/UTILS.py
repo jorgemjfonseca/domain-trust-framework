@@ -64,7 +64,8 @@ class UTILS(WEB, YAML):
 
 
     def Timestamp(self):
-        ''' 👉️ https://stackoverflow.com/questions/53676600/string-formatting-of-utcnow '''
+        ''' 👉️ Returns a current date-time in UTC format.
+        https://stackoverflow.com/questions/53676600/string-formatting-of-utcnow '''
         import datetime
         timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
         return timestamp
